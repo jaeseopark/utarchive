@@ -1,5 +1,6 @@
 import { Route, Routes, Navigate } from 'react-router-dom';
 import RootLayout from './layouts/RootLayout';
+import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import ArtistsPage from './pages/ArtistsPage';
 import ArtistDetailPage from './pages/ArtistDetailPage';
@@ -14,7 +15,14 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<RootLayout />}>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <RootLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="/artists" replace />} />
         <Route path="artists" element={<ArtistsPage />} />
         <Route path="artists/:id" element={<ArtistDetailPage />} />

@@ -12,6 +12,18 @@ export const AlbumSchema = z.object({
   artistId: z.string().uuid(),
 });
 
+export const LoginResponseSchema = z.object({
+  id: z.string(),
+});
+
+export const SessionSchema = z.object({
+  id: z.string(),
+});
+
+export const LogoutResponseSchema = z.object({
+  ok: z.literal(true),
+});
+
 export const SongSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
