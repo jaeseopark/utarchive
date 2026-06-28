@@ -12,14 +12,14 @@ export interface LoginPayload {
   totpCode: string;
 }
 
-interface SessionContextValue {
+export interface SessionContextValue {
   user: SessionUser | null;
   isLoading: boolean;
   login: (credentials: LoginPayload) => Promise<void>;
   logout: () => Promise<void>;
 }
 
-const SessionContext = createContext<SessionContextValue | undefined>(undefined);
+export const SessionContext = createContext<SessionContextValue | undefined>(undefined);
 
 export function SessionProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<SessionUser | null>(null);

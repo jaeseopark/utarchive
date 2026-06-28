@@ -24,3 +24,8 @@ jobs:
 
       - name: Run type check
         run: npm run typecheck
+
+      - name: Run Storybook build
+        run: npm run storybook:build
+      - name: Run Storybook play/test coverage
+        run: npm run storybook:test
