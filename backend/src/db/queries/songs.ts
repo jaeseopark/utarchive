@@ -39,6 +39,71 @@ export const selectSongById = async (id: string) => {
   return results[0] ?? null;
 };
 
+const calculateEffectiveDuration = (
+  duration: number | null,
+  trimStart: number | null,
+  trimEnd: number | null
+): number | null => {
+  if (duration === null || Number.isNaN(duration)) {
+    return null;
+  }
+
+  if (trimStart === null || trimEnd === null) {
+    return duration;
+  }
+
+  const effectiveTrimStart = Number(trimStart);
+  const effectiveTrimEnd = Number(trimEnd);
+
+  if (
+    Number.isNaN(effectiveTrimStart) ||
+    Number.isNaN(effectiveTrimEnd) ||
+    effectiveTrimStart >= effectiveTrimEnd
+  ) {
+    return duration;
+  }
+
+  return Math.min(Math.max(effectiveTrimEnd - effectiveTrimStart, 0), duration);
+};
+
+export const incrementSongPlayCountIfQualified = async (
+  songId: string,
+  listenedSeconds: number,
+  trimStart: number | null | undefined,
+  trimEnd: number | null | undefined
+) => {
+  const song = await selectSongById(songId);
+
+  if (!song) {
+    return null;
+  }
+
+  const effectiveDuration = calculateEffectiveDuration(
+    song.duration ?? null,
+    trimStart ?? null,
+    trimEnd ?? null
+  );
+
+  const listened = Number(listenedSeconds ?? 0);
+
+  const shouldIncrement =
+    effectiveDuration !== null &&
+    effectiveDuration > 0 &&
+    listened / effectiveDuration >= 0.5;
+
+  if (!shouldIncrement) {
+    return song.playCount;
+  }
+
+  const updatedRows = await db
+    .update(songs)
+    .set({ playCount: sql`${songs.playCount} + 1` })
+    .where(eq(songs.id, songId))
+    .returning();
+
+  return updatedRows[0]?.playCount ?? song.playCount;
+};
+
 export const selectSongArtistIds = async (songId: string) => {
   const rows = await db
     .select({ artistId: songArtists.artistId })
