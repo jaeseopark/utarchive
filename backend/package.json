@@ -3,6 +3,18 @@
   "private": true,
   "version": "0.0.0",
   "license": "MIT",
-  "devDependencies": {},
-  "dependencies": {}
+  "scripts": {
+    "migrate": "drizzle-kit push",
+    "migrate:generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
+    "pg": "^8.22.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10",
+    "@types/pg": "^8.20.0",
+    "ts-node": "^10.9.2"
+  }
 }
