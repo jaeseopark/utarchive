@@ -1,0 +1,237 @@
+import { and, eq } from "drizzle-orm";
+import { db } from "../../db";
+import { albumSongs, albums, songs } from "../../db/schema";
+
+export type AlbumTrackListItem = {
+  number: number;
+  title: string;
+};
+
+export type AlbumCreateInput = {
+  title: string;
+  artistId: string;
+  yearReleased?: number | null;
+  coverArtId?: string | null;
+  trackList?: AlbumTrackListItem[];
+  urls?: Record<string, string>;
+};
+
+export type AlbumUpdateInput = Partial<AlbumCreateInput>;
+
+export type AlbumTrack = {
+  trackNumber: number;
+  song: { id: string; title: string } | null;
+  isRegistered: boolean;
+};
+
+export type AlbumWithTracks = {
+  id: string;
+  title: string;
+  artistId: string;
+  yearReleased: number | null;
+  coverArtId: string | null;
+  trackList: AlbumTrackListItem[];
+  urls: Record<string, string>;
+  createdAt: string;
+  tracks: AlbumTrack[];
+};
+
+const normalizeTrackList = (value: unknown): AlbumTrackListItem[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter(
+      (item): item is { number: unknown; title: unknown } =>
+        item !== null && typeof item === "object" &&
+        typeof (item as { number: unknown }).number === "number" &&
+        typeof (item as { title: unknown }).title === "string"
+    )
+    .map((item) => ({
+      number: (item as { number: number }).number,
+      title: (item as { title: string }).title,
+    }));
+};
+
+const buildTracks = (
+  trackList: unknown,
+  albumSongRows: Array<{ songId: string; trackNumber: number; title: string | null }>
+): AlbumTrack[] => {
+  const normalizedTrackList = normalizeTrackList(trackList);
+  const songByTrackNumber = new Map<number, { songId: string; title: string | null }>();
+
+  for (const row of albumSongRows) {
+    songByTrackNumber.set(row.trackNumber, {
+      songId: row.songId,
+      title: row.title,
+    });
+  }
+
+  const seenTrackNumbers = new Set<number>();
+
+  const mergedTracks: AlbumTrack[] = normalizedTrackList.map((track) => {
+    const songRow = songByTrackNumber.get(track.number);
+    seenTrackNumbers.add(track.number);
+
+    return {
+      trackNumber: track.number,
+      song:
+        songRow && songRow.title !== null
+          ? { id: songRow.songId, title: songRow.title }
+          : null,
+      isRegistered: Boolean(songRow && songRow.title !== null),
+    };
+  });
+
+  for (const row of albumSongRows) {
+    if (seenTrackNumbers.has(row.trackNumber)) {
+      continue;
+    }
+
+    mergedTracks.push({
+      trackNumber: row.trackNumber,
+      song:
+        row.title !== null ? { id: row.songId, title: row.title } : null,
+      isRegistered: row.title !== null,
+    });
+  }
+
+  return mergedTracks;
+};
+
+export const selectAlbums = async (limit: number, offset: number) =>
+  db
+    .select()
+    .from(albums)
+    .orderBy(albums.title)
+    .limit(limit)
+    .offset(offset);
+
+export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | null> => {
+  const rows = await db.select().from(albums).where(eq(albums.id, id)).limit(1);
+  const album = rows[0];
+
+  if (!album) {
+    return null;
+  }
+
+  const songRows = await db
+    .select({
+      songId: albumSongs.songId,
+      trackNumber: albumSongs.trackNumber,
+      title: songs.title,
+    })
+    .from(albumSongs)
+    .leftJoin(songs, eq(songs.id, albumSongs.songId))
+    .where(eq(albumSongs.albumId, id))
+    .orderBy(albumSongs.trackNumber);
+
+  return {
+    id: album.id,
+    title: album.title,
+    artistId: album.artistId,
+    yearReleased: album.yearReleased ?? null,
+    coverArtId: album.coverArtId ?? null,
+    trackList: normalizeTrackList(album.trackList),
+    urls: album.urls ?? {},
+    createdAt: album.createdAt instanceof Date ? album.createdAt.toISOString() : String(album.createdAt),
+    tracks: buildTracks(album.trackList, songRows),
+  };
+};
+
+export const createAlbum = async (albumData: AlbumCreateInput) => {
+  const insertData = {
+    title: albumData.title,
+    artistId: albumData.artistId,
+    yearReleased: albumData.yearReleased ?? null,
+    coverArtId: albumData.coverArtId ?? null,
+    trackList: albumData.trackList ?? [],
+    urls: albumData.urls ?? {},
+  } as const;
+
+  const rows = await db.insert(albums).values(insertData).returning();
+  return rows[0];
+};
+
+export const updateAlbumById = async (
+  albumId: string,
+  updateData: AlbumUpdateInput
+) => {
+  const dataToUpdate: Partial<AlbumCreateInput> = {};
+
+  if (updateData.title !== undefined) {
+    dataToUpdate.title = updateData.title;
+  }
+
+  if (updateData.artistId !== undefined) {
+    dataToUpdate.artistId = updateData.artistId;
+  }
+
+  if (updateData.yearReleased !== undefined) {
+    dataToUpdate.yearReleased = updateData.yearReleased;
+  }
+
+  if (updateData.coverArtId !== undefined) {
+    dataToUpdate.coverArtId = updateData.coverArtId;
+  }
+
+  if (updateData.trackList !== undefined) {
+    dataToUpdate.trackList = updateData.trackList;
+  }
+
+  if (updateData.urls !== undefined) {
+    dataToUpdate.urls = updateData.urls;
+  }
+
+  const rows = await db
+    .update(albums)
+    .set(dataToUpdate)
+    .where(eq(albums.id, albumId))
+    .returning();
+
+  return rows[0] ?? null;
+};
+
+export const upsertAlbumSong = async (
+  albumId: string,
+  songId: string,
+  trackNumber: number
+) => {
+  const [existingAlbum] = await db.select().from(albums).where(eq(albums.id, albumId)).limit(1);
+
+  if (!existingAlbum) {
+    throw new Error("ALBUM_NOT_FOUND");
+  }
+
+  const [existingSong] = await db.select().from(songs).where(eq(songs.id, songId)).limit(1);
+
+  if (!existingSong) {
+    throw new Error("SONG_NOT_FOUND");
+  }
+
+  const [existingAssociation] = await db
+    .select()
+    .from(albumSongs)
+    .where(and(eq(albumSongs.albumId, albumId), eq(albumSongs.songId, songId)))
+    .limit(1);
+
+  if (existingAssociation) {
+    await db
+      .update(albumSongs)
+      .set({ trackNumber })
+      .where(and(eq(albumSongs.albumId, albumId), eq(albumSongs.songId, songId)));
+  } else {
+    await db.insert(albumSongs).values({ albumId, songId, trackNumber });
+  }
+
+  return { albumId, songId, trackNumber };
+};
+
+export const deleteAlbumSong = async (albumId: string, songId: string) => {
+  const result = await db
+    .delete(albumSongs)
+    .where(and(eq(albumSongs.albumId, albumId), eq(albumSongs.songId, songId)));
+
+  return (result.rowCount ?? 0) > 0;
+};
