@@ -1,0 +1,33 @@
+import { Route, Routes, Navigate } from 'react-router-dom';
+import RootLayout from './layouts/RootLayout';
+import LoginPage from './pages/LoginPage';
+import ArtistsPage from './pages/ArtistsPage';
+import ArtistDetailPage from './pages/ArtistDetailPage';
+import SongDetailPage from './pages/SongDetailPage';
+import AlbumsPage from './pages/AlbumsPage';
+import AlbumDetailPage from './pages/AlbumDetailPage';
+import PlaylistsPage from './pages/PlaylistsPage';
+import PlaylistDetailPage from './pages/PlaylistDetailPage';
+import SearchPage from './pages/SearchPage';
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<RootLayout />}>
+        <Route index element={<Navigate to="/artists" replace />} />
+        <Route path="artists" element={<ArtistsPage />} />
+        <Route path="artists/:id" element={<ArtistDetailPage />} />
+        <Route path="songs/:id" element={<SongDetailPage />} />
+        <Route path="albums" element={<AlbumsPage />} />
+        <Route path="albums/:id" element={<AlbumDetailPage />} />
+        <Route path="playlists" element={<PlaylistsPage />} />
+        <Route path="playlists/:id" element={<PlaylistDetailPage />} />
+        <Route path="search" element={<SearchPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/artists" replace />} />
+    </Routes>
+  );
+}
+
+export default App;
