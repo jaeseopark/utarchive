@@ -33,7 +33,7 @@ jobs:
         run: npm run test
 
       - name: Run NPM outdated check
-        uses: cssnr/npm-outdated-action@079630473e35143187b4432e69c664de3ceebc94
+        uses: cssnr/npm-outdated-action@dcebe7e3bcc737c9c1294b521d736e7a42230137
         with:
           heading: '### NPM Outdated Check'
           latest: 'true'
