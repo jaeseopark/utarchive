@@ -1,0 +1,25 @@
+import { NextFunction, Request, Response } from "express";
+import { ZodError } from "zod";
+
+export const errorHandler = (
+  err: unknown,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+) => {
+  if (err instanceof ZodError) {
+    return res.status(400).json({ error: "Invalid request", details: err.errors });
+  }
+
+  if (
+    err instanceof SyntaxError &&
+    typeof (err as any).status === "number" &&
+    (err as any).status === 400 &&
+    "body" in err
+  ) {
+    return res.status(400).json({ error: "Invalid JSON body" });
+  }
+
+  console.error(err);
+  return res.status(500).json({ error: "Internal server error" });
+};
