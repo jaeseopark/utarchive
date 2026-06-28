@@ -2,7 +2,10 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "module": "CommonJS",
-    "lib": ["ES2023", "dom"]
+    "lib": ["ES2023", "dom"],
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src"
   },
   "include": ["src", "scripts"]
 }
