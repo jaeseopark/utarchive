@@ -1,7 +1,8 @@
 name: PR Check
 
 permissions:
-  issues: write
+  contents: read
+  pull-requests: write
 
 on:
   pull_request:
@@ -31,18 +32,12 @@ jobs:
       - name: Run tests
         run: npm run test
 
-      - name: Save dependency outdated report
-        run: |
-          mkdir -p tmp
-          npm outdated --json > tmp/outdated.json || true
-
-      - name: Add dependency upgrade suggestion comment
-        if: github.event.pull_request != null
-        uses: actions/github-script@v7
-        env:
-          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+      - name: Run NPM outdated check
+        uses: cssnr/npm-outdated-action@079630473e35143187b4432e69c664de3ceebc94
         with:
-          script: |
-            const fs = require('fs');
-            const script = fs.readFileSync('.github/workflows/dependency-comment.js', 'utf8');
-            await eval(`(async () => {\n${script}\n})()`);
+          heading: '### NPM Outdated Check'
+          latest: 'true'
+          ncu: 'false'
+          update: 'false'
+          link: 'true'
+          summary: 'true'
