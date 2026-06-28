@@ -10,6 +10,12 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   AUTH_CREDENTIALS: z.string().min(1),
   JWT_SECRET: z.string().min(1),
+  JWT_TTL_SECONDS: z.preprocess((value) => {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return Number(value);
+    }
+    return 3600;
+  }, z.number().int().positive()),
 });
 
 export const config = envSchema.parse(process.env);
