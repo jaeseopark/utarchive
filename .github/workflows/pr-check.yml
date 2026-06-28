@@ -1,5 +1,9 @@
 name: PR Check
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   pull_request:
     branches:
@@ -17,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6.4.0
         with:
-          node-version: '24'
+          node-version-file: .nvmrc
 
       - name: Install dependencies
         run: npm ci
@@ -27,3 +31,13 @@ jobs:
 
       - name: Run tests
         run: npm run test
+
+      - name: Run NPM outdated check
+        uses: cssnr/npm-outdated-action@dcebe7e3bcc737c9c1294b521d736e7a42230137
+        with:
+          heading: '### NPM Outdated Check'
+          latest: 'true'
+          ncu: 'false'
+          update: 'false'
+          link: 'true'
+          summary: 'true'
