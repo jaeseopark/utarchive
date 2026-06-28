@@ -8,7 +8,7 @@ export const errorHandler = (
   _next: NextFunction
 ) => {
   if (err instanceof ZodError) {
-    return res.status(400).json({ error: "Invalid request", details: err.errors });
+    return res.status(400).json({ error: "Invalid request", details: err.issues });
   }
 
   if (
