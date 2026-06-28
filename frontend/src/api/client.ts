@@ -24,6 +24,10 @@ async function parseJson(response: Response) {
   }
 }
 
+type RequestOptions = {
+  preventUnauthorizedRedirect?: boolean;
+};
+
 function handleUnauthorized() {
   window.location.assign('/login');
 }
@@ -32,6 +36,7 @@ async function request<T>(
   input: RequestInfo,
   init: RequestInit,
   schema: ZodSchema<T>,
+  options: RequestOptions = {},
 ): Promise<T> {
   const response = await fetch(input, {
     credentials: 'include',
@@ -43,7 +48,9 @@ async function request<T>(
   });
 
   if (response.status === 401) {
-    handleUnauthorized();
+    if (!options.preventUnauthorizedRedirect) {
+      handleUnauthorized();
+    }
     throw new ApiError(401, 'Unauthorized', null);
   }
 
@@ -63,10 +70,12 @@ async function request<T>(
 }
 
 export const api = {
-  get: async <T>(url: string, schema: ZodSchema<T>) => request(url, { method: 'GET' }, schema),
-  post: async <T>(url: string, body: unknown, schema: ZodSchema<T>) =>
-    request(url, { method: 'POST', body: JSON.stringify(body) }, schema),
-  put: async <T>(url: string, body: unknown, schema: ZodSchema<T>) =>
-    request(url, { method: 'PUT', body: JSON.stringify(body) }, schema),
-  delete: async <T>(url: string, schema: ZodSchema<T>) => request(url, { method: 'DELETE' }, schema),
+  get: async <T>(url: string, schema: ZodSchema<T>, options?: RequestOptions) =>
+    request(url, { method: 'GET' }, schema, options),
+  post: async <T>(url: string, body: unknown, schema: ZodSchema<T>, options?: RequestOptions) =>
+    request(url, { method: 'POST', body: JSON.stringify(body) }, schema, options),
+  put: async <T>(url: string, body: unknown, schema: ZodSchema<T>, options?: RequestOptions) =>
+    request(url, { method: 'PUT', body: JSON.stringify(body) }, schema, options),
+  delete: async <T>(url: string, schema: ZodSchema<T>, options?: RequestOptions) =>
+    request(url, { method: 'DELETE' }, schema, options),
 };

@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
+import { useSession } from '../context/SessionContext';
 
 const navItems = [
   { to: '/artists', label: 'Artists' },
@@ -9,6 +10,8 @@ const navItems = [
 ];
 
 function RootLayout() {
+  const { logout } = useSession();
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
@@ -17,7 +20,9 @@ function RootLayout() {
             <p className="text-sm uppercase tracking-[0.35em] text-slate-500">utarchive</p>
             <h1 className="mt-2 text-3xl font-semibold">Music Archive Shell</h1>
           </div>
-          <Button variant="secondary">Placeholder action</Button>
+          <Button variant="secondary" onClick={logout}>
+            Logout
+          </Button>
         </header>
 
         <div className="grid flex-1 gap-4 lg:grid-cols-[256px_minmax(0,1fr)]">
