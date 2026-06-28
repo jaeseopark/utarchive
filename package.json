@@ -9,9 +9,9 @@
     "lint": "eslint .",
     "typecheck": "tsc -p frontend/tsconfig.json --noEmit && tsc -p backend/tsconfig.json --noEmit",
     "format": "prettier --check .",
-    "storybook": "cd frontend && npm run storybook",
-    "test:frontend": "cd frontend && npm run test",
-    "test:backend": "cd backend && npm run test",
+    "storybook": "npm -w frontend run storybook",
+    "test:frontend": "npm -w frontend run test",
+    "test:backend": "npm -w backend run test",
     "test": "npm run typecheck && npm run test:frontend && npm run test:backend"
   },
   "devDependencies": {
