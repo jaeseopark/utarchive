@@ -45,4 +45,4 @@ jobs:
           script: |
             const fs = require('fs');
             const script = fs.readFileSync('.github/workflows/dependency-comment.js', 'utf8');
-            eval(script);
+            await eval(`(async () => {\n${script}\n})()`);
