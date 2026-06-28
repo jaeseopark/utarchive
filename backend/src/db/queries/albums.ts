@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../../db";
-import { albumSongs, albums, songs } from "../../db/schema";
+import { albumSongs, albums, artists, songs } from "../../db/schema";
 
 export type AlbumTrackListItem = {
   number: number;
@@ -21,6 +21,7 @@ export type AlbumUpdateInput = Partial<AlbumCreateInput>;
 export type AlbumTrack = {
   trackNumber: number;
   song: { id: string; title: string } | null;
+  referenceTitle: string | null;
   isRegistered: boolean;
 };
 
@@ -28,6 +29,7 @@ export type AlbumWithTracks = {
   id: string;
   title: string;
   artistId: string;
+  artistName: string | null;
   yearReleased: number | null;
   coverArtId: string | null;
   trackList: AlbumTrackListItem[];
@@ -76,6 +78,7 @@ const buildTracks = (
 
     return {
       trackNumber: track.number,
+      referenceTitle: track.title,
       song:
         songRow && songRow.title !== null
           ? { id: songRow.songId, title: songRow.title }
@@ -91,6 +94,7 @@ const buildTracks = (
 
     mergedTracks.push({
       trackNumber: row.trackNumber,
+      referenceTitle: row.title ?? null,
       song:
         row.title !== null ? { id: row.songId, title: row.title } : null,
       isRegistered: row.title !== null,
@@ -102,14 +106,36 @@ const buildTracks = (
 
 export const selectAlbums = async (limit: number, offset: number) =>
   db
-    .select()
+    .select({
+      id: albums.id,
+      title: albums.title,
+      artistId: albums.artistId,
+      artistName: artists.name,
+      yearReleased: albums.yearReleased,
+    })
     .from(albums)
+    .leftJoin(artists, eq(artists.id, albums.artistId))
     .orderBy(albums.title)
     .limit(limit)
     .offset(offset);
 
 export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | null> => {
-  const rows = await db.select().from(albums).where(eq(albums.id, id)).limit(1);
+  const rows = await db
+    .select({
+      id: albums.id,
+      title: albums.title,
+      artistId: albums.artistId,
+      artistName: artists.name,
+      yearReleased: albums.yearReleased,
+      coverArtId: albums.coverArtId,
+      trackList: albums.trackList,
+      urls: albums.urls,
+      createdAt: albums.createdAt,
+    })
+    .from(albums)
+    .leftJoin(artists, eq(artists.id, albums.artistId))
+    .where(eq(albums.id, id))
+    .limit(1);
   const album = rows[0];
 
   if (!album) {
@@ -131,6 +157,7 @@ export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | nul
     id: album.id,
     title: album.title,
     artistId: album.artistId,
+    artistName: album.artistName ?? null,
     yearReleased: album.yearReleased ?? null,
     coverArtId: album.coverArtId ?? null,
     trackList: normalizeTrackList(album.trackList),
