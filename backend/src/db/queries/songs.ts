@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "../../db";
-import { songArtists, songs } from "../../db/schema";
+import { artists, songArtists, songs } from "../../db/schema";
 
 export type SongCreateInput = {
   title: string;
@@ -30,13 +30,44 @@ export type SongListFilters = {
 };
 
 export const selectSongById = async (id: string) => {
-  const results = await db
-    .select()
+  const [song] = await db
+    .select({
+      id: songs.id,
+      title: songs.title,
+      parentId: songs.parentId,
+      masterId: songs.masterId,
+      platformId: songs.platformId,
+      archivedAt: songs.archivedAt,
+      releasedAt: songs.releasedAt,
+      playCount: songs.playCount,
+      url: songs.url,
+      filePath: songs.filePath,
+      duration: songs.duration,
+      fileExtension: songs.fileExtension,
+      fileSizeBytes: songs.fileSizeBytes,
+      coverArtId: songs.coverArtId,
+      description: songs.description,
+      preferred: songs.preferred,
+      trimStart: songs.trimStart,
+      trimEnd: songs.trimEnd,
+      createdAt: songs.createdAt,
+      artistIds: sql`
+        (SELECT coalesce(array_agg(sa.artist_id ORDER BY sa.display_order), ARRAY[]::uuid[])
+         FROM song_artists sa
+         WHERE sa.song_id = ${songs.id})
+      `,
+      artistNames: sql`
+        (SELECT coalesce(array_agg(a.name ORDER BY sa.display_order), ARRAY[]::text[])
+         FROM song_artists sa
+         JOIN artists a ON a.id = sa.artist_id
+         WHERE sa.song_id = ${songs.id})
+      `,
+    })
     .from(songs)
     .where(eq(songs.id, id))
     .limit(1);
 
-  return results[0] ?? null;
+  return song ?? null;
 };
 
 const calculateEffectiveDuration = (
@@ -323,6 +354,15 @@ export const selectSongTree = async (songId: string) => {
         ),
         ARRAY[]::uuid[]
       ) AS "artistIds",
+      COALESCE(
+        (
+          SELECT array_agg(a.name ORDER BY sa.display_order)
+          FROM song_artists sa
+          JOIN artists a ON a.id = sa.artist_id
+          WHERE sa.song_id = tree.id
+        ),
+        ARRAY[]::text[]
+      ) AS "artistNames",
       tree.cover_art_id AS "coverArtId",
       tree.preferred,
       tree.play_count AS "playCount",

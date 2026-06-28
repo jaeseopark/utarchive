@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { artists, songArtists, songs } from "../../db/schema";
 
@@ -13,8 +13,25 @@ export type ArtistUpdateInput = Partial<ArtistCreateInput>;
 
 export const selectArtists = (limit: number, offset: number) =>
   db
-    .select()
+    .select({
+      id: artists.id,
+      name: artists.name,
+      aliases: artists.aliases,
+      description: artists.description,
+      urls: artists.urls,
+      createdAt: artists.createdAt,
+      songCount: sql<number>`count(${songArtists.songId})`,
+    })
     .from(artists)
+    .leftJoin(songArtists, eq(songArtists.artistId, artists.id))
+    .groupBy(
+      artists.id,
+      artists.name,
+      artists.aliases,
+      artists.description,
+      artists.urls,
+      artists.createdAt,
+    )
     .orderBy(artists.name)
     .limit(limit)
     .offset(offset);
@@ -47,4 +64,4 @@ export const selectSongsByArtistId = (artistId: string) =>
     .from(songs)
     .innerJoin(songArtists, eq(songArtists.songId, songs.id))
     .where(eq(songArtists.artistId, artistId))
-    .orderBy(songs.title);
+    .orderBy(songs.releasedAt.desc(), songs.title);
