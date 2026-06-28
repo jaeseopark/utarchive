@@ -86,6 +86,16 @@ songs = pgTable(
   ]
 );
 
+export const listeningAnalytics = pgTable("listening_analytics", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  songId: uuid("song_id").notNull().references(() => songs.id),
+  userId: varchar("user_id", { length: 2000 }).notNull(),
+  startedAt: timestamp("started_at", { mode: "date" }).notNull(),
+  durationSeconds: real("duration_seconds").notNull(),
+  playbackPercent: real("playback_percent").notNull(),
+  userAgent: text("user_agent"),
+});
+
 export const songArtists = pgTable(
   "song_artists",
   {
@@ -138,3 +148,4 @@ export type CoverArt = typeof coverArt.$inferSelect;
 export type CoverArtInsert = typeof coverArt.$inferInsert;
 export type Playlist = typeof playlists.$inferSelect;
 export type PlaylistInsert = typeof playlists.$inferInsert;
+export type ListeningAnalytics = typeof listeningAnalytics.$inferSelect;

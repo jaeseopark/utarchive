@@ -5,6 +5,9 @@ import healthRouter from "./health";
 import songsRouter from "./songs";
 import albumsRouter from "./albums";
 import playlistsRouter from "./playlists";
+import searchRouter from "./search";
+import analyticsRouter from "./analytics";
+import adminAnalyticsRouter from "./admin/analytics";
 
 const router = Router();
 
@@ -14,5 +17,8 @@ router.use(artistsRouter);
 router.use(songsRouter);
 router.use(albumsRouter);
 router.use(playlistsRouter);
+router.use(searchRouter);
+router.use(analyticsRouter);
+router.use(adminAnalyticsRouter);
 
 export default router;

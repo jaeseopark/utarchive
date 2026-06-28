@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
 import { validateRequest } from "../middleware/validateRequest";
-import { requireAuth } from "../middleware/requireAuth";
+import { requireAuth, AuthenticatedRequest } from "../middleware/requireAuth";
 import {
   createSong,
+  incrementSongPlayCountIfQualified,
   selectSongById,
   selectSongTree,
   selectSongs,
@@ -158,5 +159,28 @@ router.get("/api/songs/:id/tree", async (req, res) => {
 
   return res.status(200).json(songTree);
 });
+
+const playEventSchema = z.object({
+  listenedSeconds: z.number().nonnegative(),
+  trimStart: z.number().nonnegative().nullable().optional(),
+  trimEnd: z.number().nonnegative().nullable().optional(),
+});
+
+router.post(
+  "/api/songs/:id/play",
+  validateRequest(playEventSchema),
+  async (req: AuthenticatedRequest, res) => {
+    const songId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const payload = req.body as z.infer<typeof playEventSchema>;
+
+    const result = await incrementSongPlayCountIfQualified(songId, payload.listenedSeconds, payload.trimStart, payload.trimEnd);
+
+    if (result === null) {
+      return res.status(404).json({ error: "Song not found" });
+    }
+
+    return res.status(200).json({ playCount: result });
+  }
+);
 
 export default router;
