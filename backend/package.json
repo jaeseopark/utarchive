@@ -4,17 +4,24 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "dev": "ts-node src/index.ts",
     "migrate": "drizzle-kit push",
     "migrate:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
-    "pg": "^8.22.0"
+    "express": "^5.2.1",
+    "pg": "^8.22.0",
+    "ws": "^8.21.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.10",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.0.1",
     "@types/pg": "^8.20.0",
+    "@types/ws": "^8.18.1",
     "ts-node": "^10.9.2"
   }
 }
