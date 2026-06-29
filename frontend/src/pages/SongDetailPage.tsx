@@ -6,7 +6,6 @@ import {
   SongSchema,
   SongTreeSchema,
   type SongTree,
-  type SongTreeNode,
 } from '../api/schemas';
 import { z } from 'zod';
 import { Button } from '../components/ui/Button';
@@ -14,6 +13,8 @@ import FamilyTree from '../components/FamilyTree';
 import { formatDate, formatTrimRange } from '../lib/format';
 
 const SongTreeResponseSchema = SongTreeSchema;
+
+const PAUSE_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function SongDetailPage() {
   const { id } = useParams<'id'>();
@@ -25,7 +26,9 @@ function SongDetailPage() {
   const [listenedSeconds, setListenedSeconds] = useState(0);
   const [analyticsMessage, setAnalyticsMessage] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<Date | null>(null);
+  const [pausedAt, setPausedAt] = useState<Date | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -65,13 +68,34 @@ function SongDetailPage() {
     return () => window.clearInterval(interval);
   }, [isListening]);
 
+  const getEffectiveDuration = (songData: z.infer<typeof SongSchema> | null): number => {
+    if (!songData) return 1;
+    const baseDuration = songData.duration ?? 1;
+    // Account for trimmed song durations
+    if (songData.trimStart != null && songData.trimEnd != null) {
+      return Math.max(1, songData.trimEnd - songData.trimStart);
+    }
+    return baseDuration;
+  };
+
+  const clearListeningState = () => {
+    setStartedAt(null);
+    setListenedSeconds(0);
+    setIsListening(false);
+    setPausedAt(null);
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = null;
+    }
+  };
+
   const sendAnalytics = async (stopReason: 'pause' | 'ended') => {
     if (!song || !startedAt) {
       return;
     }
 
     const durationSeconds = listenedSeconds;
-    const trackDuration = song.duration ?? (durationSeconds || 1);
+    const trackDuration = getEffectiveDuration(song);
     const playbackPercent = Math.min(100, (durationSeconds / trackDuration) * 100);
 
     try {
@@ -92,16 +116,25 @@ function SongDetailPage() {
     } catch (err) {
       console.error('Analytics error', err);
       setAnalyticsMessage('Failed to record listening analytics.');
-    } finally {
-      setStartedAt(null);
-      setListenedSeconds(0);
-      setIsListening(false);
     }
   };
 
   const handlePlay = async () => {
     if (!song) {
       return;
+    }
+
+    // Check if there's an existing paused session that's too old (24+ hours)
+    if (pausedAt && Date.now() - pausedAt.getTime() >= PAUSE_TIMEOUT_MS) {
+      clearListeningState();
+      setAnalyticsMessage('Listening session expired. Please start a new session.');
+      return;
+    }
+
+    // Clear any existing timeout when resuming
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = null;
     }
 
     if (audioRef.current) {
@@ -113,12 +146,20 @@ function SongDetailPage() {
     setStartedAt(new Date());
     setAnalyticsMessage('Listening started...');
     setIsListening(true);
+    setPausedAt(null);
   };
 
   const handlePause = () => {
     if (!isListening || audioRef.current?.ended) {
       return;
     }
+
+    setPausedAt(new Date());
+    // Set timeout to clear state after 24 hours of inactivity
+    pauseTimeoutRef.current = setTimeout(() => {
+      clearListeningState();
+      setAnalyticsMessage('Listening session expired after 24 hours of inactivity.');
+    }, PAUSE_TIMEOUT_MS);
 
     void sendAnalytics('pause');
   };
@@ -129,7 +170,38 @@ function SongDetailPage() {
     }
 
     void sendAnalytics('ended');
+    clearListeningState();
   };
+
+  // Handle browser tab closing
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isListening && startedAt && song) {
+        const durationSeconds = listenedSeconds;
+        const trackDuration = getEffectiveDuration(song);
+        const playbackPercent = Math.min(100, (durationSeconds / trackDuration) * 100);
+
+        // Use sendBeacon for reliable delivery during page unload
+        const data = JSON.stringify({
+          songId: song.id,
+          startedAt: startedAt.toISOString(),
+          durationSeconds,
+          playbackPercent,
+          userAgent: navigator.userAgent,
+        });
+        navigator.sendBeacon('/api/analytics/listen', data);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Clean up any pending timeout on unmount
+      if (pauseTimeoutRef.current) {
+        clearTimeout(pauseTimeoutRef.current);
+      }
+    };
+  }, [isListening, startedAt, listenedSeconds, song]);
 
   return (
     <section className="space-y-6">
