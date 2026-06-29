@@ -12,7 +12,7 @@ export default defineConfig({
       provider: 'istanbul',
       reporter: ['text', 'lcov'],
       all: true,
-      include: ['src/pages/**/*.{ts,tsx}'],
+      include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/setupTests.ts', 'src/main.tsx'],
       statements: 80,
       branches: 70,
