@@ -1,7 +1,7 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "../../db";
-import { albums, albumSongs, artists, coverArt, songArtists, songs } from "../../db/schema";
+import { albumSongs, albums, songArtists, songHierarchy, songs } from "../../db/schema";
 
 export type SongCreateInput = {
   title: string;
@@ -18,7 +18,18 @@ export type SongCreateInput = {
   tags?: string[];
 };
 
-export type SongUpdateInput = Partial<SongCreateInput> & {
+export type SongUpdateInput = {
+  title?: string;
+  platformId?: string | null;
+  releasedAt?: string;
+  url?: string | null;
+  filePath?: string | null;
+  coverArtId?: string | null;
+  description?: string | null;
+  preferred?: boolean;
+  trimRange?: string | null;
+  fileHash?: string | null;
+  tags?: string[];
   artistIds?: string[];
 };
 
@@ -30,13 +41,39 @@ export type SongListFilters = {
   preferred?: boolean;
 };
 
+export type Song = {
+  id: string;
+  title: string;
+  platformId: string | null;
+  releasedAt: Date | null;
+  url: string | null;
+  filePath: string | null;
+  duration: number | null;
+  fileExtension: string | null;
+  fileSizeBytes: bigint | null;
+  coverArtId: string | null;
+  description: string | null;
+  preferred: boolean;
+  trimRange: string | null;
+  fileHash: string | null;
+  tags: string[];
+  createdAt: Date;
+};
+
+export type SongWithHierarchy = Song & {
+  parentId: string | null;
+  masterId: string;
+  artistIds: string[];
+  artistNames: string[];
+};
+
 export const selectSongById = async (id: string) => {
   const [song] = await db
     .select({
       id: songs.id,
       title: songs.title,
-      parentId: songs.parentId,
-      masterId: songs.masterId,
+      parentId: songHierarchy.parentId,
+      masterId: songHierarchy.masterId,
       platformId: songs.platformId,
       releasedAt: songs.releasedAt,
       url: songs.url,
@@ -64,6 +101,7 @@ export const selectSongById = async (id: string) => {
       `,
     })
     .from(songs)
+    .leftJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
     .where(eq(songs.id, id))
     .limit(1);
 
@@ -96,27 +134,6 @@ export const parseTrimRange = (trimRange: string | null): { start: number | null
   return { start, end };
 };
 
-const calculateEffectiveDuration = (
-  duration: number | null,
-  trimRange: string | null
-): number | null => {
-  if (duration === null || Number.isNaN(duration)) {
-    return null;
-  }
-
-  const { start, end } = parseTrimRange(trimRange);
-
-  if (start === null || end === null) {
-    return duration;
-  }
-
-  if (start >= end) {
-    return duration;
-  }
-
-  return Math.min(Math.max(end - start, 0), duration);
-};
-
 export const selectSongArtistIds = async (songId: string) => {
   const rows = await db
     .select({ artistId: songArtists.artistId })
@@ -128,38 +145,61 @@ export const selectSongArtistIds = async (songId: string) => {
 };
 
 export const selectSongs = async (filters: SongListFilters) => {
-  let query: any = db.select().from(songs);
+  if (filters.artistId && filters.masterId) {
+    return db
+      .select()
+      .from(songs)
+      .innerJoin(songArtists, eq(songArtists.songId, songs.id))
+      .innerJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
+      .where(and(eq(songArtists.artistId, filters.artistId), eq(songHierarchy.masterId, filters.masterId)))
+      .orderBy(songs.title)
+      .limit(filters.limit)
+      .offset(filters.offset);
+  }
 
   if (filters.artistId) {
-    query = (query as any)
+    return db
+      .select()
+      .from(songs)
       .innerJoin(songArtists, eq(songArtists.songId, songs.id))
-      .where(eq(songArtists.artistId, filters.artistId));
+      .where(eq(songArtists.artistId, filters.artistId))
+      .orderBy(songs.title)
+      .limit(filters.limit)
+      .offset(filters.offset);
   }
 
   if (filters.masterId) {
-    query = (query as any).where(eq(songs.masterId, filters.masterId));
+    return db
+      .select()
+      .from(songs)
+      .innerJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
+      .where(eq(songHierarchy.masterId, filters.masterId))
+      .orderBy(songs.title)
+      .limit(filters.limit)
+      .offset(filters.offset);
   }
 
-  if (filters.preferred !== undefined) {
-    query = (query as any).where(eq(songs.preferred, filters.preferred));
-  }
-
-  return (query as any).orderBy(songs.title).limit(filters.limit).offset(filters.offset);
+  return db
+    .select()
+    .from(songs)
+    .orderBy(songs.title)
+    .limit(filters.limit)
+    .offset(filters.offset);
 };
 
 export const createSong = async (
   songData: SongCreateInput,
   artistIds: string[]
-) => {
+): Promise<SongWithHierarchy> => {
   const songId = randomUUID();
-  let masterId = songData.parentId ? undefined : songId;
+  let masterId: string | undefined = songData.parentId ? undefined : songId;
 
   return db.transaction(async (tx) => {
     if (songData.parentId) {
       const parentSong = await tx
-        .select({ id: songs.id, masterId: songs.masterId })
-        .from(songs)
-        .where(eq(songs.id, songData.parentId))
+        .select({ masterId: songHierarchy.masterId })
+        .from(songHierarchy)
+        .where(eq(songHierarchy.songId, songData.parentId))
         .limit(1);
 
       const parent = parentSong[0];
@@ -168,16 +208,14 @@ export const createSong = async (
         throw new Error("PARENT_NOT_FOUND");
       }
 
-      masterId = parent.masterId ?? parent.id;
+      masterId = parent.masterId ?? songData.parentId ?? songId;
     }
 
     const insertData = {
       id: songId,
       title: songData.title,
-      parentId: songData.parentId ?? null,
-      masterId,
       platformId: songData.platformId ?? null,
-      releasedAt: songData.releasedAt,
+      releasedAt: songData.releasedAt ? new Date(songData.releasedAt) : undefined,
       url: songData.url ?? null,
       filePath: songData.filePath ?? null,
       coverArtId: songData.coverArtId ?? null,
@@ -186,17 +224,16 @@ export const createSong = async (
       trimRange: songData.trimRange ?? null,
       fileHash: songData.fileHash ?? null,
       tags: songData.tags ?? [],
-    } as const;
+    };
 
     await tx.insert(songs).values(insertData);
 
-    const createdRows = await tx
-      .select()
-      .from(songs)
-      .where(eq(songs.id, songId))
-      .limit(1);
-
-    const createdSong = createdRows[0] as any;
+    // Insert into song_hierarchy table
+    await tx.insert(songHierarchy).values({
+      songId,
+      parentId: songData.parentId ?? null,
+      masterId: masterId ?? songId,
+    });
 
     const artistRows = artistIds.map((artistId, index) => ({
       songId: songId,
@@ -209,8 +246,26 @@ export const createSong = async (
     }
 
     return {
-      ...createdSong,
+      id: songId,
+      title: songData.title,
+      platformId: songData.platformId ?? null,
+      releasedAt: songData.releasedAt ? new Date(songData.releasedAt) : null,
+      url: songData.url ?? null,
+      filePath: songData.filePath ?? null,
+      duration: null,
+      fileExtension: null,
+      fileSizeBytes: null,
+      coverArtId: songData.coverArtId ?? null,
+      description: songData.description ?? null,
+      preferred: songData.preferred ?? true,
+      trimRange: songData.trimRange ?? null,
+      fileHash: songData.fileHash ?? null,
+      tags: songData.tags ?? [],
+      createdAt: new Date(),
+      parentId: songData.parentId ?? null,
+      masterId: masterId ?? songId,
       artistIds,
+      artistNames: [],
     };
   });
 };
@@ -218,8 +273,13 @@ export const createSong = async (
 export const updateSongById = async (
   songId: string,
   updateData: SongUpdateInput
-) => {
-  const { artistIds, ...songFields } = updateData;
+): Promise<SongWithHierarchy | null> => {
+  const { artistIds, releasedAt, ...restSongFields } = updateData;
+
+  const songFields = {
+    ...restSongFields,
+    ...(releasedAt !== undefined && { releasedAt: new Date(releasedAt) }),
+  };
 
   return db.transaction(async (tx) => {
     const existing = await tx
@@ -256,6 +316,12 @@ export const updateSongById = async (
       .where(eq(songs.id, songId))
       .limit(1);
 
+    const hierarchy = await tx
+      .select({ parentId: songHierarchy.parentId, masterId: songHierarchy.masterId })
+      .from(songHierarchy)
+      .where(eq(songHierarchy.songId, songId))
+      .limit(1);
+
     const updatedArtistIds = await tx
       .select({ artistId: songArtists.artistId })
       .from(songArtists)
@@ -265,6 +331,9 @@ export const updateSongById = async (
     return {
       ...updatedSong,
       artistIds: updatedArtistIds.map((row) => row.artistId),
+      artistNames: [],
+      parentId: hierarchy[0]?.parentId ?? null,
+      masterId: hierarchy[0]?.masterId ?? songId,
     };
   });
 };
@@ -293,22 +362,23 @@ export const selectSongTree = async (songId: string) => {
   const nodes = ((await db.execute(sql`
     WITH RECURSIVE tree AS (
       SELECT
-        id,
-        title,
-        parent_id,
-        cover_art_id,
-        preferred,
-        released_at,
-        trim_range,
-        ARRAY[id] AS path,
+        s.id,
+        s.title,
+        sh.parent_id,
+        s.cover_art_id,
+        s.preferred,
+        s.released_at,
+        s.trim_range,
+        ARRAY[s.id] AS path,
         0 AS depth
-      FROM songs
-      WHERE id = ${rootId}
+      FROM songs s
+      LEFT JOIN song_hierarchy sh ON sh.song_id = s.id
+      WHERE s.id = ${rootId}
       UNION ALL
       SELECT
         s.id,
         s.title,
-        s.parent_id,
+        sh.parent_id,
         s.cover_art_id,
         s.preferred,
         s.released_at,
@@ -316,7 +386,8 @@ export const selectSongTree = async (songId: string) => {
         tree.path || s.id,
         tree.depth + 1
       FROM songs s
-      JOIN tree ON s.parent_id = tree.id
+      LEFT JOIN song_hierarchy sh ON sh.song_id = s.id
+      JOIN tree ON sh.parent_id = tree.id
     )
     SELECT
       tree.id,
@@ -385,14 +456,14 @@ export const resolveSongCoverArtId = async (songId: string): Promise<string | nu
   }
 
   // Walk up the parent chain
-  const parentSong = await db
-    .select({ parentId: songs.parentId })
-    .from(songs)
-    .where(eq(songs.id, songId))
+  const hierarchy = await db
+    .select({ parentId: songHierarchy.parentId })
+    .from(songHierarchy)
+    .where(eq(songHierarchy.songId, songId))
     .limit(1);
 
-  if (parentSong[0]?.parentId) {
-    return resolveSongCoverArtId(parentSong[0].parentId);
+  if (hierarchy[0]?.parentId) {
+    return resolveSongCoverArtId(hierarchy[0].parentId);
   }
 
   return null;

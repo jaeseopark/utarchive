@@ -1,11 +1,10 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { ZodError } from "zod";
 
 export const errorHandler = (
   err: unknown,
   _req: Request,
-  res: Response,
-  _next: NextFunction
+  res: Response
 ) => {
   if (err instanceof ZodError) {
     return res.status(400).json({ error: "Invalid request", details: err.issues });
@@ -13,8 +12,9 @@ export const errorHandler = (
 
   if (
     err instanceof SyntaxError &&
-    typeof (err as any).status === "number" &&
-    (err as any).status === 400 &&
+    "status" in err &&
+    typeof err.status === "number" &&
+    err.status === 400 &&
     "body" in err
   ) {
     return res.status(400).json({ error: "Invalid JSON body" });

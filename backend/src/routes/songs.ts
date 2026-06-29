@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { validateRequest } from "../middleware/validateRequest";
-import { requireAuth, AuthenticatedRequest } from "../middleware/requireAuth";
+import { requireAuth } from "../middleware/requireAuth";
 import {
   createSong,
   resolveSongCoverArtId,

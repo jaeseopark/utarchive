@@ -25,6 +25,7 @@ const playlistDetail = {
 
 const createMockRouterDecorator = (response: unknown) => {
   return (Story: () => ReactNode) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api.get = async () => response as any;
     return (
       <MemoryRouter initialEntries={['/playlists/1']}>

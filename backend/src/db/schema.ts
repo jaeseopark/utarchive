@@ -1,7 +1,6 @@
 import {
   bigint,
   boolean,
-  check,
   customType,
   integer,
   jsonb,
@@ -14,8 +13,6 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-
-import { sql } from "drizzle-orm/sql";
 
 const tsvector = customType<{ data: string; driverData: string }>({
   dataType: () => "tsvector",
@@ -60,15 +57,11 @@ export const albums = pgTable("albums", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
-export let songs: any;
-
-songs = pgTable(
+export const songs = pgTable(
   "songs",
-  (t) => ({
+  {
     id: uuid("id").primaryKey().defaultRandom(),
     title: varchar("title", { length: 500 }).notNull(),
-    parentId: uuid("parent_id").references(() => songs.id),
-    masterId: uuid("master_id").references(() => songs.id),
     platformId: varchar("platform_id", { length: 200 }),
     releasedAt: timestamp("released_at", { mode: "date" }),
     url: varchar("url", { length: 2000 }),
@@ -84,9 +77,21 @@ songs = pgTable(
     tags: text("tags").array().$type<string[]>().notNull().default([]),
     searchVector: tsvector("search_vector"),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  }),
-  (t) => [
-    unique("songs_file_hash_unique").on(t.fileHash),
+  },
+  (table) => [
+    unique("songs_file_hash_unique").on(table.fileHash),
+  ]
+);
+
+export const songHierarchy = pgTable(
+  "song_hierarchy",
+  {
+    songId: uuid("song_id").notNull().references(() => songs.id),
+    parentId: uuid("parent_id").references(() => songs.id),
+    masterId: uuid("master_id").notNull().references(() => songs.id),
+  },
+  (table) => [
+    primaryKey(table.songId),
   ]
 );
 

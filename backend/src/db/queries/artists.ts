@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { db } from "../../db";
 import { artists, songArtists, songs } from "../../db/schema";
 
@@ -63,4 +63,4 @@ export const selectSongsByArtistId = (artistId: string) =>
     .from(songs)
     .innerJoin(songArtists, eq(songArtists.songId, songs.id))
     .where(eq(songArtists.artistId, artistId))
-    .orderBy(songs.releasedAt.desc(), songs.title);
+    .orderBy(desc(songs.releasedAt), songs.title);

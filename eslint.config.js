@@ -1,16 +1,50 @@
-module.exports = {
-  parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint'],
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module'
+const js = require('@eslint/js');
+const ts = require('@typescript-eslint/eslint-plugin');
+const tsParser = require('@typescript-eslint/parser');
+const prettier = require('eslint-config-prettier');
+
+module.exports = [
+  {
+    ignores: [
+      'node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/storybook-static/**',
+      'tmp/**',
+      'eslint.config.js'
+    ]
   },
-  env: {
-    browser: true,
-    node: true,
-    es2024: true
+  js.configs.recommended,
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module'
+      },
+      globals: {
+        ...require('globals').browser,
+        ...require('globals').node,
+        RequestInfo: 'readonly',
+        RequestInit: 'readonly'
+      }
+    },
+    plugins: {
+      '@typescript-eslint': ts
+    },
+    rules: {
+      ...ts.configs.recommended.rules,
+      ...prettier.rules
+    }
   },
-  ignorePatterns: ['node_modules/', 'dist/', 'build/'],
-  rules: {}
-};
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx'],
+    languageOptions: {
+      globals: {
+        ...require('globals').vitest
+      }
+    }
+  }
+];
