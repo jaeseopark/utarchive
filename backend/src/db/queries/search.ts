@@ -7,7 +7,6 @@ export type SearchSongResult = {
   title: string;
   artistId: string | null;
   preferred: boolean;
-  playCount: number;
 };
 
 export type SearchArtistResult = {
@@ -59,8 +58,7 @@ export const searchEntities = async (query: string) => {
         ORDER BY sa.display_order
         LIMIT 1
       ) AS "artistId",
-      s.preferred,
-      s.play_count AS "playCount"
+      s.preferred
     FROM songs s,
       search_query
     WHERE s.search_vector @@ search_query.query

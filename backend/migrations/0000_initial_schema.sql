@@ -38,9 +38,7 @@ CREATE TABLE songs (
   parent_id uuid REFERENCES songs(id),
   master_id uuid REFERENCES songs(id),
   platform_id varchar(200),
-  archived_at timestamp with time zone,
   released_at timestamp with time zone,
-  play_count integer NOT NULL DEFAULT 0,
   url varchar(2000),
   file_path varchar(2000),
   duration real,
@@ -94,3 +92,16 @@ CREATE INDEX idx_song_artists_artist_id ON song_artists (artist_id);
 CREATE INDEX idx_album_songs_song_id ON album_songs (song_id);
 CREATE INDEX idx_artists_fts ON artists USING GIN (to_tsvector('english', name));
 CREATE INDEX idx_albums_fts ON albums USING GIN (to_tsvector('english', title));
+
+CREATE TABLE listening_analytics (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  song_id uuid NOT NULL REFERENCES songs(id),
+  user_id varchar(2000) NOT NULL,
+  started_at timestamp with time zone NOT NULL,
+  duration_seconds real NOT NULL,
+  playback_percent real NOT NULL,
+  user_agent text
+);
+
+CREATE INDEX idx_listening_analytics_song_id ON listening_analytics (song_id);
+CREATE INDEX idx_listening_analytics_user_id ON listening_analytics (user_id);

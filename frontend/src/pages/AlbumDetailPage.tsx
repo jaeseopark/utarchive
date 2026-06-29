@@ -20,15 +20,11 @@ const SongTreeResponseSchema = z.object({
     artistNames: z.array(z.string()),
     coverArtId: z.string().uuid().nullable().optional(),
     preferred: z.boolean(),
-    playCount: z.number().int(),
-    releasedAt: z.string().nullable().optional(),
-    trimStart: z.number().nullable().optional(),
-    trimEnd: z.number().nullable().optional(),
   })),
 });
 
-function AlbumDetailPage() {
-  const { id } = useParams<'id'>();
+const AlbumDetailPage = () => {
+  const { id } = useParams();
   const [album, setAlbum] = useState<AlbumDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

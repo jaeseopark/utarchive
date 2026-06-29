@@ -99,10 +99,6 @@ function SongDetailPage() {
                 <div className="mt-2 text-slate-100">{formatDate(song.releasedAt) ?? '—'}</div>
               </div>
               <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">
-                <div className="text-slate-400">Archived</div>
-                <div className="mt-2 text-slate-100">{formatDate(song.archivedAt) ?? '—'}</div>
-              </div>
-              <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">
                 <div className="text-slate-400">Platform ID</div>
                 <div className="mt-2 text-slate-100">{song.platformId || '—'}</div>
               </div>
@@ -117,10 +113,6 @@ function SongDetailPage() {
                     <span className="text-slate-100">—</span>
                   )}
                 </div>
-              </div>
-              <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">
-                <div className="text-slate-400">Play Count</div>
-                <div className="mt-2 text-slate-100">{song.playCount}</div>
               </div>
               <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">
                 <div className="text-slate-400">Preferred</div>

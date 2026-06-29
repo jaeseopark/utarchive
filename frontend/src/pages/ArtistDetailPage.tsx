@@ -95,7 +95,6 @@ function ArtistDetailPage() {
                         </td>
                         <td className="px-4 py-4 text-slate-300">{formatDate(song.releasedAt) ?? '—'}</td>
                         <td className="px-4 py-4 text-slate-300">{song.preferred ? 'Yes' : 'No'}</td>
-                        <td className="px-4 py-4 text-slate-300">{song.playCount}</td>
                       </tr>
                     ))}
                   </tbody>

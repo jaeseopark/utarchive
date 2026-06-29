@@ -37,7 +37,6 @@ const SearchSongSchema = z.object({
   title: z.string(),
   artistId: z.string().nullable().optional(),
   preferred: z.boolean(),
-  playCount: z.number().int(),
 });
 
 const SearchArtistSchema = z.object({
