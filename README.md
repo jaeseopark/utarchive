@@ -38,17 +38,13 @@ utarchive is a song archival tool for tracking original songs, covers, remixes, 
 ## Quick Start (Docker)
 
 1. Create an `.env` file containing the required variables.
-2. Build the image:
+2. Start the app using the repository compose file:
 
 ```bash
-docker build -t utarchive .
+docker compose -f docker-compose-dev.yml up --build
 ```
 
-3. Run the app with your env file and optional audio mount:
-
-```bash
-docker run --rm --env-file .env -p 3000:3000 -v /host/music:/music utarchive
-```
+3. If you want to mount local audio files, add a host mount to the compose file or use the example below.
 
 4. Visit `http://localhost:3000` and check `GET /health`.
 
