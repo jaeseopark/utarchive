@@ -7,7 +7,9 @@ import { errorHandler } from "./middleware/errorHandler";
 export const createApp = () => {
   const app = express();
 
+  // Handle both JSON and text/plain (for sendBeacon) content types
   app.use(express.json());
+  app.use(express.text({ type: ["text/plain", "application/json"] }));
   app.use(routes);
 
   const frontendDistPath = path.resolve(__dirname, "../frontend/dist");

@@ -35,14 +35,41 @@ utarchive is a song archival tool for tracking original songs, covers, remixes, 
 - Uses TOTP + password login
 - Authenticated users are required to access audio streaming and protected API routes
 
+## Quick Start (Docker)
+
+1. Create an `.env` file containing the required variables.
+2. Start the app using the repository compose file:
+
+```bash
+docker compose -f docker-compose-dev.yml up --build
+```
+
+3. If you want to mount local audio files, add a host mount to the compose file or use the example below.
+
+4. Visit `http://localhost:3000` and check `GET /health`.
+
 ## Environment variables
 
-- `DATABASE_URL` — Postgres connection string
-- `AUTH_CREDENTIALS` — `id,password,totp_key`
-- `JWT_SECRET` — JWT signing secret
-- `JWT_TTL_SECONDS` — optional token lifetime (default: 3600)
-- `PORT` — optional server port (default: 3000)
-- `NODE_ENV` — optional environment mode
+| Variable | Required | Description |
+|---|:---:|---|
+| `DATABASE_URL` | ✅ | Postgres connection string |
+| `AUTH_CREDENTIALS` | ✅ | `id,password,totp_key` |
+| `JWT_SECRET` | ✅ | Random secret for JWT signing (min 32 chars recommended) |
+| `JWT_TTL_SECONDS` | — | JWT lifetime in seconds (default: 3600) |
+| `PORT` | — | HTTP server port (default: 3000) |
+| `NODE_ENV` | — | `production` or `development` (default: `development`) |
+
+## Audio file storage
+
+Local audio files are served from absolute paths stored in the database. When running in Docker, mount a host directory into the container and write `file_path` values using that mounted path.
+
+Example:
+
+```bash
+docker run --rm --env-file .env -p 3000:3000 -v /host/music:/music utarchive
+```
+
+Store `file_path` values like `/music/artist/song.mp3`.
 
 ## Notes
 

@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { z } from "zod";
-import { validateRequest } from "../middleware/validateRequest";
 import { requireAuth, AuthenticatedRequest } from "../middleware/requireAuth";
 import { insertListeningAnalytics } from "../db/queries/analytics";
 
@@ -18,13 +17,28 @@ router.use(requireAuth);
 
 router.post(
   "/api/analytics/listen",
-  validateRequest(analyticsListenSchema),
   async (req: AuthenticatedRequest, res) => {
-    const payload = req.body as z.infer<typeof analyticsListenSchema>;
+    // Handle both JSON and text/plain (from sendBeacon) content types
+    let body: unknown;
+    if (typeof req.body === "string") {
+      try {
+        body = JSON.parse(req.body);
+      } catch {
+        return res.status(400).json({ error: "Invalid JSON" });
+      }
+    } else {
+      body = req.body;
+    }
+
+    const result = analyticsListenSchema.safeParse(body);
+    if (!result.success) {
+      return res.status(400).json({ error: "Invalid request body" });
+    }
+
+    const payload = result.data;
 
     await insertListeningAnalytics({
       songId: payload.songId,
-      userId: req.user?.sub ?? "",
       startedAt: payload.startedAt,
       durationSeconds: payload.durationSeconds,
       playbackPercent: payload.playbackPercent,

@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import {
+  AnalyticsListenResponseSchema,
   SongSchema,
   SongTreeSchema,
   type SongTree,
-  type SongTreeNode,
 } from '../api/schemas';
 import { z } from 'zod';
 import { Button } from '../components/ui/Button';
@@ -14,12 +14,21 @@ import { formatDate, formatTrimRange } from '../lib/format';
 
 const SongTreeResponseSchema = SongTreeSchema;
 
+const PAUSE_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 function SongDetailPage() {
   const { id } = useParams<'id'>();
   const [song, setSong] = useState<z.infer<typeof SongSchema> | null>(null);
   const [tree, setTree] = useState<SongTree | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [listenedSeconds, setListenedSeconds] = useState(0);
+  const [analyticsMessage, setAnalyticsMessage] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState<Date | null>(null);
+  const [pausedAt, setPausedAt] = useState<Date | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -46,6 +55,153 @@ function SongDetailPage() {
       name: song.artistNames?.[index] ?? 'Unknown',
     }));
   }, [song]);
+
+  useEffect(() => {
+    if (!isListening) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setListenedSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [isListening]);
+
+  const getEffectiveDuration = (songData: z.infer<typeof SongSchema> | null): number => {
+    if (!songData) return 1;
+    const baseDuration = songData.duration ?? 1;
+    // Account for trimmed song durations
+    if (songData.trimStart != null && songData.trimEnd != null) {
+      return Math.max(1, songData.trimEnd - songData.trimStart);
+    }
+    return baseDuration;
+  };
+
+  const clearListeningState = () => {
+    setStartedAt(null);
+    setListenedSeconds(0);
+    setIsListening(false);
+    setPausedAt(null);
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = null;
+    }
+  };
+
+  const sendAnalytics = async (stopReason: 'pause' | 'ended') => {
+    if (!song || !startedAt) {
+      return;
+    }
+
+    const durationSeconds = listenedSeconds;
+    const trackDuration = getEffectiveDuration(song);
+    const playbackPercent = Math.min(100, (durationSeconds / trackDuration) * 100);
+
+    try {
+      await api.post(
+        '/api/analytics/listen',
+        {
+          songId: song.id,
+          startedAt: startedAt.toISOString(),
+          durationSeconds,
+          playbackPercent,
+          userAgent: navigator.userAgent,
+        },
+        AnalyticsListenResponseSchema
+      );
+      setAnalyticsMessage(
+        `Recorded listening session (${stopReason}) — ${durationSeconds}s, ${Math.round(playbackPercent)}%`
+      );
+    } catch (err) {
+      console.error('Analytics error', err);
+      setAnalyticsMessage('Failed to record listening analytics.');
+    }
+  };
+
+  const handlePlay = async () => {
+    if (!song) {
+      return;
+    }
+
+    // Check if there's an existing paused session that's too old (24+ hours)
+    if (pausedAt && Date.now() - pausedAt.getTime() >= PAUSE_TIMEOUT_MS) {
+      clearListeningState();
+      setAnalyticsMessage('Listening session expired. Please start a new session.');
+      return;
+    }
+
+    // Clear any existing timeout when resuming
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = null;
+    }
+
+    if (audioRef.current) {
+      await audioRef.current.play().catch(() => {
+        setAnalyticsMessage('Unable to start audio playback.');
+      });
+    }
+
+    setStartedAt(new Date());
+    setAnalyticsMessage('Listening started...');
+    setIsListening(true);
+    setPausedAt(null);
+  };
+
+  const handlePause = () => {
+    if (!isListening || audioRef.current?.ended) {
+      return;
+    }
+
+    setPausedAt(new Date());
+    // Set timeout to clear state after 24 hours of inactivity
+    pauseTimeoutRef.current = setTimeout(() => {
+      clearListeningState();
+      setAnalyticsMessage('Listening session expired after 24 hours of inactivity.');
+    }, PAUSE_TIMEOUT_MS);
+
+    void sendAnalytics('pause');
+  };
+
+  const handleEnded = () => {
+    if (!isListening) {
+      return;
+    }
+
+    void sendAnalytics('ended');
+    clearListeningState();
+  };
+
+  // Handle browser tab closing
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isListening && startedAt && song) {
+        const durationSeconds = listenedSeconds;
+        const trackDuration = getEffectiveDuration(song);
+        const playbackPercent = Math.min(100, (durationSeconds / trackDuration) * 100);
+
+        // Use sendBeacon for reliable delivery during page unload
+        const data = JSON.stringify({
+          songId: song.id,
+          startedAt: startedAt.toISOString(),
+          durationSeconds,
+          playbackPercent,
+          userAgent: navigator.userAgent,
+        });
+        navigator.sendBeacon('/api/analytics/listen', data);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Clean up any pending timeout on unmount
+      if (pauseTimeoutRef.current) {
+        clearTimeout(pauseTimeoutRef.current);
+      }
+    };
+  }, [isListening, startedAt, listenedSeconds, song]);
 
   return (
     <section className="space-y-6">
@@ -133,6 +289,26 @@ function SongDetailPage() {
             {song.description ? (
               <div className="mt-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-4 text-slate-100">
                 <pre className="whitespace-pre-wrap text-sm leading-6">{song.description}</pre>
+              </div>
+            ) : null}
+
+            {song.filePath ? (
+              <div className="mt-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-4 text-slate-100">
+                <div className="mb-3 text-slate-400">Playback analytics</div>
+                <audio
+                  ref={audioRef}
+                  controls
+                  src={song.filePath}
+                  className="w-full rounded-3xl bg-slate-950/80"
+                  onPlay={handlePlay}
+                  onPause={handlePause}
+                  onEnded={handleEnded}
+                />
+                <div className="mt-3 text-sm text-slate-400">
+                  {isListening
+                    ? `Listening for ${listenedSeconds}s`
+                    : analyticsMessage ?? 'Start playback to capture analytics.'}
+                </div>
               </div>
             ) : null}
           </div>
