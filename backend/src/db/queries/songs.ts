@@ -13,8 +13,9 @@ export type SongCreateInput = {
   coverArtId?: string | null;
   description?: string | null;
   preferred?: boolean;
-  trimStart?: number | null;
-  trimEnd?: number | null;
+  trimRange?: string | null;
+  fileHash?: string | null;
+  tags?: string[];
 };
 
 export type SongUpdateInput = Partial<SongCreateInput> & {
@@ -46,8 +47,9 @@ export const selectSongById = async (id: string) => {
       coverArtId: songs.coverArtId,
       description: songs.description,
       preferred: songs.preferred,
-      trimStart: songs.trimStart,
-      trimEnd: songs.trimEnd,
+      trimRange: songs.trimRange,
+      fileHash: songs.fileHash,
+      tags: songs.tags,
       createdAt: songs.createdAt,
       artistIds: sql`
         (SELECT coalesce(array_agg(sa.artist_id ORDER BY sa.display_order), ARRAY[]::uuid[])
@@ -68,31 +70,51 @@ export const selectSongById = async (id: string) => {
   return song ?? null;
 };
 
+/**
+ * Parse trimRange string into start and end values.
+ * Format: "start,end" where either can be omitted.
+ * Examples: "30," -> { start: 30, end: null }
+ *           ",45" -> { start: null, end: 45 }
+ *           "30,45" -> { start: 30, end: 45 }
+ */
+export const parseTrimRange = (trimRange: string | null): { start: number | null; end: number | null } => {
+  if (!trimRange || trimRange.trim() === "") {
+    return { start: null, end: null };
+  }
+
+  const parts = trimRange.split(",");
+  const start = parts[0]?.trim() ? Number(parts[0].trim()) : null;
+  const end = parts[1]?.trim() ? Number(parts[1].trim()) : null;
+
+  if (start !== null && Number.isNaN(start)) {
+    return { start: null, end: null };
+  }
+  if (end !== null && Number.isNaN(end)) {
+    return { start: null, end: null };
+  }
+
+  return { start, end };
+};
+
 const calculateEffectiveDuration = (
   duration: number | null,
-  trimStart: number | null,
-  trimEnd: number | null
+  trimRange: string | null
 ): number | null => {
   if (duration === null || Number.isNaN(duration)) {
     return null;
   }
 
-  if (trimStart === null || trimEnd === null) {
+  const { start, end } = parseTrimRange(trimRange);
+
+  if (start === null || end === null) {
     return duration;
   }
 
-  const effectiveTrimStart = Number(trimStart);
-  const effectiveTrimEnd = Number(trimEnd);
-
-  if (
-    Number.isNaN(effectiveTrimStart) ||
-    Number.isNaN(effectiveTrimEnd) ||
-    effectiveTrimStart >= effectiveTrimEnd
-  ) {
+  if (start >= end) {
     return duration;
   }
 
-  return Math.min(Math.max(effectiveTrimEnd - effectiveTrimStart, 0), duration);
+  return Math.min(Math.max(end - start, 0), duration);
 };
 
 export const selectSongArtistIds = async (songId: string) => {
@@ -161,8 +183,9 @@ export const createSong = async (
       coverArtId: songData.coverArtId ?? null,
       description: songData.description ?? null,
       preferred: songData.preferred,
-      trimStart: songData.trimStart ?? null,
-      trimEnd: songData.trimEnd ?? null,
+      trimRange: songData.trimRange ?? null,
+      fileHash: songData.fileHash ?? null,
+      tags: songData.tags ?? [],
     } as const;
 
     await tx.insert(songs).values(insertData);
@@ -255,8 +278,7 @@ export type SongTreeNode = {
   coverArtId: string | null;
   preferred: boolean;
   releasedAt: string | null;
-  trimStart: number | null;
-  trimEnd: number | null;
+  trimRange: string | null;
 };
 
 export const selectSongTree = async (songId: string) => {
@@ -277,8 +299,7 @@ export const selectSongTree = async (songId: string) => {
         cover_art_id,
         preferred,
         released_at,
-        trim_start,
-        trim_end,
+        trim_range,
         ARRAY[id] AS path,
         0 AS depth
       FROM songs
@@ -291,8 +312,7 @@ export const selectSongTree = async (songId: string) => {
         s.cover_art_id,
         s.preferred,
         s.released_at,
-        s.trim_start,
-        s.trim_end,
+        s.trim_range,
         tree.path || s.id,
         tree.depth + 1
       FROM songs s
@@ -323,8 +343,7 @@ export const selectSongTree = async (songId: string) => {
       tree.cover_art_id AS "coverArtId",
       tree.preferred,
       tree.released_at AS "releasedAt",
-      tree.trim_start AS "trimStart",
-      tree.trim_end AS "trimEnd"
+      tree.trim_range AS "trimRange"
     FROM tree
     ORDER BY tree.path
   `)) as unknown) as SongTreeNode[];
@@ -377,4 +396,50 @@ export const resolveSongCoverArtId = async (songId: string): Promise<string | nu
   }
 
   return null;
+};
+
+/**
+ * Update tags for a specific song
+ */
+export const updateSongTags = async (songId: string, tags: string[]) => {
+  const normalizedTags = tags
+    .map((tag) => tag.trim().toLowerCase())
+    .filter((tag) => tag.length > 0);
+
+  const existing = await db
+    .select()
+    .from(songs)
+    .where(eq(songs.id, songId))
+    .limit(1);
+
+  if (!existing[0]) {
+    return null;
+  }
+
+  const [updated] = await db
+    .update(songs)
+    .set({ tags: normalizedTags })
+    .where(eq(songs.id, songId))
+    .returning();
+
+  return updated;
+};
+
+/**
+ * Get all unique tags used across the library
+ */
+export const selectUniqueTags = async (): Promise<string[]> => {
+  const rows = await db
+    .select({ tag: sql<string>`unnest(tags)` })
+    .from(songs)
+    .where(sql`tags IS NOT NULL AND array_length(tags, 1) > 0`);
+
+  const tagSet = new Set<string>();
+  for (const row of rows) {
+    if (row.tag) {
+      tagSet.add(row.tag);
+    }
+  }
+
+  return Array.from(tagSet).sort();
 };

@@ -47,15 +47,13 @@ CREATE TABLE songs (
   cover_art_id uuid REFERENCES cover_art(id),
   description text,
   preferred boolean NOT NULL DEFAULT true,
-  trim_start real,
-  trim_end real,
+  trim_range varchar(32),
+  file_hash varchar(64) UNIQUE,
+  tags text[] NOT NULL DEFAULT ARRAY[]::text[],
   search_vector tsvector GENERATED ALWAYS AS (
     to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, '') || ' ' || coalesce(url, ''))
   ) STORED,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT songs_trim_valid CHECK (
-    trim_start IS NULL OR trim_end IS NULL OR trim_start < trim_end
-  )
+  created_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
 CREATE TABLE song_artists (
@@ -87,6 +85,7 @@ CREATE TABLE playlist_songs (
 
 CREATE INDEX idx_songs_search_vector ON songs USING GIN (search_vector);
 CREATE INDEX idx_songs_master_id ON songs (master_id);
+CREATE INDEX songs_tags_gin_idx ON songs USING GIN (tags);
 CREATE INDEX idx_song_artists_song_id ON song_artists (song_id);
 CREATE INDEX idx_song_artists_artist_id ON song_artists (artist_id);
 CREATE INDEX idx_album_songs_song_id ON album_songs (song_id);
