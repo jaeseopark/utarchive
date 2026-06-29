@@ -33,11 +33,4 @@ jobs:
         run: npm run test
 
       - name: Run NPM outdated check
-        uses: cssnr/npm-outdated-action@dcebe7e3bcc737c9c1294b521d736e7a42230137
-        with:
-          heading: '### NPM Outdated Check'
-          latest: 'true'
-          ncu: 'false'
-          update: 'false'
-          link: 'true'
-          summary: 'true'
+        uses: gh640/npm-outdated-action@0864ddcc8ba15bbb484dae29d61d9dd49efad3ae
