@@ -12,8 +12,7 @@ export const validateRequest = (
       return next(result.error);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    req[source] = result.data as any;
+    req[source] = result.data as unknown;
     return next();
   };
 };

@@ -12,10 +12,9 @@ export const errorHandler = (
 
   if (
     err instanceof SyntaxError &&
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    typeof (err as any).status === "number" &&
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (err as any).status === 400 &&
+    "status" in err &&
+    typeof err.status === "number" &&
+    err.status === 400 &&
     "body" in err
   ) {
     return res.status(400).json({ error: "Invalid JSON body" });

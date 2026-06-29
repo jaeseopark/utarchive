@@ -57,16 +57,11 @@ export const albums = pgTable("albums", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export let songs: any;
-
-songs = pgTable(
+export const songs = pgTable(
   "songs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     title: varchar("title", { length: 500 }).notNull(),
-    parentId: uuid("parent_id").references(() => songs.id),
-    masterId: uuid("master_id").references(() => songs.id),
     platformId: varchar("platform_id", { length: 200 }),
     releasedAt: timestamp("released_at", { mode: "date" }),
     url: varchar("url", { length: 2000 }),
@@ -85,6 +80,18 @@ songs = pgTable(
   },
   (table) => [
     unique("songs_file_hash_unique").on(table.fileHash),
+  ]
+);
+
+export const songHierarchy = pgTable(
+  "song_hierarchy",
+  {
+    songId: uuid("song_id").notNull().references(() => songs.id),
+    parentId: uuid("parent_id").references(() => songs.id),
+    masterId: uuid("master_id").notNull().references(() => songs.id),
+  },
+  (table) => [
+    primaryKey(table.songId),
   ]
 );
 
