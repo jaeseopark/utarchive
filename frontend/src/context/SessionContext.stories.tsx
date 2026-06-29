@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { SessionProvider, SessionContext, type SessionContextValue } from './SessionContext';
+import { SessionProvider, SessionContext } from './SessionContext';
 
 const meta: Meta<typeof SessionProvider> = {
   title: 'Context/SessionProvider',

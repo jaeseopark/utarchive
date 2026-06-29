@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "../../db";
-import { albums, albumSongs, artists, coverArt, songArtists, songs } from "../../db/schema";
+import { albumSongs, albums, songArtists, songs } from "../../db/schema";
 
 export type SongCreateInput = {
   title: string;
@@ -96,27 +96,6 @@ export const parseTrimRange = (trimRange: string | null): { start: number | null
   return { start, end };
 };
 
-const calculateEffectiveDuration = (
-  duration: number | null,
-  trimRange: string | null
-): number | null => {
-  if (duration === null || Number.isNaN(duration)) {
-    return null;
-  }
-
-  const { start, end } = parseTrimRange(trimRange);
-
-  if (start === null || end === null) {
-    return duration;
-  }
-
-  if (start >= end) {
-    return duration;
-  }
-
-  return Math.min(Math.max(end - start, 0), duration);
-};
-
 export const selectSongArtistIds = async (songId: string) => {
   const rows = await db
     .select({ artistId: songArtists.artistId })
@@ -128,23 +107,24 @@ export const selectSongArtistIds = async (songId: string) => {
 };
 
 export const selectSongs = async (filters: SongListFilters) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query: any = db.select().from(songs);
 
   if (filters.artistId) {
-    query = (query as any)
+    query = query
       .innerJoin(songArtists, eq(songArtists.songId, songs.id))
       .where(eq(songArtists.artistId, filters.artistId));
   }
 
   if (filters.masterId) {
-    query = (query as any).where(eq(songs.masterId, filters.masterId));
+    query = query.where(eq(songs.masterId, filters.masterId));
   }
 
   if (filters.preferred !== undefined) {
-    query = (query as any).where(eq(songs.preferred, filters.preferred));
+    query = query.where(eq(songs.preferred, filters.preferred));
   }
 
-  return (query as any).orderBy(songs.title).limit(filters.limit).offset(filters.offset);
+  return query.orderBy(songs.title).limit(filters.limit).offset(filters.offset);
 };
 
 export const createSong = async (
@@ -196,6 +176,7 @@ export const createSong = async (
       .where(eq(songs.id, songId))
       .limit(1);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const createdSong = createdRows[0] as any;
 
     const artistRows = artistIds.map((artistId, index) => ({

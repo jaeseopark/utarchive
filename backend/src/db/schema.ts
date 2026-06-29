@@ -1,7 +1,6 @@
 import {
   bigint,
   boolean,
-  check,
   customType,
   integer,
   jsonb,
@@ -14,8 +13,6 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-
-import { sql } from "drizzle-orm/sql";
 
 const tsvector = customType<{ data: string; driverData: string }>({
   dataType: () => "tsvector",
@@ -60,11 +57,12 @@ export const albums = pgTable("albums", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export let songs: any;
 
 songs = pgTable(
   "songs",
-  (t) => ({
+  {
     id: uuid("id").primaryKey().defaultRandom(),
     title: varchar("title", { length: 500 }).notNull(),
     parentId: uuid("parent_id").references(() => songs.id),
@@ -84,9 +82,9 @@ songs = pgTable(
     tags: text("tags").array().$type<string[]>().notNull().default([]),
     searchVector: tsvector("search_vector"),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  }),
-  (t) => [
-    unique("songs_file_hash_unique").on(t.fileHash),
+  },
+  (table) => [
+    unique("songs_file_hash_unique").on(table.fileHash),
   ]
 );
 

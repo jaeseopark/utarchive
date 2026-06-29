@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { Button } from '../components/ui/Button';
@@ -92,7 +92,7 @@ function PlaylistsPage() {
 
   const hasPlaylists = playlists.length > 0;
 
-  const handleCreatePlaylist = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCreatePlaylist = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedName = playlistName.trim();
     if (!trimmedName) {

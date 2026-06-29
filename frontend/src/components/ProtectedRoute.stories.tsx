@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { MemoryRouter } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
-import { SessionContext, type SessionContextValue, type SessionUser } from '../context/SessionContext';
+import { SessionContext, type SessionContextValue } from '../context/SessionContext';
 
 const content = <div>Protected content</div>;
 

@@ -57,6 +57,7 @@ async function request<T>(
   const payload = await parseJson(response);
 
   if (!response.ok) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const message = typeof payload === 'object' && payload && 'message' in payload ? String((payload as any).message) : response.statusText;
     throw new ApiError(response.status, message, payload);
   }

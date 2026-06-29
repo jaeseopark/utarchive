@@ -1,13 +1,13 @@
 import { type z } from 'zod';
 import { UrlMapSchema } from '../api/schemas';
 
-type UrlMap = z.infer<typeof UrlMapSchema>;
+type UrlMapType = z.infer<typeof UrlMapSchema>;
 
 interface UrlMapProps {
-  urls?: UrlMap;
+  urls?: UrlMapType;
 }
 
-function UrlMap({ urls }: UrlMapProps) {
+function UrlMapComponent({ urls }: UrlMapProps) {
   const entries = urls ? Object.entries(urls) : [];
 
   if (entries.length === 0) {
@@ -35,4 +35,4 @@ function UrlMap({ urls }: UrlMapProps) {
   );
 }
 
-export default UrlMap;
+export default UrlMapComponent;

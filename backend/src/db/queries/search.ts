@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import { db } from "../../db";
-import { songArtists } from "../../db/schema";
 
 export type SearchSongResult = {
   id: string;

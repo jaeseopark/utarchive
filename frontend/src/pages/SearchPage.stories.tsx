@@ -28,6 +28,7 @@ const searchResults = {
 
 const createMockRouterDecorator = (initialEntries: string[], response: unknown) => {
   return (Story: () => ReactNode) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api.get = async () => response as any;
     return (
       <MemoryRouter initialEntries={initialEntries}>
