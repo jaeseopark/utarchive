@@ -3,7 +3,6 @@ import { z } from "zod";
 import { validateRequest } from "../../middleware/validateRequest";
 import { requireAuth } from "../../middleware/requireAuth";
 import {
-  countListeningAnalytics,
   deleteAllListeningAnalytics,
   pruneListeningAnalyticsOlderThanDays,
 } from "../../db/queries/analytics";
@@ -15,14 +14,6 @@ const pruneAnalyticsSchema = z.object({
 });
 
 router.use(requireAuth);
-
-router.get("/api/admin/analytics/stats", async (_req, res) => {
-  const count = await countListeningAnalytics();
-
-  return res.status(200).json({
-    totalRecords: count,
-  });
-});
 
 router.post("/api/admin/analytics/flush", async (_req, res) => {
   await deleteAllListeningAnalytics();
