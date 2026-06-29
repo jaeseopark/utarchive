@@ -16,12 +16,6 @@ const envSchema = z.object({
     }
     return 3600;
   }, z.number().int().positive()),
-  ANALYTICS_RETENTION_DAYS: z.preprocess((value) => {
-    if (typeof value === "string" && value.trim().length > 0) {
-      return Number(value);
-    }
-    return undefined;
-  }, z.number().int().positive().optional()),
 });
 
 export const config = envSchema.parse(process.env);

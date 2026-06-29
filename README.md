@@ -58,7 +58,6 @@ docker compose -f docker-compose-dev.yml up --build
 | `JWT_TTL_SECONDS` | — | JWT lifetime in seconds (default: 3600) |
 | `PORT` | — | HTTP server port (default: 3000) |
 | `NODE_ENV` | — | `production` or `development` (default: `development`) |
-| `ANALYTICS_RETENTION_DAYS` | — | Optional analytics retention period in days for admin reporting |
 
 ## Audio file storage
 

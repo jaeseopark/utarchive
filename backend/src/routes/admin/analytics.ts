@@ -2,7 +2,6 @@ import { Router } from "express";
 import { z } from "zod";
 import { validateRequest } from "../../middleware/validateRequest";
 import { requireAuth } from "../../middleware/requireAuth";
-import { config } from "../../config";
 import {
   countListeningAnalytics,
   deleteAllListeningAnalytics,
@@ -22,7 +21,6 @@ router.get("/api/admin/analytics/stats", async (_req, res) => {
 
   return res.status(200).json({
     totalRecords: count,
-    retentionDays: config.ANALYTICS_RETENTION_DAYS ?? null,
   });
 });
 
