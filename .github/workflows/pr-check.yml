@@ -34,3 +34,12 @@ jobs:
 
       - name: Run NPM outdated check
         uses: gh640/npm-outdated-action@0864ddcc8ba15bbb484dae29d61d9dd49efad3ae
+        id: npm-outdated
+
+      - name: Comment outdated dependencies on PR
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ${{ steps.npm-outdated.outputs.summary }}
