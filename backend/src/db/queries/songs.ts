@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "../../db";
-import { artists, songArtists, songs } from "../../db/schema";
+import { albums, albumSongs, artists, coverArt, songArtists, songs } from "../../db/schema";
 
 export type SongCreateInput = {
   title: string;
@@ -333,4 +333,48 @@ export const selectSongTree = async (songId: string) => {
     masterId: rootId,
     nodes,
   };
+};
+
+/**
+ * Resolve the effective cover art ID for a song by walking the family tree.
+ * 1. Use the song's own coverArtId
+ * 2. If absent, use the album cover art of any associated album(s)
+ * 3. If still absent, check the parent song recursively until a cover art is found
+ */
+export const resolveSongCoverArtId = async (songId: string): Promise<string | null> => {
+  // First, try to get the song's own cover art
+  const song = await db
+    .select({ coverArtId: songs.coverArtId })
+    .from(songs)
+    .where(eq(songs.id, songId))
+    .limit(1);
+
+  if (song[0]?.coverArtId) {
+    return song[0].coverArtId;
+  }
+
+  // Try to find cover art from associated albums
+  const albumCoverArt = await db
+    .select({ coverArtId: albums.coverArtId })
+    .from(albumSongs)
+    .innerJoin(albums, eq(albums.id, albumSongs.albumId))
+    .where(eq(albumSongs.songId, songId))
+    .limit(1);
+
+  if (albumCoverArt[0]?.coverArtId) {
+    return albumCoverArt[0].coverArtId;
+  }
+
+  // Walk up the parent chain
+  const parentSong = await db
+    .select({ parentId: songs.parentId })
+    .from(songs)
+    .where(eq(songs.id, songId))
+    .limit(1);
+
+  if (parentSong[0]?.parentId) {
+    return resolveSongCoverArtId(parentSong[0].parentId);
+  }
+
+  return null;
 };
