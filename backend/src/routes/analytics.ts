@@ -24,7 +24,6 @@ router.post(
 
     await insertListeningAnalytics({
       songId: payload.songId,
-      userId: req.user?.sub ?? "",
       startedAt: payload.startedAt,
       durationSeconds: payload.durationSeconds,
       playbackPercent: payload.playbackPercent,

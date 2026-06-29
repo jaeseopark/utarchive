@@ -4,7 +4,6 @@ import { listeningAnalytics } from "../../db/schema";
 
 export type ListeningAnalyticsInsert = {
   songId: string;
-  userId: string;
   startedAt: string;
   durationSeconds: number;
   playbackPercent: number;
@@ -17,7 +16,6 @@ export const insertListeningAnalytics = async (
   return await db.transaction(async (tx) => {
     await tx.insert(listeningAnalytics).values({
       songId: record.songId,
-      userId: record.userId,
       startedAt: new Date(record.startedAt),
       durationSeconds: record.durationSeconds,
       playbackPercent: record.playbackPercent,

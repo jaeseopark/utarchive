@@ -95,6 +95,10 @@ export const SessionSchema = z.object({
   id: z.string(),
 });
 
+export const AnalyticsListenResponseSchema = z.object({
+  ok: z.literal(true),
+});
+
 export const LogoutResponseSchema = z.object({
   ok: z.literal(true),
 });

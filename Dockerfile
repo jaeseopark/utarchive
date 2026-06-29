@@ -13,7 +13,7 @@ FROM deps AS build
 WORKDIR /app
 COPY . .
 
-RUN cd backend && npm run build
+RUN cd frontend && npm run build && cd ../backend && npm run build
 
 # Stage 3: production image
 FROM node:24.17.0-alpine AS production

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import {
+  AnalyticsListenResponseSchema,
   SongSchema,
   SongTreeSchema,
   type SongTree,
@@ -20,6 +21,11 @@ function SongDetailPage() {
   const [tree, setTree] = useState<SongTree | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [listenedSeconds, setListenedSeconds] = useState(0);
+  const [analyticsMessage, setAnalyticsMessage] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState<Date | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -46,6 +52,84 @@ function SongDetailPage() {
       name: song.artistNames?.[index] ?? 'Unknown',
     }));
   }, [song]);
+
+  useEffect(() => {
+    if (!isListening) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setListenedSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [isListening]);
+
+  const sendAnalytics = async (stopReason: 'pause' | 'ended') => {
+    if (!song || !startedAt) {
+      return;
+    }
+
+    const durationSeconds = listenedSeconds;
+    const trackDuration = song.duration ?? (durationSeconds || 1);
+    const playbackPercent = Math.min(100, (durationSeconds / trackDuration) * 100);
+
+    try {
+      await api.post(
+        '/api/analytics/listen',
+        {
+          songId: song.id,
+          startedAt: startedAt.toISOString(),
+          durationSeconds,
+          playbackPercent,
+          userAgent: navigator.userAgent,
+        },
+        AnalyticsListenResponseSchema
+      );
+      setAnalyticsMessage(
+        `Recorded listening session (${stopReason}) — ${durationSeconds}s, ${Math.round(playbackPercent)}%`
+      );
+    } catch (err) {
+      console.error('Analytics error', err);
+      setAnalyticsMessage('Failed to record listening analytics.');
+    } finally {
+      setStartedAt(null);
+      setListenedSeconds(0);
+      setIsListening(false);
+    }
+  };
+
+  const handlePlay = async () => {
+    if (!song) {
+      return;
+    }
+
+    if (audioRef.current) {
+      await audioRef.current.play().catch(() => {
+        setAnalyticsMessage('Unable to start audio playback.');
+      });
+    }
+
+    setStartedAt(new Date());
+    setAnalyticsMessage('Listening started...');
+    setIsListening(true);
+  };
+
+  const handlePause = () => {
+    if (!isListening || audioRef.current?.ended) {
+      return;
+    }
+
+    void sendAnalytics('pause');
+  };
+
+  const handleEnded = () => {
+    if (!isListening) {
+      return;
+    }
+
+    void sendAnalytics('ended');
+  };
 
   return (
     <section className="space-y-6">
@@ -133,6 +217,26 @@ function SongDetailPage() {
             {song.description ? (
               <div className="mt-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-4 text-slate-100">
                 <pre className="whitespace-pre-wrap text-sm leading-6">{song.description}</pre>
+              </div>
+            ) : null}
+
+            {song.filePath ? (
+              <div className="mt-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-4 text-slate-100">
+                <div className="mb-3 text-slate-400">Playback analytics</div>
+                <audio
+                  ref={audioRef}
+                  controls
+                  src={song.filePath}
+                  className="w-full rounded-3xl bg-slate-950/80"
+                  onPlay={handlePlay}
+                  onPause={handlePause}
+                  onEnded={handleEnded}
+                />
+                <div className="mt-3 text-sm text-slate-400">
+                  {isListening
+                    ? `Listening for ${listenedSeconds}s`
+                    : analyticsMessage ?? 'Start playback to capture analytics.'}
+                </div>
               </div>
             ) : null}
           </div>
