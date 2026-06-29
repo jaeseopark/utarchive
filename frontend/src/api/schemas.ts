@@ -16,7 +16,6 @@ export const SongListItemSchema = z.object({
   title: z.string(),
   releasedAt: z.string().nullable().optional(),
   preferred: z.boolean(),
-  playCount: z.number().int(),
 });
 
 export const AlbumSchema = z.object({
@@ -33,9 +32,7 @@ export const SongSchema = z.object({
   parentId: z.string().uuid().nullable().optional(),
   masterId: z.string().uuid().nullable().optional(),
   platformId: z.string().nullable().optional(),
-  archivedAt: z.string().nullable().optional(),
   releasedAt: z.string().nullable().optional(),
-  playCount: z.number().int(),
   url: z.string().nullable().optional(),
   filePath: z.string().nullable().optional(),
   duration: z.number().nullable().optional(),
@@ -60,7 +57,6 @@ export const SongTreeNodeSchema = z.object({
   artistNames: z.array(z.string()),
   coverArtId: z.string().uuid().nullable().optional(),
   preferred: z.boolean(),
-  playCount: z.number().int(),
   releasedAt: z.string().nullable().optional(),
   trimStart: z.number().nullable().optional(),
   trimEnd: z.number().nullable().optional(),

@@ -1,5 +1,5 @@
 import { db } from "../../db";
-import { lt, sql } from "drizzle-orm";
+import { lt, eq } from "drizzle-orm";
 import { listeningAnalytics } from "../../db/schema";
 
 export type ListeningAnalyticsInsert = {
@@ -14,13 +14,16 @@ export type ListeningAnalyticsInsert = {
 export const insertListeningAnalytics = async (
   record: ListeningAnalyticsInsert
 ) => {
-  return await db.insert(listeningAnalytics).values({
-    songId: record.songId,
-    userId: record.userId,
-    startedAt: new Date(record.startedAt),
-    durationSeconds: record.durationSeconds,
-    playbackPercent: record.playbackPercent,
-    userAgent: record.userAgent ?? null,
+  return await db.transaction(async (tx) => {
+    await tx.insert(listeningAnalytics).values({
+      songId: record.songId,
+      userId: record.userId,
+      startedAt: new Date(record.startedAt),
+      durationSeconds: record.durationSeconds,
+      playbackPercent: record.playbackPercent,
+      userAgent: record.userAgent ?? null,
+    });
+
   });
 };
 

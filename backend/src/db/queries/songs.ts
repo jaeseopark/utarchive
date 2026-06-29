@@ -37,9 +37,7 @@ export const selectSongById = async (id: string) => {
       parentId: songs.parentId,
       masterId: songs.masterId,
       platformId: songs.platformId,
-      archivedAt: songs.archivedAt,
       releasedAt: songs.releasedAt,
-      playCount: songs.playCount,
       url: songs.url,
       filePath: songs.filePath,
       duration: songs.duration,
@@ -95,44 +93,6 @@ const calculateEffectiveDuration = (
   }
 
   return Math.min(Math.max(effectiveTrimEnd - effectiveTrimStart, 0), duration);
-};
-
-export const incrementSongPlayCountIfQualified = async (
-  songId: string,
-  listenedSeconds: number,
-  trimStart: number | null | undefined,
-  trimEnd: number | null | undefined
-) => {
-  const song = await selectSongById(songId);
-
-  if (!song) {
-    return null;
-  }
-
-  const effectiveDuration = calculateEffectiveDuration(
-    song.duration ?? null,
-    trimStart ?? null,
-    trimEnd ?? null
-  );
-
-  const listened = Number(listenedSeconds ?? 0);
-
-  const shouldIncrement =
-    effectiveDuration !== null &&
-    effectiveDuration > 0 &&
-    listened / effectiveDuration >= 0.5;
-
-  if (!shouldIncrement) {
-    return song.playCount;
-  }
-
-  const updatedRows = await db
-    .update(songs)
-    .set({ playCount: sql`${songs.playCount} + 1` })
-    .where(eq(songs.id, songId))
-    .returning();
-
-  return updatedRows[0]?.playCount ?? song.playCount;
 };
 
 export const selectSongArtistIds = async (songId: string) => {
@@ -294,7 +254,6 @@ export type SongTreeNode = {
   artistIds: string[];
   coverArtId: string | null;
   preferred: boolean;
-  playCount: number;
   releasedAt: string | null;
   trimStart: number | null;
   trimEnd: number | null;
@@ -317,7 +276,6 @@ export const selectSongTree = async (songId: string) => {
         parent_id,
         cover_art_id,
         preferred,
-        play_count,
         released_at,
         trim_start,
         trim_end,
@@ -332,7 +290,6 @@ export const selectSongTree = async (songId: string) => {
         s.parent_id,
         s.cover_art_id,
         s.preferred,
-        s.play_count,
         s.released_at,
         s.trim_start,
         s.trim_end,
@@ -365,7 +322,6 @@ export const selectSongTree = async (songId: string) => {
       ) AS "artistNames",
       tree.cover_art_id AS "coverArtId",
       tree.preferred,
-      tree.play_count AS "playCount",
       tree.released_at AS "releasedAt",
       tree.trim_start AS "trimStart",
       tree.trim_end AS "trimEnd"
