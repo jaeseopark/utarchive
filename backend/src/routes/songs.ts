@@ -4,6 +4,7 @@ import { validateRequest } from "../middleware/validateRequest";
 import { requireAuth, AuthenticatedRequest } from "../middleware/requireAuth";
 import {
   createSong,
+  resolveSongCoverArtId,
   selectSongById,
   selectSongTree,
   selectSongs,
@@ -123,7 +124,13 @@ router.get("/api/songs/:id", async (req, res) => {
     return res.status(404).json({ error: "Song not found" });
   }
 
-  return res.status(200).json(song);
+  // Resolve cover art with fallback logic
+  const resolvedCoverArtId = await resolveSongCoverArtId(req.params.id);
+
+  return res.status(200).json({
+    ...song,
+    coverArtId: resolvedCoverArtId,
+  });
 });
 
 router.patch(

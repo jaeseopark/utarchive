@@ -18,6 +18,17 @@ export const SongListItemSchema = z.object({
   preferred: z.boolean(),
 });
 
+export const CoverArtSchema = z.object({
+  id: z.string().uuid(),
+  filePath: z.string(),
+  width: z.number().int(),
+  height: z.number().int(),
+  fileExtension: z.string(),
+  fileSizeBytes: z.number().int(),
+  fileHash: z.string(),
+  createdAt: z.string(),
+});
+
 export const AlbumSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),

@@ -9,6 +9,7 @@ import {
 } from '../api/schemas';
 import { z } from 'zod';
 import { Button } from '../components/ui/Button';
+import CoverArt from '../components/CoverArt';
 import FamilyTree from '../components/FamilyTree';
 import { formatDate, formatTrimRange } from '../lib/format';
 
@@ -218,24 +219,34 @@ function SongDetailPage() {
         <div className="space-y-6">
           <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6 shadow-xl shadow-slate-950/20">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h1 className="text-3xl font-semibold text-slate-100">{song.title}</h1>
-                <div className="mt-3 text-sm text-slate-400">
-                  {artists.length > 0 ? (
-                    <span>
-                      Artists:{' '}
-                      {artists.map((artist, index) => (
-                        <span key={artist.id}>
-                          <Link to={`/artists/${artist.id}`} className="text-sky-300 hover:underline">
-                            {artist.name}
-                          </Link>
-                          {index < artists.length - 1 ? ', ' : ''}
-                        </span>
-                      ))}
-                    </span>
-                  ) : (
-                    'Artists: Unknown'
-                  )}
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+                <div className="flex-shrink-0">
+                  <CoverArt
+                    coverArtId={song.coverArtId}
+                    size={128}
+                    className="h-32 w-32 rounded-2xl object-cover shadow-lg"
+                    alt={`${song.title} cover art`}
+                  />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-semibold text-slate-100">{song.title}</h1>
+                  <div className="mt-3 text-sm text-slate-400">
+                    {artists.length > 0 ? (
+                      <span>
+                        Artists:{' '}
+                        {artists.map((artist, index) => (
+                          <span key={artist.id}>
+                            <Link to={`/artists/${artist.id}`} className="text-sky-300 hover:underline">
+                              {artist.name}
+                            </Link>
+                            {index < artists.length - 1 ? ', ' : ''}
+                          </span>
+                        ))}
+                      </span>
+                    ) : (
+                      'Artists: Unknown'
+                    )}
+                  </div>
                 </div>
               </div>
 

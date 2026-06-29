@@ -15,6 +15,7 @@
     "test": "npm run typecheck && npm run test:frontend && npm run test:backend"
   },
   "devDependencies": {
+    "@types/multer": "^2.1.0",
     "@typescript-eslint/eslint-plugin": "8.62.0",
     "@typescript-eslint/parser": "8.62.0",
     "eslint": "10.6.0",
