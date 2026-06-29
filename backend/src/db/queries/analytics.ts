@@ -1,5 +1,5 @@
 import { db } from "../../db";
-import { lt, eq } from "drizzle-orm";
+import { lt, eq, sql } from "drizzle-orm";
 import { listeningAnalytics } from "../../db/schema";
 
 export type ListeningAnalyticsInsert = {

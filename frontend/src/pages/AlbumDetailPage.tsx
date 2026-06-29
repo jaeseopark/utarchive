@@ -20,7 +20,12 @@ const SongTreeResponseSchema = z.object({
     artistNames: z.array(z.string()),
     coverArtId: z.string().uuid().nullable().optional(),
     preferred: z.boolean(),
+  })),
+});
 
+const AlbumDetailPage = () => {
+  const { id } = useParams();
+  const [album, setAlbum] = useState<AlbumDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedSongId, setExpandedSongId] = useState<string | null>(null);
