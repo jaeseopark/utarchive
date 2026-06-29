@@ -9,7 +9,32 @@ export const formatDate = (dateString: string | null | undefined) => {
   });
 };
 
-export const formatTrimRange = (start: number | null | undefined, end: number | null | undefined) => {
+/**
+ * Parse trimRange string into start and end values.
+ * Format: "start,end" where either can be omitted.
+ */
+export const parseTrimRange = (trimRange: string | null | undefined): { start: number | null; end: number | null } => {
+  if (!trimRange || trimRange.trim() === "") {
+    return { start: null, end: null };
+  }
+
+  const parts = trimRange.split(",");
+  const start = parts[0]?.trim() ? Number(parts[0].trim()) : null;
+  const end = parts[1]?.trim() ? Number(parts[1].trim()) : null;
+
+  if (start !== null && Number.isNaN(start)) {
+    return { start: null, end: null };
+  }
+  if (end !== null && Number.isNaN(end)) {
+    return { start: null, end: null };
+  }
+
+  return { start, end };
+};
+
+export const formatTrimRange = (trimRange: string | null | undefined) => {
+  const { start, end } = parseTrimRange(trimRange);
+
   if (start == null || end == null) {
     return null;
   }

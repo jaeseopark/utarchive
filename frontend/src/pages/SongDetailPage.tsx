@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { Button } from '../components/ui/Button';
 import CoverArt from '../components/CoverArt';
 import FamilyTree from '../components/FamilyTree';
-import { formatDate, formatTrimRange } from '../lib/format';
+import { formatDate, formatTrimRange, parseTrimRange } from '../lib/format';
 
 const SongTreeResponseSchema = SongTreeSchema;
 
@@ -73,8 +73,9 @@ function SongDetailPage() {
     if (!songData) return 1;
     const baseDuration = songData.duration ?? 1;
     // Account for trimmed song durations
-    if (songData.trimStart != null && songData.trimEnd != null) {
-      return Math.max(1, songData.trimEnd - songData.trimStart);
+    const { start, end } = parseTrimRange(songData.trimRange);
+    if (start != null && end != null) {
+      return Math.max(1, end - start);
     }
     return baseDuration;
   };
@@ -289,10 +290,10 @@ function SongDetailPage() {
                   </span>
                 </div>
               </div>
-              {formatTrimRange(song.trimStart, song.trimEnd) ? (
+              {formatTrimRange(song.trimRange) ? (
                 <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">
                   <div className="text-slate-400">Trim Range</div>
-                  <div className="mt-2 text-slate-100">{formatTrimRange(song.trimStart, song.trimEnd)}</div>
+                  <div className="mt-2 text-slate-100">{formatTrimRange(song.trimRange)}</div>
                 </div>
               ) : null}
             </div>

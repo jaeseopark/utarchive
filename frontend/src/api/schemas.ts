@@ -52,8 +52,9 @@ export const SongSchema = z.object({
   coverArtId: z.string().uuid().nullable().optional(),
   description: z.string().nullable().optional(),
   preferred: z.boolean(),
-  trimStart: z.number().nullable().optional(),
-  trimEnd: z.number().nullable().optional(),
+  trimRange: z.string().nullable().optional(),
+  fileHash: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional().default([]),
   createdAt: z.string(),
   artistIds: z.array(z.string().uuid()).optional().default([]),
   artistNames: z.array(z.string()).optional().default([]),
@@ -69,8 +70,7 @@ export const SongTreeNodeSchema = z.object({
   coverArtId: z.string().uuid().nullable().optional(),
   preferred: z.boolean(),
   releasedAt: z.string().nullable().optional(),
-  trimStart: z.number().nullable().optional(),
-  trimEnd: z.number().nullable().optional(),
+  trimRange: z.string().nullable().optional(),
 });
 
 export const SongTreeSchema = z.object({

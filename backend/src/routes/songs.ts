@@ -9,6 +9,8 @@ import {
   selectSongTree,
   selectSongs,
   updateSongById,
+  updateSongTags,
+  selectUniqueTags,
 } from "../db/queries/songs";
 
 const router = Router();
@@ -30,8 +32,9 @@ const songCreateSchema = z.object({
   coverArtId: z.string().uuid().nullable().optional(),
   description: z.string().optional(),
   preferred: z.boolean().optional(),
-  trimStart: z.number().nullable().optional(),
-  trimEnd: z.number().nullable().optional(),
+  trimRange: z.string().nullable().optional(),
+  fileHash: z.string().max(64).nullable().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 const songUpdateSchema = z.object({
@@ -46,8 +49,9 @@ const songUpdateSchema = z.object({
   coverArtId: z.string().uuid().nullable().optional(),
   description: z.string().optional(),
   preferred: z.boolean().optional(),
-  trimStart: z.number().nullable().optional(),
-  trimEnd: z.number().nullable().optional(),
+  trimRange: z.string().nullable().optional(),
+  fileHash: z.string().max(64).nullable().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 const songListSchema = z.object({
@@ -164,6 +168,35 @@ router.get("/api/songs/:id/tree", async (req, res) => {
   }
 
   return res.status(200).json(songTree);
+});
+
+const tagsUpdateSchema = z.object({
+  tags: z.array(z.string()).optional(),
+});
+
+router.patch(
+  "/api/songs/:id/tags",
+  validateRequest(tagsUpdateSchema),
+  async (req, res) => {
+    const { tags } = req.body as z.infer<typeof tagsUpdateSchema>;
+    const songId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+
+    const updatedSong = await updateSongTags(songId, tags ?? []);
+
+    if (!updatedSong) {
+      return res.status(404).json({ error: "Song not found" });
+    }
+
+    return res.status(200).json({
+      id: updatedSong.id,
+      tags: updatedSong.tags,
+    });
+  }
+);
+
+router.get("/api/tags", async (_req, res) => {
+  const tags = await selectUniqueTags();
+  return res.status(200).json(tags);
 });
 
 

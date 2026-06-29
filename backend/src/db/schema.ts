@@ -79,16 +79,14 @@ songs = pgTable(
     coverArtId: uuid("cover_art_id").references(() => coverArt.id),
     description: text("description"),
     preferred: boolean("preferred").notNull().default(true),
-    trimStart: real("trim_start"),
-    trimEnd: real("trim_end"),
+    trimRange: varchar("trim_range", { length: 32 }),
+    fileHash: varchar("file_hash", { length: 64 }),
+    tags: text("tags").array().$type<string[]>().notNull().default([]),
     searchVector: tsvector("search_vector"),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   }),
-  () => [
-    check(
-      "songs_trim_valid",
-      sql`trim_start IS NULL OR trim_end IS NULL OR trim_start < trim_end`
-    ),
+  (t) => [
+    unique("songs_file_hash_unique").on(t.fileHash),
   ]
 );
 
