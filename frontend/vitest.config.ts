@@ -8,5 +8,16 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/setupTests.ts',
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    coverage: {
+      provider: 'istanbul',
+      reporter: ['text', 'lcov'],
+      all: true,
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/setupTests.ts', 'src/main.tsx'],
+      statements: 80,
+      branches: 70,
+      functions: 80,
+      lines: 80,
+    },
   },
 });
