@@ -41,11 +41,11 @@ export const coverArt = pgTable(
     height: integer("height").notNull(),
     fileExtension: varchar("file_extension", { length: 16 }),
     fileSizeBytes: bigint("file_size_bytes", { mode: "bigint" }),
-    contentHash: varchar("content_hash", { length: 64 }).notNull(),
+    fileHash: varchar("file_hash", { length: 64 }).notNull(),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
   (table) => [
-    unique("cover_art_content_hash_unique").on(table.contentHash),
+    unique("cover_art_file_hash_unique").on(table.fileHash),
   ]
 );
 

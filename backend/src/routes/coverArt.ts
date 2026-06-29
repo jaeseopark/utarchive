@@ -6,7 +6,7 @@ import { db } from "../db";
 import { coverArt } from "../db/schema";
 import {
   processCoverArtImage,
-  calculateContentHash,
+  calculatefileHash,
   validateFileSize,
   getThumbnailPath,
 } from "../lib/imageProcessor";
@@ -48,12 +48,12 @@ router.post(
       validateFileSize(buffer.length);
 
       // Calculate hash and check for duplicates
-      const contentHash = calculateContentHash(buffer);
+      const fileHash = calculatefileHash(buffer);
 
       const existingCoverArt = await db
         .select()
         .from(coverArt)
-        .where(eq(coverArt.contentHash, contentHash))
+        .where(eq(coverArt.fileHash, fileHash))
         .limit(1);
 
       if (existingCoverArt.length > 0) {
@@ -81,7 +81,7 @@ router.post(
           height: processedImage.height,
           fileExtension: processedImage.fileExtension,
           fileSizeBytes: BigInt(processedImage.fileSizeBytes),
-          contentHash: processedImage.contentHash,
+          fileHash: processedImage.fileHash,
         })
         .returning();
 
@@ -92,7 +92,7 @@ router.post(
         height: created.height,
         fileExtension: created.fileExtension,
         fileSizeBytes: created.fileSizeBytes,
-        contentHash: created.contentHash,
+        fileHash: created.fileHash,
         createdAt: created.createdAt,
       });
     } catch (error) {

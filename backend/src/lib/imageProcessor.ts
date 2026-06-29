@@ -15,7 +15,7 @@ export type ProcessedImage = {
   height: number;
   fileExtension: string;
   fileSizeBytes: number;
-  contentHash: string;
+  fileHash: string;
 };
 
 export type ThumbnailPaths = {
@@ -25,7 +25,7 @@ export type ThumbnailPaths = {
 /**
  * Calculate SHA-256 hash of file content
  */
-export const calculateContentHash = (buffer: Buffer): string => {
+export const calculatefileHash = (buffer: Buffer): string => {
   return createHash('sha256').update(buffer).digest('hex');
 };
 
@@ -98,7 +98,7 @@ export const processCoverArtImage = async (
 ): Promise<ProcessedImage> => {
   validateFileSize(buffer.length);
 
-  const contentHash = calculateContentHash(buffer);
+  const fileHash = calculatefileHash(buffer);
   const { width, height, format } = await getImageMetadata(buffer);
 
   // Save original file
@@ -115,7 +115,7 @@ export const processCoverArtImage = async (
     height,
     fileExtension: format,
     fileSizeBytes: buffer.length,
-    contentHash,
+    fileHash,
   };
 };
 

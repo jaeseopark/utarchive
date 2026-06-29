@@ -25,7 +25,7 @@ export const CoverArtSchema = z.object({
   height: z.number().int(),
   fileExtension: z.string(),
   fileSizeBytes: z.number().int(),
-  contentHash: z.string(),
+  fileHash: z.string(),
   createdAt: z.string(),
 });
 
