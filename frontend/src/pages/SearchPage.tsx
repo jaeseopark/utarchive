@@ -20,7 +20,8 @@ const SearchArtistSchema = z.object({
 const SearchAlbumSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
-  artistId: z.string().uuid(),
+  artistIds: z.array(z.string().uuid()).optional().default([]),
+  artistNames: z.array(z.string()).optional().default([]),
   yearReleased: z.number().int().nullable().optional(),
 });
 
@@ -200,9 +201,18 @@ function SearchPage() {
                             </Link>
                           </td>
                           <td className="px-4 py-4 text-slate-300">
-                            <Link to={`/artists/${album.artistId}`} className="text-sky-300 hover:underline">
-                              Artist
-                            </Link>
+                            {album.artistNames.length > 0 ? (
+                              album.artistNames.map((name, index) => (
+                                <span key={index}>
+                                  {index > 0 && ', '}
+                                  <Link to={`/artists/${album.artistIds[index]}`} className="text-sky-300 hover:underline">
+                                    {name}
+                                  </Link>
+                                </span>
+                              ))
+                            ) : (
+                              'Unknown'
+                            )}
                           </td>
                           <td className="px-4 py-4 text-slate-300">{album.yearReleased ?? '—'}</td>
                         </tr>

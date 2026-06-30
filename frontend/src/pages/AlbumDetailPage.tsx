@@ -83,11 +83,16 @@ const AlbumDetailPage = () => {
               <div>
                 <h1 className="text-3xl font-semibold text-slate-100">{album.title}</h1>
                 <div className="mt-2 text-slate-300">
-                  Artist:{' '}
-                  {album.artistName ? (
-                    <Link to={`/artists/${album.artistId}`} className="text-sky-300 hover:underline">
-                      {album.artistName}
-                    </Link>
+                  Artist{album.artistNames.length > 1 ? 's' : ''}{' '}
+                  {album.artistNames.length > 0 ? (
+                    album.artistNames.map((name, index) => (
+                      <span key={index}>
+                        {index > 0 && ', '}
+                        <Link to={`/artists/${album.artistIds[index]}`} className="text-sky-300 hover:underline">
+                          {name}
+                        </Link>
+                      </span>
+                    ))
                   ) : (
                     'Unknown'
                   )}

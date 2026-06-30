@@ -24,7 +24,6 @@ CREATE TABLE cover_art (
 CREATE TABLE albums (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(500) NOT NULL,
-  artist_id uuid NOT NULL REFERENCES artists(id),
   year_released integer,
   cover_art_id uuid REFERENCES cover_art(id),
   track_list jsonb NOT NULL DEFAULT '[]'::jsonb,
@@ -37,7 +36,7 @@ CREATE TABLE songs (
   title varchar(500) NOT NULL,
   parent_id uuid REFERENCES songs(id),
   master_id uuid REFERENCES songs(id),
-  platform_id varchar(200),
+  platform_id varchar(200) UNIQUE,
   released_at timestamp with time zone,
   url varchar(2000),
   file_path varchar(2000),
@@ -61,6 +60,13 @@ CREATE TABLE song_artists (
   artist_id uuid NOT NULL REFERENCES artists(id),
   display_order integer NOT NULL DEFAULT 0,
   PRIMARY KEY (song_id, artist_id)
+);
+
+CREATE TABLE album_artists (
+  album_id uuid NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
+  artist_id uuid NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+  display_order integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (album_id, artist_id)
 );
 
 CREATE TABLE album_songs (
@@ -88,6 +94,8 @@ CREATE INDEX idx_songs_master_id ON songs (master_id);
 CREATE INDEX songs_tags_gin_idx ON songs USING GIN (tags);
 CREATE INDEX idx_song_artists_song_id ON song_artists (song_id);
 CREATE INDEX idx_song_artists_artist_id ON song_artists (artist_id);
+CREATE INDEX idx_album_artists_album_id ON album_artists (album_id);
+CREATE INDEX idx_album_artists_artist_id ON album_artists (artist_id);
 CREATE INDEX idx_album_songs_song_id ON album_songs (song_id);
 CREATE INDEX idx_artists_fts ON artists USING GIN (to_tsvector('english', name));
 CREATE INDEX idx_albums_fts ON albums USING GIN (to_tsvector('english', title));

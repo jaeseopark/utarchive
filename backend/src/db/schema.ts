@@ -49,7 +49,6 @@ export const coverArt = pgTable(
 export const albums = pgTable("albums", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 500 }).notNull(),
-  artistId: uuid("artist_id").notNull().references(() => artists.id),
   yearReleased: integer("year_released"),
   coverArtId: uuid("cover_art_id").references(() => coverArt.id),
   trackList: jsonb("track_list").$type<unknown[]>().notNull().default([]),
@@ -80,6 +79,7 @@ export const songs = pgTable(
   },
   (table) => [
     unique("songs_file_hash_unique").on(table.fileHash),
+    unique("songs_platform_id_unique").on(table.platformId),
   ]
 );
 
@@ -113,6 +113,18 @@ export const songArtists = pgTable(
   },
   (table) => ({
     pk: primaryKey(table.songId, table.artistId),
+  })
+);
+
+export const albumArtists = pgTable(
+  "album_artists",
+  {
+    albumId: uuid("album_id").notNull().references(() => albums.id),
+    artistId: uuid("artist_id").notNull().references(() => artists.id),
+    displayOrder: integer("display_order").notNull().default(0),
+  },
+  (table) => ({
+    pk: primaryKey(table.albumId, table.artistId),
   })
 );
 
@@ -152,6 +164,8 @@ export type Song = typeof songs.$inferSelect;
 export type SongInsert = typeof songs.$inferInsert;
 export type Album = typeof albums.$inferSelect;
 export type AlbumInsert = typeof albums.$inferInsert;
+export type AlbumArtist = typeof albumArtists.$inferSelect;
+export type AlbumArtistInsert = typeof albumArtists.$inferInsert;
 export type CoverArt = typeof coverArt.$inferSelect;
 export type CoverArtInsert = typeof coverArt.$inferInsert;
 export type Playlist = typeof playlists.$inferSelect;
