@@ -18,8 +18,11 @@ CREATE TABLE cover_art (
   height integer NOT NULL,
   file_extension varchar(16),
   file_size_bytes bigint,
+  file_hash varchar(64) NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
+
+CREATE UNIQUE INDEX cover_art_file_hash_unique ON cover_art (file_hash);
 
 CREATE TABLE albums (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -34,8 +37,6 @@ CREATE TABLE albums (
 CREATE TABLE songs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(500) NOT NULL,
-  parent_id uuid REFERENCES songs(id),
-  master_id uuid REFERENCES songs(id),
   platform_id varchar(200) UNIQUE,
   released_at timestamp with time zone,
   url varchar(2000),
@@ -53,6 +54,13 @@ CREATE TABLE songs (
     to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, '') || ' ' || coalesce(url, ''))
   ) STORED,
   created_at timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE song_hierarchy (
+  song_id uuid NOT NULL REFERENCES songs(id),
+  parent_id uuid REFERENCES songs(id),
+  master_id uuid NOT NULL REFERENCES songs(id),
+  PRIMARY KEY (song_id)
 );
 
 CREATE TABLE song_artists (
@@ -90,7 +98,7 @@ CREATE TABLE playlist_songs (
 );
 
 CREATE INDEX idx_songs_search_vector ON songs USING GIN (search_vector);
-CREATE INDEX idx_songs_master_id ON songs (master_id);
+CREATE INDEX idx_song_hierarchy_master_id ON song_hierarchy (master_id);
 CREATE INDEX songs_tags_gin_idx ON songs USING GIN (tags);
 CREATE INDEX idx_song_artists_song_id ON song_artists (song_id);
 CREATE INDEX idx_song_artists_artist_id ON song_artists (artist_id);
