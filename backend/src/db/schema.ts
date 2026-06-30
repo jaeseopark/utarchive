@@ -170,4 +170,7 @@ export type CoverArt = typeof coverArt.$inferSelect;
 export type CoverArtInsert = typeof coverArt.$inferInsert;
 export type Playlist = typeof playlists.$inferSelect;
 export type PlaylistInsert = typeof playlists.$inferInsert;
+export type SongHierarchy = typeof songHierarchy.$inferSelect;
+export type SongHierarchyInsert = typeof songHierarchy.$inferInsert;
 export type ListeningAnalytics = typeof listeningAnalytics.$inferSelect;
+export type ListeningAnalyticsInsert = typeof listeningAnalytics.$inferInsert;
