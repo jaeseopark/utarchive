@@ -32,8 +32,8 @@ export const CoverArtSchema = z.object({
 export const AlbumSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
-  artistId: z.string().uuid(),
-  artistName: z.string().nullable().optional(),
+  artistIds: z.array(z.string().uuid()).optional().default([]),
+  artistNames: z.array(z.string()).optional().default([]),
   yearReleased: z.number().int().nullable().optional(),
 });
 
@@ -88,8 +88,8 @@ export const AlbumTrackSchema = z.object({
 export const AlbumDetailSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
-  artistId: z.string().uuid(),
-  artistName: z.string().nullable().optional(),
+  artistIds: z.array(z.string().uuid()).optional().default([]),
+  artistNames: z.array(z.string()).optional().default([]),
   yearReleased: z.number().int().nullable().optional(),
   coverArtId: z.string().uuid().nullable().optional(),
   trackList: z.array(z.object({ number: z.number().int(), title: z.string() })),

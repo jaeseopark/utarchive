@@ -22,7 +22,7 @@ const albumTrackSchema = z.object({
 
 const albumCreateSchema = z.object({
   title: z.string().min(1).max(500),
-  artistId: z.string().uuid(),
+  artistIds: z.array(z.string().uuid()).min(1),
   yearReleased: z.number().int().optional(),
   coverArtId: z.string().uuid().nullable().optional(),
   trackList: z.array(albumTrackSchema).optional(),

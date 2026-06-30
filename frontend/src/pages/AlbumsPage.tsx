@@ -55,7 +55,20 @@ function AlbumsPage() {
                       {album.title}
                     </Link>
                   </td>
-                  <td className="px-4 py-4 text-slate-300">{album.artistName ?? 'Unknown'}</td>
+                  <td className="px-4 py-4 text-slate-300">
+                    {album.artistNames.length > 0 ? (
+                      album.artistNames.map((name, index) => (
+                        <span key={index}>
+                          {index > 0 && ', '}
+                          <Link to={`/artists/${album.artistIds[index]}`} className="text-sky-300 hover:underline">
+                            {name}
+                          </Link>
+                        </span>
+                      ))
+                    ) : (
+                      'Unknown'
+                    )}
+                  </td>
                   <td className="px-4 py-4 text-slate-300">{album.yearReleased ?? '—'}</td>
                 </tr>
               ))}

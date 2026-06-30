@@ -1,6 +1,6 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../../db";
-import { albumSongs, albums, artists, songs } from "../../db/schema";
+import { albumArtists, albumSongs, albums, songs } from "../../db/schema";
 
 export type AlbumTrackListItem = {
   number: number;
@@ -9,7 +9,7 @@ export type AlbumTrackListItem = {
 
 export type AlbumCreateInput = {
   title: string;
-  artistId: string;
+  artistIds: string[];
   yearReleased?: number | null;
   coverArtId?: string | null;
   trackList?: AlbumTrackListItem[];
@@ -28,8 +28,8 @@ export type AlbumTrack = {
 export type AlbumWithTracks = {
   id: string;
   title: string;
-  artistId: string;
-  artistName: string | null;
+  artistIds: string[];
+  artistNames: string[];
   yearReleased: number | null;
   coverArtId: string | null;
   trackList: AlbumTrackListItem[];
@@ -109,12 +109,20 @@ export const selectAlbums = async (limit: number, offset: number) =>
     .select({
       id: albums.id,
       title: albums.title,
-      artistId: albums.artistId,
-      artistName: artists.name,
+      artistIds: sql`(
+        SELECT coalesce(array_agg(aa.artist_id ORDER BY aa.display_order), ARRAY[]::uuid[])
+        FROM album_artists aa
+        WHERE aa.album_id = ${albums.id}
+      )`,
+      artistNames: sql`(
+        SELECT coalesce(array_agg(a.name ORDER BY aa.display_order), ARRAY[]::text[])
+        FROM album_artists aa
+        JOIN artists a ON a.id = aa.artist_id
+        WHERE aa.album_id = ${albums.id}
+      )`,
       yearReleased: albums.yearReleased,
     })
     .from(albums)
-    .leftJoin(artists, eq(artists.id, albums.artistId))
     .orderBy(albums.title)
     .limit(limit)
     .offset(offset);
@@ -124,8 +132,17 @@ export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | nul
     .select({
       id: albums.id,
       title: albums.title,
-      artistId: albums.artistId,
-      artistName: artists.name,
+      artistIds: sql`(
+        SELECT coalesce(array_agg(aa.artist_id ORDER BY aa.display_order), ARRAY[]::uuid[])
+        FROM album_artists aa
+        WHERE aa.album_id = ${albums.id}
+      )`,
+      artistNames: sql`(
+        SELECT coalesce(array_agg(a.name ORDER BY aa.display_order), ARRAY[]::text[])
+        FROM album_artists aa
+        JOIN artists a ON a.id = aa.artist_id
+        WHERE aa.album_id = ${albums.id}
+      )`,
       yearReleased: albums.yearReleased,
       coverArtId: albums.coverArtId,
       trackList: albums.trackList,
@@ -133,7 +150,6 @@ export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | nul
       createdAt: albums.createdAt,
     })
     .from(albums)
-    .leftJoin(artists, eq(artists.id, albums.artistId))
     .where(eq(albums.id, id))
     .limit(1);
   const album = rows[0];
@@ -156,8 +172,8 @@ export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | nul
   return {
     id: album.id,
     title: album.title,
-    artistId: album.artistId,
-    artistName: album.artistName ?? null,
+    artistIds: Array.isArray(album.artistIds) ? album.artistIds : [],
+    artistNames: Array.isArray(album.artistNames) ? album.artistNames : [],
     yearReleased: album.yearReleased ?? null,
     coverArtId: album.coverArtId ?? null,
     trackList: normalizeTrackList(album.trackList),
@@ -168,17 +184,33 @@ export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | nul
 };
 
 export const createAlbum = async (albumData: AlbumCreateInput) => {
-  const insertData = {
-    title: albumData.title,
-    artistId: albumData.artistId,
-    yearReleased: albumData.yearReleased ?? null,
-    coverArtId: albumData.coverArtId ?? null,
-    trackList: albumData.trackList ?? [],
-    urls: albumData.urls ?? {},
-  } as const;
+  const albumId = crypto.randomUUID();
 
-  const rows = await db.insert(albums).values(insertData).returning();
-  return rows[0];
+  return db.transaction(async (tx) => {
+    const rows = await tx
+      .insert(albums)
+      .values({
+        id: albumId,
+        title: albumData.title,
+        yearReleased: albumData.yearReleased ?? null,
+        coverArtId: albumData.coverArtId ?? null,
+        trackList: albumData.trackList ?? [],
+        urls: albumData.urls ?? {},
+      })
+      .returning();
+
+    if (albumData.artistIds && albumData.artistIds.length > 0) {
+      await tx.insert(albumArtists).values(
+        albumData.artistIds.map((artistId, index) => ({
+          albumId,
+          artistId,
+          displayOrder: index,
+        }))
+      );
+    }
+
+    return rows[0];
+  });
 };
 
 export const updateAlbumById = async (
@@ -191,8 +223,18 @@ export const updateAlbumById = async (
     dataToUpdate.title = updateData.title;
   }
 
-  if (updateData.artistId !== undefined) {
-    dataToUpdate.artistId = updateData.artistId;
+  if (updateData.artistIds !== undefined) {
+    // Delete existing album_artists and insert new ones
+    await db.delete(albumArtists).where(eq(albumArtists.albumId, albumId));
+    if (updateData.artistIds.length > 0) {
+      await db.insert(albumArtists).values(
+        updateData.artistIds.map((artistId, index) => ({
+          albumId: albumId,
+          artistId,
+          displayOrder: index,
+        }))
+      );
+    }
   }
 
   if (updateData.yearReleased !== undefined) {
