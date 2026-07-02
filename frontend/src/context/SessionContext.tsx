@@ -28,7 +28,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const data = await api.get('/auth/me', SessionSchema, { preventUnauthorizedRedirect: true });
+        const data = await api.get('/api/auth/me', SessionSchema, { preventUnauthorizedRedirect: true });
         setUser({ id: data.id });
       } catch {
         setUser(null);
@@ -41,7 +41,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }, []);
 
   const login = useCallback(async (credentials: LoginPayload) => {
-    const data = await api.post('/auth/login', credentials, LoginResponseSchema, {
+    const data = await api.post('/api/auth/login', credentials, LoginResponseSchema, {
       preventUnauthorizedRedirect: true,
     });
     setUser({ id: data.id });
@@ -49,7 +49,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   const logout = useCallback(async () => {
     try {
-      await api.post('/auth/logout', null, LogoutResponseSchema, {
+      await api.post('/api/auth/logout', null, LogoutResponseSchema, {
         preventUnauthorizedRedirect: true,
       });
     } finally {

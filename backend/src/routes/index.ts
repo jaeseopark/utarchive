@@ -21,15 +21,15 @@ const upload = multer({
   },
 });
 
-router.use(healthRouter);
-router.use("/auth", authRouter);
-router.use(upload.single("file"), coverArtRouter);
-router.use(artistsRouter);
-router.use(songsRouter);
-router.use(albumsRouter);
-router.use(playlistsRouter);
-router.use(searchRouter);
-router.use(analyticsRouter);
-router.use(adminAnalyticsRouter);
+router.use("/api", healthRouter);
+router.use("/api/auth", authRouter);
+router.use("/api", upload.single("file"), coverArtRouter);
+router.use("/api", artistsRouter);
+router.use("/api", songsRouter);
+router.use("/api", albumsRouter);
+router.use("/api", playlistsRouter);
+router.use("/api", searchRouter);
+router.use("/api", analyticsRouter);
+router.use("/api", adminAnalyticsRouter);
 
 export default router;

@@ -55,7 +55,7 @@ const albumSongSchema = z.object({
 router.use(requireAuth);
 
 router.get(
-  "/api/albums",
+  "/albums",
   validateRequest(listAlbumsQuerySchema, "query"),
   async (req, res) => {
     const { limit, offset } = req.query as unknown as z.infer<typeof listAlbumsQuerySchema>;
@@ -65,7 +65,7 @@ router.get(
 );
 
 router.post(
-  "/api/albums",
+  "/albums",
   validateRequest(albumCreateSchema),
   async (req, res) => {
     const albumData = req.body as AlbumCreateInput;
@@ -74,7 +74,7 @@ router.post(
   }
 );
 
-router.get("/api/albums/:id", async (req, res) => {
+router.get("/albums/:id", async (req, res) => {
   const album = await selectAlbumById(req.params.id);
 
   if (!album) {
@@ -85,7 +85,7 @@ router.get("/api/albums/:id", async (req, res) => {
 });
 
 router.patch(
-  "/api/albums/:id",
+  "/albums/:id",
   validateRequest(albumUpdateSchema),
   async (req, res) => {
     const updateData = req.body as AlbumUpdateInput;
@@ -106,7 +106,7 @@ router.patch(
 );
 
 router.put(
-  "/api/albums/:id/songs/:songId",
+  "/albums/:id/songs/:songId",
   validateRequest(albumSongSchema),
   async (req, res) => {
     const trackNumber = req.body.trackNumber as number;
@@ -132,7 +132,7 @@ router.put(
   }
 );
 
-router.delete("/api/albums/:id/songs/:songId", async (req, res) => {
+router.delete("/albums/:id/songs/:songId", async (req, res) => {
   const albumId = req.params.id;
   const songId = req.params.songId;
   const deleted = await deleteAlbumSong(albumId, songId);

@@ -52,7 +52,7 @@ const playlistReplaceSongsSchema = z.object({
 router.use(requireAuth);
 
 router.get(
-  "/api/playlists",
+  "/playlists",
   validateRequest(listQuerySchema, "query"),
   async (req, res) => {
     const { limit, offset } = req.query as unknown as z.infer<typeof listQuerySchema>;
@@ -62,7 +62,7 @@ router.get(
 );
 
 router.post(
-  "/api/playlists",
+  "/playlists",
   validateRequest(playlistCreateSchema),
   async (req, res) => {
     const { name } = req.body as z.infer<typeof playlistCreateSchema>;
@@ -71,7 +71,7 @@ router.post(
   }
 );
 
-router.get("/api/playlists/:id", async (req, res) => {
+router.get("/playlists/:id", async (req, res) => {
   const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const playlist = await selectPlaylistById(playlistId);
 
@@ -83,7 +83,7 @@ router.get("/api/playlists/:id", async (req, res) => {
 });
 
 router.patch(
-  "/api/playlists/:id",
+  "/playlists/:id",
   validateRequest(playlistUpdateSchema),
   async (req, res) => {
     const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -99,7 +99,7 @@ router.patch(
   }
 );
 
-router.delete("/api/playlists/:id", async (req, res) => {
+router.delete("/playlists/:id", async (req, res) => {
   const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const deleted = await deletePlaylistById(playlistId);
 
@@ -111,7 +111,7 @@ router.delete("/api/playlists/:id", async (req, res) => {
 });
 
 router.post(
-  "/api/playlists/:id/songs",
+  "/playlists/:id/songs",
   validateRequest(playlistSongCreateSchema),
   async (req, res) => {
     const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -138,7 +138,7 @@ router.post(
   }
 );
 
-router.delete("/api/playlists/:id/songs/:songId", async (req, res) => {
+router.delete("/playlists/:id/songs/:songId", async (req, res) => {
   const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const songId = Array.isArray(req.params.songId) ? req.params.songId[0] : req.params.songId;
 
@@ -152,7 +152,7 @@ router.delete("/api/playlists/:id/songs/:songId", async (req, res) => {
 });
 
 router.put(
-  "/api/playlists/:id/songs",
+  "/playlists/:id/songs",
   validateRequest(playlistReplaceSongsSchema),
   async (req, res) => {
     const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
