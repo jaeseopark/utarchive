@@ -40,7 +40,7 @@ const paginationSchema = z.object({
 
 router.use(requireAuth);
 
-router.get("/api/artists", validateRequest(paginationSchema, "query"), async (req, res) => {
+router.get("/artists", validateRequest(paginationSchema, "query"), async (req, res) => {
   const { limit, offset } = req.query as unknown as {
     limit: number;
     offset: number;
@@ -50,7 +50,7 @@ router.get("/api/artists", validateRequest(paginationSchema, "query"), async (re
 });
 
 router.post(
-  "/api/artists",
+  "/artists",
   validateRequest(artistCreateSchema),
   async (req, res) => {
     const artist = req.body as z.infer<typeof artistCreateSchema>;
@@ -59,7 +59,7 @@ router.post(
   }
 );
 
-router.get("/api/artists/:id", async (req, res) => {
+router.get("/artists/:id", async (req, res) => {
   const artist = await selectArtistById(req.params.id);
 
   if (!artist) {
@@ -70,7 +70,7 @@ router.get("/api/artists/:id", async (req, res) => {
 });
 
 router.patch(
-  "/api/artists/:id",
+  "/artists/:id",
   validateRequest(artistUpdateSchema),
   async (req, res) => {
     const updateData = req.body as z.infer<typeof artistUpdateSchema>;
@@ -90,7 +90,7 @@ router.patch(
   }
 );
 
-router.get("/api/artists/:id/songs", async (req, res) => {
+router.get("/artists/:id/songs", async (req, res) => {
   const artist = await selectArtistById(req.params.id);
 
   if (!artist) {

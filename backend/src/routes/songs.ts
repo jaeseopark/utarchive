@@ -82,7 +82,7 @@ const songListSchema = z.object({
 router.use(requireAuth);
 
 router.get(
-  "/api/songs",
+  "/songs",
   validateRequest(songListSchema, "query"),
   async (req, res) => {
     const { limit, offset, artistId, masterId, preferred } = req.query as unknown as z.infer<
@@ -102,7 +102,7 @@ router.get(
 );
 
 router.post(
-  "/api/songs",
+  "/songs",
   validateRequest(songCreateSchema),
   async (req, res) => {
     const songData = req.body as z.infer<typeof songCreateSchema>;
@@ -121,7 +121,7 @@ router.post(
   }
 );
 
-router.get("/api/songs/:id", async (req, res) => {
+router.get("/songs/:id", async (req, res) => {
   const song = await selectSongById(req.params.id);
 
   if (!song) {
@@ -138,7 +138,7 @@ router.get("/api/songs/:id", async (req, res) => {
 });
 
 router.patch(
-  "/api/songs/:id",
+  "/songs/:id",
   validateRequest(songUpdateSchema),
   async (req, res) => {
     const updateData = req.body as z.infer<typeof songUpdateSchema>;
@@ -160,7 +160,7 @@ router.patch(
   }
 );
 
-router.get("/api/songs/:id/tree", async (req, res) => {
+router.get("/songs/:id/tree", async (req, res) => {
   const songTree = await selectSongTree(req.params.id);
 
   if (!songTree) {
@@ -175,7 +175,7 @@ const tagsUpdateSchema = z.object({
 });
 
 router.patch(
-  "/api/songs/:id/tags",
+  "/songs/:id/tags",
   validateRequest(tagsUpdateSchema),
   async (req, res) => {
     const { tags } = req.body as z.infer<typeof tagsUpdateSchema>;
@@ -194,7 +194,7 @@ router.patch(
   }
 );
 
-router.get("/api/tags", async (_req, res) => {
+router.get("/tags", async (_req, res) => {
   const tags = await selectUniqueTags();
   return res.status(200).json(tags);
 });

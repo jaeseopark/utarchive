@@ -32,7 +32,7 @@ router.use(requireAuth);
  * - Generates 128x128 and 1024x1024 thumbnails
  */
 router.post(
-  "/api/cover-art",
+  "/cover-art",
   validateRequest(coverArtUploadSchema),
   async (req, res) => {
     const file = req.file;
@@ -108,11 +108,11 @@ router.post(
 );
 
 /**
- * GET /api/cover-art/:id/thumbnail/:size
+ * GET /cover-art/:id/thumbnail/:size
  * Serve a thumbnail image for a cover art
  */
 router.get(
-  "/api/cover-art/:id/thumbnail/:size",
+  "/cover-art/:id/thumbnail/:size",
   async (req, res) => {
     const { id, size } = req.params;
     const sizeNum = parseInt(size, 10);
