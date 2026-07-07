@@ -20,8 +20,17 @@ RUN npm install
 # Go back to app root
 WORKDIR /app
 
+# Force rebuild - $(date)
+RUN echo "Building at $(date)"
+
 EXPOSE 3000
 EXPOSE 5173
 
-# Run both backend and frontend in dev mode
-CMD ["npm", "run", "dev:docker"]
+# Install pg_isready tool
+RUN apk add --no-cache postgresql-client
+
+# Copy entrypoint script with cache bust
+COPY docker/entrypoint.dev.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && echo "Entrypoint updated"
+
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -8,11 +8,10 @@
     "dev:watch": "nodemon --exec ts-node src/index.ts",
     "build": "tsc -p .",
     "start": "node dist/index.js",
-    "migrate": "drizzle-kit push",
-    "migrate:generate": "drizzle-kit generate",
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
+    "base32-encode": "^2.0.0",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
     "express": "^5.2.1",
@@ -20,6 +19,7 @@
     "multer": "^2.0.2",
     "otpauth": "^9.5.1",
     "pg": "^8.22.0",
+    "qrcode": "^1.5.4",
     "sharp": "0.35.2",
     "ws": "^8.21.0",
     "zod": "^4.4.3"
@@ -29,6 +29,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.0.1",
     "@types/pg": "^8.20.0",
+    "@types/qrcode": "^1.5.6",
     "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.10",
     "nodemon": "^3.1.4",

@@ -34,6 +34,13 @@ CREATE TABLE albums (
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
+CREATE TABLE totp_keys (
+  id varchar(255) PRIMARY KEY,
+  totp_key_hash varchar(64),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
+
 CREATE TABLE songs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(500) NOT NULL,
