@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { db } from "../db";
 import { totpKeys } from "../db/schema";
@@ -28,7 +28,7 @@ const loginTotpSchema = z.object({
 });
 
 // Handle TOTP verification (both first-time setup and existing user verification)
-const totpHandler = async (req: any, res: any) => {
+const totpHandler = async (req: Request, res: Response) => {
   const { id, totpCode } = req.body;
 
   try {
