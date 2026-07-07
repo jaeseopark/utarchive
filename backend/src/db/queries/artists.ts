@@ -19,8 +19,7 @@ export const selectArtists = (limit: number, offset: number) =>
       aliases: artists.aliases,
       description: artists.description,
       urls: artists.urls,
-      createdAt: artists.createdAt,
-      songCount: sql<number>`count(${songArtists.songId})`,
+      songCount: sql<number>`CAST(count(${songArtists.songId}) AS INTEGER)`,
     })
     .from(artists)
     .leftJoin(songArtists, eq(songArtists.artistId, artists.id))
@@ -30,7 +29,6 @@ export const selectArtists = (limit: number, offset: number) =>
       artists.aliases,
       artists.description,
       artists.urls,
-      artists.createdAt,
     )
     .orderBy(artists.name)
     .limit(limit)

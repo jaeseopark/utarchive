@@ -2,6 +2,7 @@
   "name": "frontend",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
@@ -13,11 +14,15 @@
     "test:storybook": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
     "clsx": "^2.1.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-hook-form": "^7.81.0",
     "react-router-dom": "^7.18.0",
-    "zod": "^4.4.3"
+    "react-select": "^5.10.2",
+    "zod": "^4.4.3",
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@storybook/addon-essentials": "^8.6.18",
