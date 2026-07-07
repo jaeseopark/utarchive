@@ -13,13 +13,15 @@
     "storybook": "npm -w frontend run storybook",
     "test:frontend": "npm -w frontend run test",
     "test:backend": "npm -w backend run test",
-    "test": "npm run typecheck && npm run test:frontend && npm run test:backend"
+    "test": "npm run typecheck && npm run test:frontend && npm run test:backend",
+    "dev:docker": "concurrently \"npm -w backend run dev:watch\" \"npm -w frontend run dev\""
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/multer": "^2.1.0",
     "@typescript-eslint/eslint-plugin": "8.62.0",
     "@typescript-eslint/parser": "8.62.0",
+    "concurrently": "^9.1.0",
     "eslint": "10.6.0",
     "eslint-config-prettier": "10.1.8",
     "globals": "^17.7.0",

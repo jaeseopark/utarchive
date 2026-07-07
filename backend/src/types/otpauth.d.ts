@@ -4,7 +4,6 @@ declare module "otpauth" {
     algorithm?: string;
     digits?: number;
     period?: number;
-    encoding?: "ascii" | "hex" | "base32" | "base64";
   }
 
   export class TOTP {
