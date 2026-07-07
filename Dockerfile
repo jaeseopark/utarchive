@@ -23,6 +23,16 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/backend/dist ./backend/dist
 COPY --from=build /app/frontend/dist ./frontend/dist
 
-WORKDIR /app/backend
+# Install PostgreSQL client for running migrations
+RUN apk add --no-cache postgresql-client
+
+# Copy migration files (drizzle-kit migrate will apply these)
+COPY backend/migrations ./backend/migrations
+COPY backend/drizzle.config.ts ./backend/
+
+# Copy entrypoint script
+COPY docker/entrypoint.prod.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 3000
-CMD ["node", "dist/index.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]

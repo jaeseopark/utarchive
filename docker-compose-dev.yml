@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/utarchive
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/utarchive
       - AUTH_CREDENTIALS=id,password,totp_key
       - JWT_SECRET=changeme
       - JWT_TTL_SECONDS=3600

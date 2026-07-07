@@ -20,6 +20,13 @@ const tsvector = customType<{ data: string; driverData: string }>({
   fromDriver: (value) => value,
 });
 
+export const totpKeys = pgTable("totp_keys", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  totpKeyHash: varchar("totp_key_hash", { length: 64 }),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
 export const artists = pgTable("artists", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 500 }).notNull(),

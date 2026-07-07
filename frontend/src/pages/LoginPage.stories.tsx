@@ -28,6 +28,9 @@ const defaultContextValue: SessionContextValue = {
   logout: async () => {
     /* noop */
   },
+  refreshSession: async () => {
+    /* noop */
+  },
 };
 
 export const Default: Story = {

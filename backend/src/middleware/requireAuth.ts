@@ -32,7 +32,7 @@ export const requireAuth = (
   const token = extractSessionToken(req.headers.cookie);
 
   if (!token) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized - no session cookie" });
   }
 
   try {

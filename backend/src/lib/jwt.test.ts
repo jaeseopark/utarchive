@@ -8,6 +8,7 @@ beforeAll(async () => {
   vi.stubEnv('AUTH_CREDENTIALS', 'user,pass,totp');
   vi.stubEnv('DATABASE_URL', 'postgres://localhost/test');
   vi.stubEnv('JWT_TTL_SECONDS', '60');
+  vi.stubEnv('NODE_ENV', 'development');
   const jwtHelpers = await import('./jwt');
   signJwt = jwtHelpers.signJwt;
   verifyJwt = jwtHelpers.verifyJwt;

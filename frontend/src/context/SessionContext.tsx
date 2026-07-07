@@ -17,6 +17,7 @@ export interface SessionContextValue {
   isLoading: boolean;
   login: (credentials: LoginPayload) => Promise<void>;
   logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 export const SessionContext = createContext<SessionContextValue | undefined>(undefined);
@@ -57,9 +58,18 @@ export function SessionProvider({ children }: PropsWithChildren) {
     }
   }, []);
 
+  const refreshSession = useCallback(async () => {
+    try {
+      const data = await api.get('/api/auth/me', SessionSchema, { preventUnauthorizedRedirect: true });
+      setUser({ id: data.id });
+    } catch {
+      setUser(null);
+    }
+  }, []);
+
   const value = useMemo(
-    () => ({ user, isLoading, login, logout }),
-    [user, isLoading, login, logout],
+    () => ({ user, isLoading, login, logout, refreshSession }),
+    [user, isLoading, login, logout, refreshSession],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

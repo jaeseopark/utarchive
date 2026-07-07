@@ -37,16 +37,20 @@ utarchive is a song archival tool for tracking original songs, covers, remixes, 
 
 ## Quick Start (Docker)
 
-1. Create an `.env` file containing the required variables.
-2. Start the app using the repository compose file:
+1. Start the app using the repository compose file:
 
 ```bash
 docker compose -f docker-compose-dev.yml up --build
 ```
 
-3. If you want to mount local audio files, add a host mount to the compose file or use the example below.
+The `docker-compose-dev.yml` file includes default environment variables for development. To use your own `.env` file instead:
+   - Create a `.env` file with your variables
+   - Remove the `environment` section from `docker-compose-dev.yml`
+   - Add `env_file: .env` to the `app` service in the compose file
 
-4. Visit `http://localhost:3000` and check `GET /health`.
+2. If you want to mount local audio files, add a host mount to the compose file or use the example below.
+
+3. Visit `http://localhost:3000` and check `GET /health`.
 
 ## Environment variables
 
