@@ -16,6 +16,7 @@ const envSchema = z.object({
     }
     return 3600;
   }, z.number().int().positive()),
+  NODE_ENV: z.enum(["development", "production"]).default("development"),
 });
 
 export const config = envSchema.parse(process.env);

@@ -3,6 +3,7 @@ import { useNavigate, useLocation, type Location } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '../components/ui/Button';
 import { ApiError, api } from '../api/client';
+import { useSession } from '../context/SessionContext';
 
 type LocationState = {
   from?: Location;
@@ -26,6 +27,7 @@ const verifyResponseSchema = z.object({
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { refreshSession } = useSession();
   const [step, setStep] = useState<LoginStep>('credentials');
   const [credentials, setCredentials] = useState({ id: '', password: '' });
   const [totpCode, setTotpCode] = useState('');
@@ -111,6 +113,7 @@ function LoginPage() {
       );
 
       // The session cookie is already set by the server
+      await refreshSession();
       navigate(from, { replace: true });
     } catch (errorValue) {
       const message =
@@ -150,6 +153,7 @@ function LoginPage() {
       );
 
       // The session cookie is already set by the server
+      await refreshSession();
       navigate(from, { replace: true });
     } catch (errorValue) {
       const message =

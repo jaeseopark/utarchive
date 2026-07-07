@@ -80,7 +80,7 @@ const totpHandler = async (req: any, res: any) => {
 
     res.cookie("session", token, {
       httpOnly: true,
-      secure: true,
+      secure: config.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: config.JWT_TTL_SECONDS * 1000,
       path: "/",

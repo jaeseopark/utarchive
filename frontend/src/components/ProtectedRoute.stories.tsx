@@ -28,6 +28,9 @@ const createContextValue = (overrides: Partial<SessionContextValue>): SessionCon
   logout: async () => {
     /* noop */
   },
+  refreshSession: async () => {
+    /* noop */
+  },
   ...overrides,
 });
 
