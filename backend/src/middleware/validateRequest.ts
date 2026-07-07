@@ -12,7 +12,7 @@ export const validateRequest = (
       return next(result.error);
     }
 
-    req[source] = result.data as unknown;
+    Object.assign(req[source], result.data);
     return next();
   };
 };
