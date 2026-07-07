@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "ts-node src/index.ts",
+    "dev:watch": "nodemon --exec ts-node src/index.ts",
     "build": "tsc -p .",
     "start": "node dist/index.js",
     "migrate": "drizzle-kit push",
@@ -30,6 +31,7 @@
     "@types/pg": "^8.20.0",
     "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.10",
+    "nodemon": "^3.1.4",
     "ts-node": "^10.9.2",
     "vitest": "^4.1.9"
   }
