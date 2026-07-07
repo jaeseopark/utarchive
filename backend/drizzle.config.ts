@@ -1,6 +1,6 @@
 import type { Config } from "drizzle-kit";
 
-const connectionString =
+const url =
   process.env.DATABASE_URL || "postgresql://postgres:postgres@db:5432/utarchive";
 
 const config: Config = {
@@ -8,7 +8,7 @@ const config: Config = {
   out: "./migrations",
   dialect: "postgresql",
   dbCredentials: {
-    connectionString,
+    url,
   },
 };
 
