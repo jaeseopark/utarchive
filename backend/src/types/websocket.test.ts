@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { verifyJwt, signJwt } from "../lib/jwt";
-import { EntityCreatedMessage, EntityUpdatedMessage } from "../types/websocket";
+import { DataChangedMessage } from "../types/websocket";
 
 describe("Backend WebSocket Types", () => {
   describe("JWT Authentication", () => {
@@ -27,60 +27,86 @@ describe("Backend WebSocket Types", () => {
   });
 
   describe("WebSocket Message Types", () => {
-    it("should create EntityCreatedMessage correctly", () => {
-      const message: EntityCreatedMessage = {
-        type: "ENTITY_CREATED",
+    it("should create DataChangedMessage with created items", () => {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
         entity: "song",
         timestamp: Date.now(),
         data: {
-          id: "song-123",
-          title: "Test Song",
-          artistIds: ["artist-1"],
+          created: [
+            {
+              id: "song-123",
+              title: "Test Song",
+              artistIds: ["artist-1"],
+            },
+          ],
         },
         requestId: "req-456",
       };
 
-      expect(message.type).toBe("ENTITY_CREATED");
+      expect(message.type).toBe("DATA_CHANGED");
       expect(message.entity).toBe("song");
       expect(message.data).toBeDefined();
       expect(message.requestId).toBe("req-456");
+      if (
+        message.data &&
+        typeof message.data === "object" &&
+        "created" in message.data &&
+        Array.isArray(message.data.created)
+      ) {
+        expect(message.data.created).toHaveLength(1);
+      }
     });
 
-    it("should create EntityUpdatedMessage with partial data", () => {
-      const message: EntityUpdatedMessage = {
-        type: "ENTITY_UPDATED",
+    it("should create DataChangedMessage with updated items", () => {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
         entity: "song",
         timestamp: Date.now(),
         data: {
-          id: "song-123",
-          title: "Updated Title",
+          updated: [
+            {
+              id: "song-123",
+              title: "Updated Title",
+            },
+          ],
         },
         requestId: "req-789",
       };
 
-      expect(message.type).toBe("ENTITY_UPDATED");
-      if (message.data && typeof message.data === "object" && "id" in message.data) {
-        expect(message.data.id).toBe("song-123");
-      }
-      if (message.data && typeof message.data === "object" && "title" in message.data) {
-        expect(message.data.title).toBe("Updated Title");
+      expect(message.type).toBe("DATA_CHANGED");
+      if (
+        message.data &&
+        typeof message.data === "object" &&
+        "updated" in message.data &&
+        Array.isArray(message.data.updated)
+      ) {
+        expect(message.data.updated).toHaveLength(1);
+        const updated = message.data.updated[0];
+        if (updated && typeof updated === "object" && "id" in updated) {
+          expect(updated.id).toBe("song-123");
+        }
       }
     });
 
-    it("should serialize and deserialize messages", () => {
-      const message: EntityCreatedMessage = {
-        type: "ENTITY_CREATED",
+    it("should serialize and deserialize DataChangedMessage", () => {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
         entity: "album",
         timestamp: 1234567890,
         data: {
-          id: "album-1",
-          title: "Test Album",
+          created: [
+            {
+              id: "album-1",
+              title: "Test Album",
+            },
+          ],
         },
       };
 
       const serialized = JSON.stringify(message);
       // eslint-disable-next-line no-restricted-syntax
-      const deserialized = JSON.parse(serialized) as EntityCreatedMessage;
+      const deserialized = JSON.parse(serialized) as DataChangedMessage;
 
       expect(deserialized.type).toBe(message.type);
       expect(deserialized.entity).toBe(message.entity);
@@ -90,25 +116,29 @@ describe("Backend WebSocket Types", () => {
   });
 
   describe("Request ID handling", () => {
-    it("should include requestId in messages", () => {
+    it("should include requestId in DataChangedMessage", () => {
       const requestId = "req-123-abc";
-      const message: EntityCreatedMessage = {
-        type: "ENTITY_CREATED",
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
         entity: "artist",
         timestamp: Date.now(),
-        data: { id: "artist-1", name: "Test Artist" },
+        data: {
+          created: [{ id: "artist-1", name: "Test Artist" }],
+        },
         requestId,
       };
 
       expect(message.requestId).toBe(requestId);
     });
 
-    it("should handle messages without requestId", () => {
-      const message: EntityUpdatedMessage = {
-        type: "ENTITY_UPDATED",
+    it("should handle DataChangedMessage without requestId", () => {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
         entity: "song",
         timestamp: Date.now(),
-        data: { id: "song-1", title: "Updated" },
+        data: {
+          updated: [{ id: "song-1", title: "Updated" }],
+        },
       };
 
       expect(message.requestId).toBeUndefined();
