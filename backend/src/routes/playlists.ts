@@ -55,6 +55,7 @@ router.get(
   "/playlists",
   validateRequest(listQuerySchema, "query"),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const { limit, offset } = req.query as unknown as z.infer<typeof listQuerySchema>;
     const playlists = await selectPlaylists(limit, offset);
     return res.status(200).json(playlists);
@@ -65,6 +66,7 @@ router.post(
   "/playlists",
   validateRequest(playlistCreateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const { name } = req.body as z.infer<typeof playlistCreateSchema>;
     const playlist = await insertPlaylist(name);
     return res.status(201).json(playlist);
@@ -87,6 +89,7 @@ router.patch(
   validateRequest(playlistUpdateSchema),
   async (req, res) => {
     const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    // eslint-disable-next-line no-restricted-syntax
     const { name } = req.body as z.infer<typeof playlistUpdateSchema>;
 
     const updatedPlaylist = await updatePlaylistById(playlistId, name);
@@ -115,6 +118,7 @@ router.post(
   validateRequest(playlistSongCreateSchema),
   async (req, res) => {
     const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    // eslint-disable-next-line no-restricted-syntax
     const { songId, position } = req.body as z.infer<typeof playlistSongCreateSchema>;
 
     try {
@@ -156,6 +160,7 @@ router.put(
   validateRequest(playlistReplaceSongsSchema),
   async (req, res) => {
     const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    // eslint-disable-next-line no-restricted-syntax
     const { songIds } = req.body as z.infer<typeof playlistReplaceSongsSchema>;
 
     try {

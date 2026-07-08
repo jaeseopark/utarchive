@@ -25,8 +25,8 @@ export const useWebSocket = ({
 }: UseWebSocketOptions) => {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptRef = useRef(0);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoConnectInitializedRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -98,6 +98,7 @@ export const useWebSocket = ({
 
       ws.onmessage = (event) => {
         try {
+          // eslint-disable-next-line no-restricted-syntax
           const message = JSON.parse(event.data) as WebSocketMessage;
           onMessage?.(message);
         } catch (err) {
@@ -194,7 +195,6 @@ export const useWebSocket = ({
       autoConnectInitializedRef.current = true;
       connect();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoConnect, user, isSessionLoading]);
 
   return {

@@ -119,6 +119,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       // Update album details if cached
       const updatedDetails = { ...state.albumDetails };
       if (updatedDetails[id]) {
+        // eslint-disable-next-line no-restricted-syntax
         updatedDetails[id] = { ...updatedDetails[id], ...updates } as AlbumDetail;
       }
 

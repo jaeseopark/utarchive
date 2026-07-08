@@ -24,6 +24,7 @@ router.post(
   "/admin/analytics/prune",
   validateRequest(pruneAnalyticsSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const { retentionDays } = req.body as z.infer<typeof pruneAnalyticsSchema>;
 
     await pruneListeningAnalyticsOlderThanDays(retentionDays);

@@ -37,9 +37,10 @@ export const CoverArt: FC<CoverArtProps> = ({
       className={className}
       onError={(e) => {
         // Fallback to placeholder if image fails to load
-        const img = e.target as HTMLImageElement;
-        if (img.src !== PLACEHOLDER_IMAGE) {
-          img.src = PLACEHOLDER_IMAGE;
+        if (e.target instanceof HTMLImageElement) {
+          if (e.target.src !== PLACEHOLDER_IMAGE) {
+            e.target.src = PLACEHOLDER_IMAGE;
+          }
         }
       }}
     />

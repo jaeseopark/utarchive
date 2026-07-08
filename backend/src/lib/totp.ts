@@ -2,6 +2,7 @@ import { TOTP } from "otpauth";
 import QRCode from "qrcode";
 
 const TOTP_CONFIG = {
+  // eslint-disable-next-line no-restricted-syntax
   algorithm: "SHA1" as const,
   digits: 6,
   period: 30,

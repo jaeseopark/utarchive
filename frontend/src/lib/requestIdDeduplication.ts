@@ -62,7 +62,7 @@ export const clearRequestIds = (): void => {
 /**
  * Start cleanup interval to prevent memory leaks
  */
-let cleanupIntervalId: NodeJS.Timeout | null = null;
+let cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
 
 export const startRequestIdCleanup = (): void => {
   if (cleanupIntervalId) return;

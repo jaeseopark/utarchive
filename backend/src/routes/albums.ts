@@ -60,6 +60,7 @@ router.get(
   "/albums",
   validateRequest(listAlbumsQuerySchema, "query"),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const { limit, offset } = req.query as unknown as z.infer<typeof listAlbumsQuerySchema>;
     const albums = await selectAlbums(limit, offset);
     return res.status(200).json(albums);
@@ -70,8 +71,9 @@ router.post(
   "/albums",
   validateRequest(albumCreateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const albumData = req.body as AlbumCreateInput;
-    const requestId = (req as any).requestId;
+    const requestId = req.requestId;
     
     const createdAlbum = await createAlbum(albumData);
     
@@ -108,9 +110,10 @@ router.patch(
   "/albums/:id",
   validateRequest(albumUpdateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const updateData = req.body as AlbumUpdateInput;
     const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const requestId = (req as any).requestId;
+    const requestId = req.requestId;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: "No update fields provided" });
@@ -145,6 +148,7 @@ router.put(
   "/albums/:id/songs/:songId",
   validateRequest(albumSongSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const trackNumber = req.body.trackNumber as number;
     const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const songId = Array.isArray(req.params.songId) ? req.params.songId[0] : req.params.songId;

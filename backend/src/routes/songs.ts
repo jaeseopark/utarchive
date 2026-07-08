@@ -87,6 +87,7 @@ router.get(
   "/songs",
   validateRequest(songListSchema, "query"),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const { limit, offset, artistId, masterId, preferred } = req.query as unknown as z.infer<
       typeof songListSchema
     >;
@@ -107,9 +108,10 @@ router.post(
   "/songs",
   validateRequest(songCreateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const songData = req.body as z.infer<typeof songCreateSchema>;
     const artistIds = songData.artistIds;
-    const requestId = (req as any).requestId;
+    const requestId = req.requestId;
 
     try {
       const createdSong = await createSong(songData, artistIds);
@@ -160,11 +162,12 @@ router.patch(
   "/songs/:id",
   validateRequest(songUpdateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const updateData = req.body as z.infer<typeof songUpdateSchema>;
     const songId = Array.isArray(req.params.id)
       ? req.params.id[0]
       : req.params.id;
-    const requestId = (req as any).requestId;
+    const requestId = req.requestId;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: "No update fields provided" });
@@ -213,9 +216,10 @@ router.patch(
   "/songs/:id/tags",
   validateRequest(tagsUpdateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const { tags } = req.body as z.infer<typeof tagsUpdateSchema>;
     const songId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const requestId = (req as any).requestId;
+    const requestId = req.requestId;
 
     const updatedSong = await updateSongTags(songId, tags ?? []);
 

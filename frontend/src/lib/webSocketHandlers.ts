@@ -14,41 +14,54 @@ const updateStoreByAction = (
   items: Array<Record<string, unknown>>
 ) => {
   items.forEach((item) => {
-    const id = (item as any).id;
+    // Validate id is a string
+    if (typeof item.id !== "string") {
+      console.warn(`[WebSocket] Item missing or invalid id for ${entity}`);
+      return;
+    }
+    const id = item.id;
 
     switch (entity) {
       case "song":
         if (action === "created") {
-          useSongsStore.getState().addSong(item as any);
+          // eslint-disable-next-line no-restricted-syntax
+          useSongsStore.getState().addSong(item as never);
         } else if (action === "updated") {
-          useSongsStore.getState().updateSong(id, item as any);
+          // eslint-disable-next-line no-restricted-syntax
+          useSongsStore.getState().updateSong(id, item as never);
         } else if (action === "deleted") {
           useSongsStore.getState().removeSong(id);
         }
         break;
       case "album":
         if (action === "created") {
-          useAlbumsStore.getState().addAlbum(item as any);
+          // eslint-disable-next-line no-restricted-syntax
+          useAlbumsStore.getState().addAlbum(item as never);
         } else if (action === "updated") {
-          useAlbumsStore.getState().updateAlbum(id, item as any);
+          // eslint-disable-next-line no-restricted-syntax
+          useAlbumsStore.getState().updateAlbum(id, item as never);
         } else if (action === "deleted") {
           useAlbumsStore.getState().removeAlbum(id);
         }
         break;
       case "artist":
         if (action === "created") {
-          useArtistsStore.getState().addArtist(item as any);
+          // eslint-disable-next-line no-restricted-syntax
+          useArtistsStore.getState().addArtist(item as never);
         } else if (action === "updated") {
-          useArtistsStore.getState().updateArtist(id, item as any);
+          // eslint-disable-next-line no-restricted-syntax
+          useArtistsStore.getState().updateArtist(id, item as never);
         } else if (action === "deleted") {
           useArtistsStore.getState().removeArtist(id);
         }
         break;
       case "playlist":
         if (action === "created") {
-          usePlaylistsStore.getState().addPlaylist(item as any);
+          // eslint-disable-next-line no-restricted-syntax
+          usePlaylistsStore.getState().addPlaylist(item as never);
         } else if (action === "updated") {
-          usePlaylistsStore.getState().updatePlaylistFromRemote(id, item as any);
+          // eslint-disable-next-line no-restricted-syntax
+          usePlaylistsStore.getState().updatePlaylistFromRemote(id, item as never);
         } else if (action === "deleted") {
           usePlaylistsStore.getState().removePlaylistFromRemote(id);
         }

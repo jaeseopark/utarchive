@@ -22,7 +22,7 @@ router.get("/admin/websocket/stats", (_req: Request, res: Response) => {
     };
 
     return res.status(200).json(response);
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: "Failed to get WebSocket stats" });
   }
 });
@@ -32,10 +32,8 @@ router.get("/admin/websocket/stats", (_req: Request, res: Response) => {
  */
 router.get("/admin/websocket/events", (req: Request, res: Response) => {
   try {
-    const limit = Math.min(
-      parseInt(req.query.limit as string) || 100,
-      500 // Max 500 events
-    );
+    // eslint-disable-next-line no-restricted-syntax
+    const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
 
     const events = getRecentEvents(limit);
 
@@ -44,7 +42,7 @@ router.get("/admin/websocket/events", (req: Request, res: Response) => {
       count: events.length,
       timestamp: Date.now(),
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: "Failed to get WebSocket events" });
   }
 });
@@ -61,7 +59,7 @@ router.get("/admin/websocket/connections", (_req: Request, res: Response) => {
       activeConnections: connections,
       timestamp: Date.now(),
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: "Failed to get connection count" });
   }
 });

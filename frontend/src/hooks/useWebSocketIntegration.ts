@@ -58,34 +58,45 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
     logMessageReceived(message);
 
     switch (message.type) {
-      case "DATA_CHANGED":
+      case "DATA_CHANGED": {
+        // eslint-disable-next-line no-restricted-syntax
         handleDataChanged(message as DataChangedMessage);
+        // eslint-disable-next-line no-restricted-syntax
         const dataMsg = message as DataChangedMessage;
         const changedIds = [
-          ...(dataMsg.data.created?.map((i: any) => i.id) || []),
-          ...(dataMsg.data.updated?.map((i: any) => i.id) || []),
-          ...(dataMsg.data.deleted?.map((i: any) => i.id) || []),
+          // eslint-disable-next-line no-restricted-syntax
+          ...(dataMsg.data.created?.map((i: Record<string, unknown>) => i.id as string) || []),
+          // eslint-disable-next-line no-restricted-syntax
+          ...(dataMsg.data.updated?.map((i: Record<string, unknown>) => i.id as string) || []),
+          // eslint-disable-next-line no-restricted-syntax
+          ...(dataMsg.data.deleted?.map((i: Record<string, unknown>) => i.id as string) || []),
         ];
         changedIds.forEach((id) => {
           logStateUpdate(dataMsg.entity, "changed", id);
         });
         break;
+      }
 
-      case "PONG":
+      case "PONG": {
         // Heartbeat response - no action needed
         break;
+      }
 
-      case "CONNECTED":
+      case "CONNECTED": {
         // Server confirmation of connection - no action needed
         break;
+      }
 
-      case "ERROR":
+      case "ERROR": {
         console.error("[WebSocket] Server error:", message.error);
         logError(message.error || "Unknown error");
         break;
+      }
 
-      default:
-        console.warn("[WebSocket] Unknown message type:", (message as any).type);
+      default: {
+        // eslint-disable-next-line no-restricted-syntax
+        console.warn("[WebSocket] Unknown message type:", (message as Record<string, unknown>).type);
+      }
     }
   } catch (err) {
     console.error("[WebSocket] Error handling message:", err);

@@ -20,6 +20,7 @@ describe("WebSocket Message Types", () => {
       };
 
       const serialized = JSON.stringify(message);
+      // eslint-disable-next-line no-restricted-syntax
       const deserialized = JSON.parse(serialized) as DataChangedMessage;
 
       expect(deserialized.type).toBe("DATA_CHANGED");
@@ -45,11 +46,16 @@ describe("WebSocket Message Types", () => {
       };
 
       const serialized = JSON.stringify(message);
+      // eslint-disable-next-line no-restricted-syntax
       const deserialized = JSON.parse(serialized) as DataChangedMessage;
 
       expect(deserialized.type).toBe("DATA_CHANGED");
       expect(deserialized.data.updated).toHaveLength(1);
-      expect((deserialized.data.updated![0] as any).id).toBe("album-456");
+      if (deserialized.data.updated && deserialized.data.updated[0]) {
+        // eslint-disable-next-line no-restricted-syntax
+        const updated = deserialized.data.updated[0] as Record<string, unknown>;
+        expect(updated.id).toBe("album-456");
+      }
     });
 
     it("should handle deleted entities", () => {
@@ -64,11 +70,14 @@ describe("WebSocket Message Types", () => {
       };
 
       const serialized = JSON.stringify(message);
+      // eslint-disable-next-line no-restricted-syntax
       const deserialized = JSON.parse(serialized) as DataChangedMessage;
 
       expect(deserialized.type).toBe("DATA_CHANGED");
       expect(deserialized.data.deleted).toHaveLength(1);
-      expect((deserialized.data.deleted![0] as any).id).toBe("artist-789");
+      if (deserialized.data.deleted && deserialized.data.deleted[0]) {
+        expect(deserialized.data.deleted[0].id).toBe("artist-789");
+      }
     });
 
     it("should handle combined created, updated, and deleted", () => {
@@ -85,6 +94,7 @@ describe("WebSocket Message Types", () => {
       };
 
       const serialized = JSON.stringify(message);
+      // eslint-disable-next-line no-restricted-syntax
       const deserialized = JSON.parse(serialized) as DataChangedMessage;
 
       expect(deserialized.type).toBe("DATA_CHANGED");
@@ -105,6 +115,7 @@ describe("WebSocket Message Types", () => {
       };
 
       const serialized = JSON.stringify(message);
+      // eslint-disable-next-line no-restricted-syntax
       const deserialized = JSON.parse(serialized) as DataChangedMessage;
 
       expect(deserialized.data.created).toHaveLength(1);
@@ -113,6 +124,7 @@ describe("WebSocket Message Types", () => {
     });
 
     it("should handle all entity types", () => {
+      // eslint-disable-next-line no-restricted-syntax
       const entities = ["song", "album", "artist", "playlist", "coverArt"] as const;
 
       entities.forEach((entity) => {
@@ -126,6 +138,7 @@ describe("WebSocket Message Types", () => {
         };
 
         const serialized = JSON.stringify(message);
+        // eslint-disable-next-line no-restricted-syntax
         const deserialized = JSON.parse(serialized) as DataChangedMessage;
         expect(deserialized.entity).toBe(entity);
       });
@@ -143,6 +156,7 @@ describe("WebSocket Message Types", () => {
       };
 
       const serialized = JSON.stringify(message);
+      // eslint-disable-next-line no-restricted-syntax
       const deserialized = JSON.parse(serialized) as DataChangedMessage;
       expect(deserialized.timestamp).toBe(now);
     });

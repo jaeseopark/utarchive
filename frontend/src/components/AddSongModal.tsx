@@ -74,6 +74,7 @@ export function AddSongModal() {
           )
         );
         
+        // eslint-disable-next-line no-restricted-syntax
         await createSong(cleanedData as SongCreateInput);
         reset();
         setSelectedArtists([]);

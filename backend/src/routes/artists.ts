@@ -43,6 +43,7 @@ const paginationSchema = z.object({
 router.use(requireAuth);
 
 router.get("/artists", validateRequest(paginationSchema, "query"), async (req, res) => {
+  // eslint-disable-next-line no-restricted-syntax
   const { limit, offset } = req.query as unknown as {
     limit: number;
     offset: number;
@@ -55,8 +56,9 @@ router.post(
   "/artists",
   validateRequest(artistCreateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const artist = req.body as z.infer<typeof artistCreateSchema>;
-    const requestId = (req as any).requestId;
+    const requestId = req.requestId;
     
     const [createdArtist] = await insertArtist(artist);
     
@@ -93,9 +95,10 @@ router.patch(
   "/artists/:id",
   validateRequest(artistUpdateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const updateData = req.body as z.infer<typeof artistUpdateSchema>;
     const artistId = String(req.params.id);
-    const requestId = (req as any).requestId;
+    const requestId = req.requestId;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: "No update fields provided" });

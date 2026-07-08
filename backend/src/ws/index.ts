@@ -5,7 +5,6 @@ import { verifyJwt } from "../lib/jwt";
 import {
   AuthenticatedWebSocket,
   WebSocketMessage,
-  PingMessage,
   PongMessage,
   ConnectedMessage,
   ErrorMessage,
@@ -13,7 +12,6 @@ import {
 import { logConnection, logMessageSend, logError, logBroadcast } from "../lib/webSocketLogger";
 
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
-const HEARTBEAT_TIMEOUT = 5000; // 5 seconds
 
 export const createWebSocketServer = (server: http.Server) => {
   const wss = new WebSocketServer({ noServer: true });
@@ -48,12 +46,13 @@ export const createWebSocketServer = (server: http.Server) => {
         const payload = verifyJwt(token);
 
         wss.handleUpgrade(request, socket, head, (ws: WebSocket) => {
-          const authWs = ws as AuthenticatedWebSocket;
-          authWs.userId = payload.sub;
-          authWs.isAlive = true;
+          const authWs: AuthenticatedWebSocket = Object.assign(ws, {
+            userId: payload.sub,
+            isAlive: true,
+          });
           wss.emit("connection", authWs, request);
         });
-      } catch (err) {
+      } catch {
         socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
         socket.destroy();
       }
@@ -86,14 +85,19 @@ export const createWebSocketServer = (server: http.Server) => {
     // Message handler
     socket.on("message", (data: Buffer) => {
       try {
-        const message = JSON.parse(data.toString()) as WebSocketMessage;
+        const parsed = JSON.parse(data.toString());
+        // Validate message has required fields
+        if (typeof parsed === "object" && parsed !== null && "type" in parsed && "timestamp" in parsed) {
+          // eslint-disable-next-line no-restricted-syntax
+          const message = parsed as WebSocketMessage;
 
-        if (message.type === "PING") {
-          const pongMsg: PongMessage = {
-            type: "PONG",
-            timestamp: Date.now(),
-          };
-          socket.send(JSON.stringify(pongMsg));
+          if (message.type === "PING") {
+            const pongMsg: PongMessage = {
+              type: "PONG",
+              timestamp: Date.now(),
+            };
+            socket.send(JSON.stringify(pongMsg));
+          }
         }
       } catch (err) {
         console.error("[WebSocket] Failed to parse message:", err);
@@ -127,6 +131,7 @@ export const createWebSocketServer = (server: http.Server) => {
   // Start heartbeat interval
   const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((socket: WebSocket) => {
+      // eslint-disable-next-line no-restricted-syntax
       const authWs = socket as AuthenticatedWebSocket;
 
       if (authWs.isAlive === false) {
@@ -164,6 +169,7 @@ export const broadcastMessage = (
   wss.clients.forEach((client) => {
     if (
       client.readyState === WebSocket.OPEN &&
+      // eslint-disable-next-line no-restricted-syntax
       (!excludeSocketId || (client as AuthenticatedWebSocket).userId !== excludeSocketId)
     ) {
       client.send(payload);
@@ -188,6 +194,7 @@ export const sendToClient = (
   wss.clients.forEach((client) => {
     if (
       client.readyState === WebSocket.OPEN &&
+      // eslint-disable-next-line no-restricted-syntax
       (client as AuthenticatedWebSocket).userId === userId
     ) {
       client.send(payload);

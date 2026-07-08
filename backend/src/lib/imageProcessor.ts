@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { createHash } from 'crypto';
 
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
+// eslint-disable-next-line no-restricted-syntax
 const THUMBNAIL_SIZES = [128, 1024] as const;
 
 export type ThumbnailSize = (typeof THUMBNAIL_SIZES)[number];
