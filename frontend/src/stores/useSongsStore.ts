@@ -33,6 +33,7 @@ export interface SongsState {
   fetchAllSongs: () => Promise<void>;
   fetchSongDetail: (id: string) => Promise<void>;
   fetchSongTree: (id: string) => Promise<void>;
+  refreshSongTree: (id: string) => Promise<void>;
   getSongDetail: (id: string) => Song | undefined;
   getSongTree: (id: string) => SongTree | undefined;
   addSongDetail: (song: Song) => void;
@@ -258,5 +259,20 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         },
       };
     });
+  },
+
+  // Refresh song trees (e.g., after adding a child)
+  refreshSongTree: async (id: string) => {
+    const store = { setLoading: (val: boolean) => set({ isLoading: val }), setError: (err: string | null) => set({ error: err }) };
+    const tree = await withStoreLoadingSilent(store, `/api/songs/${id}/tree`, SongTreeSchema);
+
+    if (tree) {
+      set((state) => ({
+        songTrees: {
+          ...state.songTrees,
+          [id]: tree,
+        },
+      }));
+    }
   },
 }));

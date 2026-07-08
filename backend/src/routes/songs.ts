@@ -11,6 +11,7 @@ import {
   updateSongById,
   updateSongTags,
   selectUniqueTags,
+  linkChildToParent,
 } from "../db/queries/songs";
 import { broadcastMessage } from "../ws";
 import { DataChangedMessage } from "../types/websocket";
@@ -207,6 +208,53 @@ router.get("/songs/:id/tree", async (req, res) => {
 
   return res.status(200).json(songTree);
 });
+
+const linkChildSchema = z.object({
+  childId: z.string().uuid(),
+});
+
+router.post(
+  "/songs/:id/children",
+  validateRequest(linkChildSchema),
+  async (req, res) => {
+    const parentId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    // eslint-disable-next-line no-restricted-syntax
+    const { childId } = req.body as z.infer<typeof linkChildSchema>;
+    const requestId = req.requestId;
+
+    try {
+      const linkedChild = await linkChildToParent(childId, parentId);
+
+      // Broadcast to all connected clients
+      const wss = req.app.locals.wss;
+      if (wss) {
+        const message: DataChangedMessage = {
+          type: "DATA_CHANGED",
+          entity: "song",
+          timestamp: Date.now(),
+          data: {
+            updated: [linkedChild],
+          },
+          requestId,
+        };
+        broadcastMessage(wss, message);
+      }
+
+      return res.status(200).json(linkedChild);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === "CHILD_NOT_FOUND") {
+          return res.status(404).json({ error: "Child song not found" });
+        }
+        if (error.message === "PARENT_NOT_FOUND") {
+          return res.status(404).json({ error: "Parent song not found" });
+        }
+      }
+
+      throw error;
+    }
+  }
+);
 
 const tagsUpdateSchema = z.object({
   tags: z.array(z.string()).optional(),

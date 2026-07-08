@@ -72,7 +72,7 @@ export const selectSongById = async (id: string) => {
       id: songs.id,
       title: songs.title,
       parentId: songHierarchy.parentId,
-      masterId: songHierarchy.masterId,
+      masterId: sql<string>`coalesce(${songHierarchy.masterId}, ${songs.id})`,
       platformId: songs.platformId,
       releasedAt: songs.releasedAt,
       url: songs.url,
@@ -87,7 +87,7 @@ export const selectSongById = async (id: string) => {
       fileHash: songs.fileHash,
       tags: songs.tags,
       createdAt: songs.createdAt,
-      artistIds: sql`
+      artistIds: sql<string[]>`
         (SELECT coalesce(array_agg(sa.artist_id ORDER BY sa.display_order), ARRAY[]::uuid[])
          FROM song_artists sa
          WHERE sa.song_id = ${songs.id})
@@ -498,6 +498,64 @@ export const updateSongTags = async (songId: string, tags: string[]) => {
     .returning();
 
   return updated;
+};
+
+/**
+ * Link an existing child song to a parent song
+ * Creates or updates the song_hierarchy relationship
+ */
+export const linkChildToParent = async (childId: string, parentId: string): Promise<SongWithHierarchy> => {
+  return db.transaction(async (tx) => {
+    // Verify both songs exist
+    const childSong = await tx.select().from(songs).where(eq(songs.id, childId)).limit(1);
+    if (!childSong[0]) {
+      throw new Error("CHILD_NOT_FOUND");
+    }
+
+    const parentSong = await tx.select().from(songs).where(eq(songs.id, parentId)).limit(1);
+    if (!parentSong[0]) {
+      throw new Error("PARENT_NOT_FOUND");
+    }
+
+    // Get parent's hierarchy info to determine master ID
+    const parentHierarchy = await tx
+      .select({ masterId: songHierarchy.masterId, parentId: songHierarchy.parentId })
+      .from(songHierarchy)
+      .where(eq(songHierarchy.songId, parentId))
+      .limit(1);
+
+    const masterId = parentHierarchy[0]?.masterId ?? parentId;
+
+    // Check if child already has a hierarchy entry
+    const existingChildHierarchy = await tx
+      .select()
+      .from(songHierarchy)
+      .where(eq(songHierarchy.songId, childId))
+      .limit(1);
+
+    if (existingChildHierarchy[0]) {
+      // Update existing hierarchy
+      await tx
+        .update(songHierarchy)
+        .set({ parentId, masterId })
+        .where(eq(songHierarchy.songId, childId));
+    } else {
+      // Insert new hierarchy entry
+      await tx.insert(songHierarchy).values({
+        songId: childId,
+        parentId,
+        masterId,
+      });
+    }
+
+    // Return updated child song
+    const updatedChild = await selectSongById(childId);
+    if (!updatedChild) {
+      throw new Error("CHILD_NOT_FOUND");
+    }
+
+    return updatedChild;
+  });
 };
 
 /**
