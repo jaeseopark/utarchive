@@ -30,6 +30,7 @@ export interface ArtistsState {
   fetchArtistDetail: (id: string) => Promise<void>;
   getArtistDetail: (id: string) => ArtistDetail | undefined;
   addArtist: (artist: Artist) => void;
+  incrementArtistSongCount: (artistId: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -110,6 +111,22 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       pagination: {
         ...state.pagination,
         total: state.pagination.total + 1,
+      },
+    }));
+  },
+
+  incrementArtistSongCount: (artistId: string) => {
+    set((state) => ({
+      artists: state.artists.map((artist) =>
+        artist.id === artistId
+          ? { ...artist, songCount: (artist.songCount ?? 0) + 1 }
+          : artist
+      ),
+      artistDetails: {
+        ...state.artistDetails,
+        [artistId]: state.artistDetails[artistId]
+          ? { ...state.artistDetails[artistId], songCount: (state.artistDetails[artistId].songCount ?? 0) + 1 }
+          : state.artistDetails[artistId],
       },
     }));
   },
