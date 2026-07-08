@@ -7,6 +7,8 @@ import UrlMap from '../components/UrlMap';
 import { formatDate } from '../lib/format';
 import { Button } from '../components/ui/Button';
 import { useAlbumDetail } from '../hooks/useAlbumDetail';
+import { useArtistsStore } from '../stores/useArtistsStore';
+import { getArtistNames } from '../lib/artistNames';
 
 const SongTreeResponseSchema = SongTreeSchema;
 
@@ -17,6 +19,7 @@ const AlbumDetailPage = () => {
   const [tree, setTree] = useState<SongTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
+  const artists = useArtistsStore((state) => state.artists);
 
   const toggleTree = (songId: string) => {
     if (expandedSongId === songId) {
@@ -39,6 +42,11 @@ const AlbumDetailPage = () => {
 
   const trackRows = useMemo(() => album?.tracks ?? [], [album]);
 
+  const albumArtistNames = useMemo(() => {
+    if (!album) return [];
+    return getArtistNames(album.artistIds ?? [], artists);
+  }, [album, artists]);
+
   return (
     <section className="space-y-6">
       <div>
@@ -57,9 +65,9 @@ const AlbumDetailPage = () => {
               <div>
                 <h1 className="text-3xl font-semibold text-slate-900">{album.title}</h1>
                 <div className="mt-2 text-slate-700">
-                  Artist{album.artistNames.length > 1 ? 's' : ''}{' '}
-                  {album.artistNames.length > 0 ? (
-                    album.artistNames.map((name, index) => (
+                  Artist{albumArtistNames.length > 1 ? 's' : ''}{' '}
+                  {albumArtistNames.length > 0 ? (
+                    albumArtistNames.map((name, index) => (
                       <span key={index}>
                         {index > 0 && ', '}
                         <Link to={`/artists/${album.artistIds[index]}`} className="text-sky-500 hover:underline">

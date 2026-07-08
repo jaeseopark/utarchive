@@ -12,6 +12,8 @@ import { Button } from '../components/ui/Button';
 import CoverArt from '../components/CoverArt';
 import FamilyTree from '../components/FamilyTree';
 import { formatDate, formatTrimRange, parseTrimRange } from '../lib/format';
+import { useArtistsStore } from '../stores/useArtistsStore';
+import { getArtistNames } from '../lib/artistNames';
 
 const SongTreeResponseSchema = SongTreeSchema;
 
@@ -30,6 +32,7 @@ function SongDetailPage() {
   const [pausedAt, setPausedAt] = useState<Date | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const artists = useArtistsStore((state) => state.artists);
 
   useEffect(() => {
     if (!id) return;
@@ -49,13 +52,14 @@ function SongDetailPage() {
       .finally(() => setIsLoading(false));
   }, [id]);
 
-  const artists = useMemo(() => {
+  const artistList = useMemo(() => {
     if (!song) return [];
-    return song.artistIds.map((artistId, index) => ({
-      id: artistId,
-      name: song.artistNames?.[index] ?? 'Unknown',
+    const artistNames = getArtistNames(song.artistIds ?? [], artists);
+    return artistNames.map((name, index) => ({
+      id: song.artistIds?.[index] ?? '',
+      name,
     }));
-  }, [song]);
+  }, [song, artists]);
 
   useEffect(() => {
     if (!isListening) {
@@ -232,15 +236,15 @@ function SongDetailPage() {
                 <div>
                   <h1 className="text-3xl font-semibold text-slate-900">{song.title}</h1>
                   <div className="mt-3 text-sm text-slate-600">
-                    {artists.length > 0 ? (
+                    {artistList.length > 0 ? (
                       <span>
                         Artists:{' '}
-                        {artists.map((artist, index) => (
+                        {artistList.map((artist, index) => (
                           <span key={artist.id}>
                             <Link to={`/artists/${artist.id}`} className="text-sky-500 hover:underline">
                               {artist.name}
                             </Link>
-                            {index < artists.length - 1 ? ', ' : ''}
+                            {index < artistList.length - 1 ? ', ' : ''}
                           </span>
                         ))}
                       </span>

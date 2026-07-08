@@ -156,7 +156,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         preferred: song.preferred,
         coverArtId: song.coverArtId,
         artistIds: song.artistIds,
-        artistNames: song.artistNames,
       };
 
       return {

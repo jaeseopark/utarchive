@@ -11,7 +11,7 @@ import {
 } from "../types/websocket";
 import { logConnection, logMessageSend, logError, logBroadcast } from "../lib/webSocketLogger";
 
-const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+const HEARTBEAT_INTERVAL = 2000; // 2 seconds
 
 export const createWebSocketServer = (server: http.Server) => {
   const wss = new WebSocketServer({ noServer: true });

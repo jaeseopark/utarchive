@@ -10,7 +10,7 @@ export interface UseWebSocketOptions {
   autoConnect?: boolean;
 }
 
-const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+const HEARTBEAT_INTERVAL = 2000; // 2 seconds
 const RECONNECT_DELAYS = [1000, 2000, 5000, 10000, 30000]; // milliseconds
 
 /**
@@ -28,6 +28,7 @@ export const useWebSocket = ({
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoConnectInitializedRef = useRef(false);
+  const hasConnectedBeforeRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -89,6 +90,7 @@ export const useWebSocket = ({
 
       ws.onopen = () => {
         console.log("[WebSocket] Connected");
+        hasConnectedBeforeRef.current = true;
         reconnectAttemptRef.current = 0;
         setIsConnected(true);
         setIsConnecting(false);
@@ -121,7 +123,7 @@ export const useWebSocket = ({
 
         // Attempt to reconnect only if we had been connected before
         // This prevents reconnection loops when user is not authenticated
-        if (reconnectAttemptRef.current > 0) {
+        if (hasConnectedBeforeRef.current) {
           reconnect();
         }
       };

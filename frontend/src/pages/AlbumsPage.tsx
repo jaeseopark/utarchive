@@ -1,12 +1,23 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAlbums } from '../hooks/useAlbums';
+import { useArtistsStore } from '../stores/useArtistsStore';
+import { getArtistNames } from '../lib/artistNames';
 
 const PAGE_SIZE = 50;
 
 function AlbumsPage() {
   const [page, setPage] = useState(0);
   const { albums, isLoading, error } = useAlbums(page);
+  const artists = useArtistsStore((state) => state.artists);
+
+  const albumsWithArtistNames = useMemo(() => {
+    const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
+    return albums.map((album) => ({
+      ...album,
+      artistNames: getArtistNames(album.artistIds ?? [], artistMap),
+    }));
+  }, [albums, artists]);
 
   return (
     <section className="space-y-6">
@@ -32,7 +43,7 @@ function AlbumsPage() {
               </tr>
             </thead>
             <tbody>
-              {albums.map((album) => (
+              {albumsWithArtistNames.map((album) => (
                 <tr key={album.id} className="border-b border-slate-300 last:border-b-0">
                   <td className="px-4 py-4">
                     <Link to={`/albums/${album.id}`} className="text-slate-900 transition hover:text-sky-500">
@@ -74,7 +85,7 @@ function AlbumsPage() {
         <button
           type="button"
           className="rounded-2xl border border-slate-400 bg-slate-200 px-4 py-2 transition hover:border-slate-500 hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={albums.length < PAGE_SIZE}
+          disabled={albumsWithArtistNames.length < PAGE_SIZE}
           onClick={() => setPage((current) => current + 1)}
         >
           Next

@@ -26,7 +26,6 @@ export const SongListItemSchema = z.object({
   preferred: z.boolean(),
   coverArtId: z.string().uuid().nullable().optional(),
   artistIds: z.array(z.string().uuid()).optional().default([]),
-  artistNames: z.array(z.string()).optional().default([]),
 });
 
 // Response schema for songs list endpoint
@@ -47,7 +46,6 @@ export const AlbumSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   artistIds: z.array(z.string().uuid()).optional().default([]),
-  artistNames: z.array(z.string()).optional().default([]),
   yearReleased: z.number().int().nullable().optional(),
 });
 
@@ -71,7 +69,6 @@ export const SongSchema = z.object({
   tags: z.array(z.string()).optional().default([]),
   createdAt: z.string(),
   artistIds: z.array(z.string().uuid()).optional().default([]),
-  artistNames: z.array(z.string()).optional().default([]),
 });
 
 // Helper to create optional UUID field that accepts empty strings
@@ -108,7 +105,6 @@ export const SongTreeNodeSchema = z.object({
   parentId: z.string().uuid().nullable().optional(),
   depth: z.number().int(),
   artistIds: z.array(z.string().uuid()),
-  artistNames: z.array(z.string()),
   coverArtId: z.string().uuid().nullable().optional(),
   preferred: z.boolean(),
   releasedAt: z.string().nullable().optional(),
@@ -131,7 +127,6 @@ export const AlbumDetailSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   artistIds: z.array(z.string().uuid()).optional().default([]),
-  artistNames: z.array(z.string()).optional().default([]),
   yearReleased: z.number().int().nullable().optional(),
   coverArtId: z.string().uuid().nullable().optional(),
   trackList: z.array(z.object({ number: z.number().int(), title: z.string() })),
