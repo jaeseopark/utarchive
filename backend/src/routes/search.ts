@@ -13,7 +13,7 @@ const searchSchema = z.object({
 router.use(requireAuth);
 
 router.get(
-  "/api/search",
+  "/search",
   validateRequest(searchSchema, "query"),
   async (req, res) => {
     const { q } = req.query as unknown as z.infer<typeof searchSchema>;
