@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { WebSocketMessage } from "../types/websocket";
+import { useSession } from "../context/SessionContext";
 
 export interface UseWebSocketOptions {
   onMessage?: (message: WebSocketMessage) => void;
@@ -26,6 +27,7 @@ export const useWebSocket = ({
   const reconnectAttemptRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const autoConnectInitializedRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -69,18 +71,19 @@ export const useWebSocket = ({
     setIsConnecting(true);
 
     try {
-      // Get JWT token from localStorage or session
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        throw new Error("No authentication token available");
-      }
-
       // Determine WebSocket URL (ws or wss based on protocol)
+      // Note: Session cookie will be sent automatically by the browser
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/ws?token=${encodeURIComponent(token)}`;
+      const hostname = window.location.hostname;
+      
+      // In development, frontend runs on 5173, backend on 3000
+      // In production, both are on same origin (usually proxied)
+      const port = window.location.port === "5173" ? "3000" : window.location.port || "";
+      const hostWithPort = port ? `${hostname}:${port}` : hostname;
+      
+      const wsUrl = `${protocol}//${hostWithPort}/ws`;
 
-      console.log("[WebSocket] Connecting to", wsUrl.replace(token, "***"));
+      console.log("[WebSocket] Connecting to", wsUrl);
 
       const ws = new WebSocket(wsUrl);
 
@@ -115,8 +118,11 @@ export const useWebSocket = ({
         setIsConnecting(false);
         onDisconnect?.();
 
-        // Attempt to reconnect
-        reconnect();
+        // Attempt to reconnect only if we had been connected before
+        // This prevents reconnection loops when user is not authenticated
+        if (reconnectAttemptRef.current > 0) {
+          reconnect();
+        }
       };
 
       wsRef.current = ws;
@@ -125,9 +131,6 @@ export const useWebSocket = ({
       const error = err instanceof Error ? err : new Error("Unknown error");
       onError?.(error);
       setIsConnecting(false);
-
-      // Attempt to reconnect
-      reconnect();
     }
   }, [isConnecting, isConnected, onConnect, onDisconnect, onError, onMessage, startHeartbeat, clearHeartbeat]);
 
@@ -167,16 +170,32 @@ export const useWebSocket = ({
     }
   }, []);
 
-  // Auto-connect on mount
+  const { user, isLoading: isSessionLoading } = useSession();
+
+  // Auto-connect on mount and when authentication state changes
   useEffect(() => {
-    if (autoConnect) {
-      connect();
+    // If not authenticated or session still loading, reset and disconnect
+    if (!user || isSessionLoading) {
+      autoConnectInitializedRef.current = false;
+      // Close WebSocket if it exists
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      clearHeartbeat();
+      clearReconnectTimeout();
+      setIsConnected(false);
+      setIsConnecting(false);
+      return;
     }
 
-    return () => {
-      disconnect();
-    };
-  }, [autoConnect]); // Only run on mount/unmount
+    // Only initialize connection once per authenticated session
+    if (autoConnect && !autoConnectInitializedRef.current) {
+      autoConnectInitializedRef.current = true;
+      connect();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoConnect, user, isSessionLoading]);
 
   return {
     isConnected,

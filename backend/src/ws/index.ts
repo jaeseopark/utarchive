@@ -22,8 +22,21 @@ export const createWebSocketServer = (server: http.Server) => {
   server.on("upgrade", (request, socket, head) => {
     // Only upgrade /ws requests
     if (request.url?.startsWith("/ws")) {
+      // Try to get token from query parameter or cookie
       const url = new URL(request.url, `http://${request.headers.host}`);
-      const token = url.searchParams.get("token");
+      let token = url.searchParams.get("token");
+
+      // If no token in query, try to extract from session cookie
+      if (!token) {
+        const cookieHeader = request.headers.cookie;
+        if (cookieHeader) {
+          const cookies = cookieHeader.split(";").map((c) => c.trim());
+          const sessionCookie = cookies.find((c) => c.startsWith("session="));
+          if (sessionCookie) {
+            token = sessionCookie.substring("session=".length);
+          }
+        }
+      }
 
       if (!token) {
         socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
