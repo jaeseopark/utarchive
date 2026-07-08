@@ -13,18 +13,18 @@ function SongsPage() {
 
   const canPrevious = page > 0;
 
-  const rows = useMemo(
-    () => songs.map((song) => {
-      const artistNames = getArtistNames(song.artistIds ?? [], artists);
+  const rows = useMemo(() => {
+    const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
+    return songs.map((song) => {
+      const artistNames = getArtistNames(song.artistIds ?? [], artistMap);
       return {
         ...song,
         artistText: artistNames.length ? artistNames.join(', ') : 'Unknown',
         artistNames,
         releasedYear: song.releasedAt ? new Date(song.releasedAt).getFullYear() : null,
       };
-    }),
-    [songs, artists],
-  );
+    });
+  }, [songs, artists]);
 
   return (
     <section className="space-y-6">

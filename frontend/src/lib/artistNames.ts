@@ -1,14 +1,35 @@
 import type { ArtistsState } from '../stores/useArtistsStore';
 
 /**
- * Get artist names from artist IDs using the artists store.
+ * Get artist names from artist IDs.
  * Returns an array of artist names in the same order as the IDs.
  * If an artist is not found, returns a placeholder name.
+ * 
+ * Overloads:
+ * - getArtistNames(artistIds, artists) - creates map internally
+ * - getArtistNames(artistIds, artistMap) - uses pre-built map for performance
  */
-export const getArtistNames = (
+
+export function getArtistNames(
   artistIds: string[],
-  artists: ArtistsState['artists']
-): string[] => {
-  const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
+  artists: ArtistsState['artists'],
+): string[];
+
+// eslint-disable-next-line no-redeclare
+export function getArtistNames(
+  artistIds: string[],
+  artistMap: Map<string, string>,
+): string[];
+
+// eslint-disable-next-line no-redeclare
+export function getArtistNames(
+  artistIds: string[],
+  artistsOrMap: ArtistsState['artists'] | Map<string, string>,
+): string[] {
+  const artistMap =
+    artistsOrMap instanceof Map
+      ? artistsOrMap
+      : new Map(artistsOrMap.map((artist) => [artist.id, artist.name]));
+
   return artistIds.map((id) => artistMap.get(id) ?? 'Unknown Artist');
 };

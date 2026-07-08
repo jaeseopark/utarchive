@@ -1,4 +1,7 @@
+import { useMemo } from 'react';
 import { usePlayer } from '../hooks/usePlayer';
+import { getArtistNames } from '../lib/artistNames';
+import { useArtistsStore } from '../stores/useArtistsStore';
 
 /**
  * Global player component (v1 - stub)
@@ -7,6 +10,12 @@ import { usePlayer } from '../hooks/usePlayer';
  */
 export function GlobalPlayer() {
   const { currentSong, isPlaying, play, pause } = usePlayer();
+  const artists = useArtistsStore((state) => state.artists);
+
+  const artistNames = useMemo(
+    () => (currentSong ? getArtistNames(currentSong.artistIds ?? [], artists) : []),
+    [currentSong, artists],
+  );
 
   if (!currentSong) {
     return null;
@@ -17,7 +26,7 @@ export function GlobalPlayer() {
       <div className="mx-auto flex max-w-6xl items-center gap-4">
         <div className="flex-1 truncate">
           <p className="truncate text-sm font-medium text-slate-900">{currentSong.title}</p>
-          <p className="truncate text-xs text-slate-600">{currentSong.artistNames.join(', ')}</p>
+          <p className="truncate text-xs text-slate-600">{artistNames.join(', ')}</p>
         </div>
 
         <button

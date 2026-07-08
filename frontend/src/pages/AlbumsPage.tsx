@@ -12,9 +12,10 @@ function AlbumsPage() {
   const artists = useArtistsStore((state) => state.artists);
 
   const albumsWithArtistNames = useMemo(() => {
+    const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
     return albums.map((album) => ({
       ...album,
-      artistNames: getArtistNames(album.artistIds ?? [], artists),
+      artistNames: getArtistNames(album.artistIds ?? [], artistMap),
     }));
   }, [albums, artists]);
 

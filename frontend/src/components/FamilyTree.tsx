@@ -1,12 +1,25 @@
 import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 import type { SongTreeNode } from '../api/schemas';
+import { getArtistNames } from '../lib/artistNames';
+import { useArtistsStore } from '../stores/useArtistsStore';
 
 interface FamilyTreeProps {
   nodes: SongTreeNode[];
   currentSongId: string;
 }
 
-function FamilyTree({ nodes, currentSongId }: FamilyTreeProps) {
+function FamilyTree({ nodes: nodesWithoutArtistNames, currentSongId }: FamilyTreeProps) {
+  const artists = useArtistsStore((state) => state.artists);
+
+  const nodes = useMemo(() => {
+    const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
+    return nodesWithoutArtistNames.map((node) => ({
+      ...node,
+      artistNames: getArtistNames(node.artistIds, artistMap),
+    }));
+  }, [nodesWithoutArtistNames, artists]);
+
   if (nodes.length === 0) {
     return null;
   }
