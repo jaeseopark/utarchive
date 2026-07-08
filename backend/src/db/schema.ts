@@ -77,7 +77,7 @@ export const songs = pgTable(
     fileSizeBytes: bigint("file_size_bytes", { mode: "bigint" }),
     coverArtId: uuid("cover_art_id").references(() => coverArt.id),
     description: text("description"),
-    preferred: boolean("preferred").notNull().default(true),
+    playbackEnabled: boolean("playback_enabled").notNull().default(false),
     trimRange: varchar("trim_range", { length: 32 }),
     fileHash: varchar("file_hash", { length: 64 }),
     tags: text("tags").array().$type<string[]>().notNull().default([]),

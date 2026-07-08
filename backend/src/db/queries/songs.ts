@@ -12,7 +12,7 @@ export type SongCreateInput = {
   filePath?: string | null;
   coverArtId?: string | null;
   description?: string | null;
-  preferred?: boolean;
+  playbackEnabled?: boolean;
   trimRange?: string | null;
   fileHash?: string | null;
   tags?: string[];
@@ -26,7 +26,7 @@ export type SongUpdateInput = {
   filePath?: string | null;
   coverArtId?: string | null;
   description?: string | null;
-  preferred?: boolean;
+  playbackEnabled?: boolean;
   trimRange?: string | null;
   fileHash?: string | null;
   tags?: string[];
@@ -38,7 +38,7 @@ export type SongListFilters = {
   offset: number;
   artistId?: string;
   masterId?: string;
-  preferred?: boolean;
+  playbackEnabled?: boolean;
 };
 
 export type Song = {
@@ -53,7 +53,7 @@ export type Song = {
   fileSizeBytes: bigint | null;
   coverArtId: string | null;
   description: string | null;
-  preferred: boolean;
+  playbackEnabled: boolean;
   trimRange: string | null;
   fileHash: string | null;
   tags: string[];
@@ -82,7 +82,7 @@ export const selectSongById = async (id: string) => {
       fileSizeBytes: songs.fileSizeBytes,
       coverArtId: songs.coverArtId,
       description: songs.description,
-      preferred: songs.preferred,
+      playbackEnabled: songs.playbackEnabled,
       trimRange: songs.trimRange,
       fileHash: songs.fileHash,
       tags: songs.tags,
@@ -143,7 +143,7 @@ export const selectSongs = async (filters: SongListFilters) => {
     title: songs.title,
     platformId: songs.platformId,
     releasedAt: songs.releasedAt,
-    preferred: songs.preferred,
+    playbackEnabled: songs.playbackEnabled,
     coverArtId: songs.coverArtId,
     artistIds: sql<string[]>`
       coalesce(array_agg("song_artists"."artist_id" ORDER BY "song_artists"."display_order"), ARRAY[]::uuid[])
@@ -232,7 +232,7 @@ export const createSong = async (
       filePath: songData.filePath ?? null,
       coverArtId: songData.coverArtId ?? null,
       description: songData.description ?? null,
-      preferred: songData.preferred,
+      playbackEnabled: songData.playbackEnabled,
       trimRange: songData.trimRange ?? null,
       fileHash: songData.fileHash ?? null,
       tags: songData.tags ?? [],
@@ -269,7 +269,7 @@ export const createSong = async (
       fileSizeBytes: null,
       coverArtId: songData.coverArtId ?? null,
       description: songData.description ?? null,
-      preferred: songData.preferred ?? true,
+      playbackEnabled: songData.playbackEnabled ?? true,
       trimRange: songData.trimRange ?? null,
       fileHash: songData.fileHash ?? null,
       tags: songData.tags ?? [],
@@ -355,7 +355,7 @@ export type SongTreeNode = {
   depth: number;
   artistIds: string[];
   coverArtId: string | null;
-  preferred: boolean;
+  playbackEnabled: boolean;
   releasedAt: string | null;
   trimRange: string | null;
 };
@@ -376,7 +376,7 @@ export const selectSongTree = async (songId: string) => {
         s.title,
         sh.parent_id,
         s.cover_art_id,
-        s.preferred,
+        s.playback_enabled,
         s.released_at,
         s.trim_range,
         ARRAY[s.id] AS path,
@@ -390,7 +390,7 @@ export const selectSongTree = async (songId: string) => {
         s.title,
         sh.parent_id,
         s.cover_art_id,
-        s.preferred,
+        s.playback_enabled,
         s.released_at,
         s.trim_range,
         tree.path || s.id,
@@ -413,7 +413,7 @@ export const selectSongTree = async (songId: string) => {
         ARRAY[]::uuid[]
       ) AS "artistIds",
       tree.cover_art_id AS "coverArtId",
-      tree.preferred,
+      tree.playback_enabled AS "playbackEnabled",
       tree.released_at AS "releasedAt",
       tree.trim_range AS "trimRange"
     FROM tree

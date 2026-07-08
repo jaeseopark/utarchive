@@ -15,8 +15,8 @@ type Story = StoryObj<typeof SearchPage>;
 
 const searchResults = {
   songs: [
-    { id: 'song-1', title: 'Space Anthem', artistIds: ['artist-1'], preferred: true },
-    { id: 'song-2', title: 'Moonlight Drive', artistIds: ['artist-2'], preferred: false },
+    { id: 'song-1', title: 'Space Anthem', artistIds: ['artist-1'], playbackEnabled: true },
+    { id: 'song-2', title: 'Moonlight Drive', artistIds: ['artist-2'], playbackEnabled: false },
   ],
   artists: [
     { id: 'artist-1', name: 'Astro Child', aliases: ['A.Child'] },

@@ -46,7 +46,7 @@ Convert AST nodes into Drizzle SQL conditions:
 - `tags.includes(tag)` → `songs.tags @> ARRAY[tag]::text[]`
 - `!tags.includes(tag)` → `NOT (songs.tags @> ARRAY[tag]::text[])`
 - `artist = "foo"` → join `artists` and filter by name
-- `preferred = true` → direct boolean filter
+- `playbackEnabled = true` → direct boolean filter
 
 ### API Endpoints
 

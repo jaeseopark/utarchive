@@ -9,12 +9,12 @@ utarchive is a song archival tool for tracking original songs, covers, remixes, 
 - Supports albums with track reference lists and album-song associations
 - Shows all songs for a given artist
 - Provides built-in streaming for local audio files via authenticated byte-range playback
-- Supports playlists with ordered song queues and preferred-song skip logic
+- Supports playlists with ordered song queues and playbackEnabled-song skip logic
 - Includes PostgreSQL full-text search across song, artist, and album metadata
 
 ## Key data models
 
-- `songs`: title, parent/master tree links, platform id, archive/release timestamps, play count, artist, URL, local stream file, description, preferred flag
+- `songs`: title, parent/master tree links, platform id, archive/release timestamps, play count, artist, URL, local stream file, description, playbackEnabled flag
 - `artists`: name, aliases, description, URL map
 - `albums`: title, artist, year, reference track list, URL map
 - `album_songs`: album-song association with track number

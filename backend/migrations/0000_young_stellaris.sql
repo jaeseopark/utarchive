@@ -91,7 +91,7 @@ CREATE TABLE "songs" (
 	"file_size_bytes" bigint,
 	"cover_art_id" uuid,
 	"description" text,
-	"preferred" boolean DEFAULT true NOT NULL,
+	"playback_enabled" boolean DEFAULT false NOT NULL,
 	"trim_range" varchar(32),
 	"file_hash" varchar(64),
 	"tags" text[] DEFAULT '{}' NOT NULL,

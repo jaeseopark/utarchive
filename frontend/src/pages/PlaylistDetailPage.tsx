@@ -9,7 +9,7 @@ const SearchSongSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   artistId: z.string().nullable().optional(),
-  preferred: z.boolean(),
+  playbackEnabled: z.boolean(),
 });
 
 const SearchArtistSchema = z.object({
@@ -248,7 +248,7 @@ function PlaylistDetailPage() {
                     <tr>
                       <th className="px-4 py-3">#</th>
                       <th className="px-4 py-3">Title</th>
-                      <th className="px-4 py-3">Preferred</th>
+                      <th className="px-4 py-3">Playback Enabled</th>
                       <th className="px-4 py-3">Actions</th>
                     </tr>
                   </thead>
@@ -261,7 +261,7 @@ function PlaylistDetailPage() {
                             {item.song.title}
                           </Link>
                         </td>
-                        <td className="px-4 py-4 text-slate-700">{item.song.preferred ? 'Yes' : 'No'}</td>
+                        <td className="px-4 py-4 text-slate-700">{item.song.playbackEnabled ? 'Yes' : 'No'}</td>
                         <td className="px-4 py-4 space-x-2">
                           <Button type="button" variant="secondary" disabled={index === 0} onClick={() => handleReorder(index, index - 1)}>
                             Up
@@ -333,7 +333,7 @@ function PlaylistDetailPage() {
                     <thead className="border-b border-slate-300 text-slate-600">
                       <tr>
                         <th className="px-4 py-3">Title</th>
-                        <th className="px-4 py-3">Preferred</th>
+                        <th className="px-4 py-3">Playback Enabled</th>
                         <th className="px-4 py-3">Action</th>
                       </tr>
                     </thead>
@@ -341,7 +341,7 @@ function PlaylistDetailPage() {
                       {searchSongResults.map((song) => (
                         <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
                           <td className="px-4 py-4 text-slate-900">{song.title}</td>
-                          <td className="px-4 py-4 text-slate-700">{song.preferred ? 'Yes' : 'No'}</td>
+                          <td className="px-4 py-4 text-slate-700">{song.playbackEnabled ? 'Yes' : 'No'}</td>
                           <td className="px-4 py-4">
                             <Button
                               type="button"

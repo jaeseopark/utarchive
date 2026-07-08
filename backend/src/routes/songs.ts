@@ -33,7 +33,7 @@ const songCreateSchema = z.object({
   filePath: z.string().max(2000).nullable().optional(),
   coverArtId: z.string().uuid().nullable().optional(),
   description: z.string().optional(),
-  preferred: z.boolean().optional(),
+  playbackEnabled: z.boolean().optional(),
   trimRange: z.string().nullable().optional(),
   fileHash: z.string().max(64).nullable().optional(),
   tags: z.array(z.string()).optional(),
@@ -50,7 +50,7 @@ const songUpdateSchema = z.object({
   filePath: z.string().max(2000).nullable().optional(),
   coverArtId: z.string().uuid().nullable().optional(),
   description: z.string().optional(),
-  preferred: z.boolean().optional(),
+  playbackEnabled: z.boolean().optional(),
   trimRange: z.string().nullable().optional(),
   fileHash: z.string().max(64).nullable().optional(),
   tags: z.array(z.string()).optional(),
@@ -73,7 +73,7 @@ const songListSchema = z.object({
     }, z.number().int().min(0).default(0)),
   artistId: z.string().uuid().optional(),
   masterId: z.string().uuid().optional(),
-  preferred: z
+  playbackEnabled: z
     .preprocess((value) => {
       if (value === "true") return true;
       if (value === "false") return false;
@@ -88,7 +88,7 @@ router.get(
   validateRequest(songListSchema, "query"),
   async (req, res) => {
     // eslint-disable-next-line no-restricted-syntax
-    const { limit, offset, artistId, masterId, preferred } = req.query as unknown as z.infer<
+    const { limit, offset, artistId, masterId, playbackEnabled } = req.query as unknown as z.infer<
       typeof songListSchema
     >;
 
@@ -97,7 +97,7 @@ router.get(
       offset,
       artistId,
       masterId,
-      preferred,
+      playbackEnabled,
     });
 
     return res.status(200).json(songs);

@@ -3,13 +3,15 @@ import { useMemo } from 'react';
 import type { SongTreeNode } from '../api/schemas';
 import { getArtistNames } from '../lib/artistNames';
 import { useArtistsStore } from '../stores/useArtistsStore';
+import { PlaybackEnabledToggle } from './PlaybackEnabledToggle';
 
 interface FamilyTreeProps {
   nodes: SongTreeNode[];
   currentSongId: string;
+  onPlaybackEnabledChange?: (nodeId: string, newPlaybackEnabled: boolean) => void;
 }
 
-function FamilyTree({ nodes: nodesWithoutArtistNames, currentSongId }: FamilyTreeProps) {
+function FamilyTree({ nodes: nodesWithoutArtistNames, currentSongId, onPlaybackEnabledChange }: FamilyTreeProps) {
   const artists = useArtistsStore((state) => state.artists);
 
   const nodes = useMemo(() => {
@@ -33,7 +35,7 @@ function FamilyTree({ nodes: nodesWithoutArtistNames, currentSongId }: FamilyTre
             <th className="px-3 py-2">Title</th>
             <th className="px-3 py-2">Artists</th>
             <th className="px-3 py-2">Released</th>
-            <th className="px-3 py-2">Preferred</th>
+            <th className="px-3 py-2">Playback Enabled</th>
           </tr>
         </thead>
         <tbody>
@@ -58,10 +60,14 @@ function FamilyTree({ nodes: nodesWithoutArtistNames, currentSongId }: FamilyTre
                   {node.artistNames.join(', ') || 'Unknown'}
                 </td>
                 <td className="px-3 py-3 align-top text-slate-700">{node.releasedAt ? new Date(node.releasedAt).toLocaleDateString() : '—'}</td>
-                <td className="px-3 py-3 align-top">
-                  <span className={node.preferred ? 'rounded-full bg-emerald-500 px-2 py-1 text-xs font-semibold text-white' : 'rounded-full bg-slate-300 px-2 py-1 text-xs text-slate-700'}>
-                    {node.preferred ? 'Preferred' : 'Skip'}
-                  </span>
+                <td className="px-3 py-3 align-middle">
+                  <div className="h-6">
+                    <PlaybackEnabledToggle
+                      songId={node.id}
+                      isEnabled={node.playbackEnabled}
+                      onPlaybackEnabledChange={onPlaybackEnabledChange}
+                    />
+                  </div>
                 </td>
               </tr>
             );

@@ -83,6 +83,8 @@ export const api = {
     request(url, { method: 'POST', body: JSON.stringify(body) }, schema, options),
   put: async <T>(url: string, body: unknown, schema: ZodSchema<T>, options?: RequestOptions) =>
     request(url, { method: 'PUT', body: JSON.stringify(body) }, schema, options),
+  patch: async <T>(url: string, body: unknown, schema: ZodSchema<T>, options?: RequestOptions) =>
+    request(url, { method: 'PATCH', body: JSON.stringify(body) }, schema, options),
   delete: async <T>(url: string, schema: ZodSchema<T>, options?: RequestOptions) =>
     request(url, { method: 'DELETE' }, schema, options),
 };

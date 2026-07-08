@@ -6,6 +6,7 @@ import { z } from 'zod';
 import UrlMap from '../components/UrlMap';
 import { combineAliases, formatDate } from '../lib/format';
 import { useArtistDetail } from '../hooks/useArtistDetail';
+import { PlaybackEnabledToggle } from '../components/PlaybackEnabledToggle';
 
 const ArtistSongsSchema = z.array(SongListItemSchema);
 
@@ -38,6 +39,12 @@ function ArtistDetailPage() {
       .catch((err) => setSongsError(err instanceof Error ? err.message : String(err)))
       .finally(() => setSongsLoading(false));
   }, [id]);
+
+  const handlePlaybackEnabledChange = (songId: string, newPlaybackEnabled: boolean) => {
+    setSongs((prev) =>
+      prev.map((song) => (song.id === songId ? { ...song, playbackEnabled: newPlaybackEnabled } : song))
+    );
+  };
 
   const isLoading = artistLoading || songsLoading;
   const error = artistError || songsError;
@@ -80,8 +87,7 @@ function ArtistDetailPage() {
                     <tr>
                       <th className="px-4 py-3">Title</th>
                       <th className="px-4 py-3">Released</th>
-                      <th className="px-4 py-3">Preferred</th>
-                      <th className="px-4 py-3">Play Count</th>
+                      <th className="px-4 py-3">Playback Enabled</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -93,7 +99,15 @@ function ArtistDetailPage() {
                           </Link>
                         </td>
                         <td className="px-4 py-4 text-slate-700">{formatDate(song.releasedAt) ?? '—'}</td>
-                        <td className="px-4 py-4 text-slate-700">{song.preferred ? 'Yes' : 'No'}</td>
+                        <td className="px-4 py-4 align-middle">
+                          <div className="h-6">
+                            <PlaybackEnabledToggle
+                              songId={song.id}
+                              isEnabled={song.playbackEnabled}
+                              onPlaybackEnabledChange={handlePlaybackEnabledChange}
+                            />
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

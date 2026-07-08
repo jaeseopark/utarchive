@@ -713,12 +713,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "preferred": {
-          "name": "preferred",
+        "playback_enabled": {
+          "name": "playback_enabled",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "trim_range": {
           "name": "trim_range",
