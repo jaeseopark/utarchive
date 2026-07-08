@@ -9,15 +9,18 @@ export function useSongDetail(songId: string) {
 
   useEffect(() => {
     if (!songId) return;
+    
+    // Check cache and fetch if needed
     const cached = getSongDetail(songId);
     if (!cached) {
       fetchSongDetail(songId);
     }
+    
     const treeCached = getSongTree(songId);
     if (!treeCached) {
       fetchSongTree(songId);
     }
-  }, [songId, fetchSongDetail, getSongDetail, fetchSongTree, getSongTree]);
+  }, [songId]); // Only depend on songId, not the store functions
 
   const song = getSongDetail(songId);
   const tree = getSongTree(songId);

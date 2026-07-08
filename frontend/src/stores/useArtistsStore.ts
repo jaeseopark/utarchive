@@ -12,6 +12,7 @@ export interface ArtistsState {
   // Data
   artists: Artist[];
   artistDetails: Record<string, ArtistDetail>;
+  lastFetchedAt: number;
 
   // Loading/Error
   isLoading: boolean;
@@ -28,6 +29,7 @@ export interface ArtistsState {
   fetchArtists: (page?: number) => Promise<void>;
   fetchArtistDetail: (id: string) => Promise<void>;
   getArtistDetail: (id: string) => ArtistDetail | undefined;
+  addArtist: (artist: Artist) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -35,6 +37,7 @@ export interface ArtistsState {
 export const useArtistsStore = create<ArtistsState>((set, get) => ({
   artists: [],
   artistDetails: {},
+  lastFetchedAt: 0,
   isLoading: false,
   error: null,
   pagination: {
@@ -47,6 +50,14 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
   setError: (error: string | null) => set({ error }),
 
   fetchArtists: async (page = 0) => {
+    // Check if cache is still fresh (5 minutes TTL)
+    const now = Date.now();
+    const lastFetch = get().lastFetchedAt;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+    if (get().artists.length > 0 && (now - lastFetch < CACHE_TTL)) {
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const artists = await api.get(
@@ -55,6 +66,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       );
       set({
         artists,
+        lastFetchedAt: now,
         pagination: {
           page,
           limit: 50,
@@ -90,5 +102,15 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
 
   getArtistDetail: (id: string) => {
     return get().artistDetails[id];
+  },
+
+  addArtist: (artist: Artist) => {
+    set((state) => ({
+      artists: [artist, ...state.artists],
+      pagination: {
+        ...state.pagination,
+        total: state.pagination.total + 1,
+      },
+    }));
   },
 }));

@@ -1,7 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "../../db";
-import { albumSongs, albums, songArtists, songHierarchy, songs } from "../../db/schema";
+import { albumSongs, albums, artists, songArtists, songHierarchy, songs } from "../../db/schema";
 
 export type SongCreateInput = {
   title: string;
@@ -145,43 +145,65 @@ export const selectSongArtistIds = async (songId: string) => {
 };
 
 export const selectSongs = async (filters: SongListFilters) => {
+  const selectObj = {
+    id: songs.id,
+    title: songs.title,
+    platformId: songs.platformId,
+    releasedAt: songs.releasedAt,
+    preferred: songs.preferred,
+    coverArtId: songs.coverArtId,
+    artistIds: sql<string[]>`
+      coalesce(array_agg("song_artists"."artist_id" ORDER BY "song_artists"."display_order"), ARRAY[]::uuid[])
+    `,
+    artistNames: sql<string[]>`
+      coalesce(array_agg("artists"."name" ORDER BY "song_artists"."display_order"), ARRAY[]::text[])
+    `,
+  };
+
   if (filters.artistId && filters.masterId) {
-    return db
-      .select()
+    return db.select(selectObj)
       .from(songs)
       .innerJoin(songArtists, eq(songArtists.songId, songs.id))
+      .innerJoin(artists, eq(artists.id, songArtists.artistId))
       .innerJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
       .where(and(eq(songArtists.artistId, filters.artistId), eq(songHierarchy.masterId, filters.masterId)))
+      .groupBy(songs.id)
       .orderBy(songs.title)
       .limit(filters.limit)
       .offset(filters.offset);
   }
 
   if (filters.artistId) {
-    return db
-      .select()
+    return db.select(selectObj)
       .from(songs)
       .innerJoin(songArtists, eq(songArtists.songId, songs.id))
+      .innerJoin(artists, eq(artists.id, songArtists.artistId))
       .where(eq(songArtists.artistId, filters.artistId))
+      .groupBy(songs.id)
       .orderBy(songs.title)
       .limit(filters.limit)
       .offset(filters.offset);
   }
 
   if (filters.masterId) {
-    return db
-      .select()
+    return db.select(selectObj)
       .from(songs)
+      .leftJoin(songArtists, eq(songArtists.songId, songs.id))
+      .leftJoin(artists, eq(artists.id, songArtists.artistId))
       .innerJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
       .where(eq(songHierarchy.masterId, filters.masterId))
+      .groupBy(songs.id)
       .orderBy(songs.title)
       .limit(filters.limit)
       .offset(filters.offset);
   }
 
-  return db
-    .select()
+  // Default: no filters, return all songs with artist info
+  return db.select(selectObj)
     .from(songs)
+    .leftJoin(songArtists, eq(songArtists.songId, songs.id))
+    .leftJoin(artists, eq(artists.id, songArtists.artistId))
+    .groupBy(songs.id)
     .orderBy(songs.title)
     .limit(filters.limit)
     .offset(filters.offset);
@@ -359,7 +381,7 @@ export const selectSongTree = async (songId: string) => {
 
   const rootId = song.masterId ?? song.id;
 
-  const nodes = ((await db.execute(sql`
+  const result = await db.execute(sql`
     WITH RECURSIVE tree AS (
       SELECT
         s.id,
@@ -417,7 +439,9 @@ export const selectSongTree = async (songId: string) => {
       tree.trim_range AS "trimRange"
     FROM tree
     ORDER BY tree.path
-  `)) as unknown) as SongTreeNode[];
+  `);
+
+  const nodes = (result.rows ?? result) as SongTreeNode[];
 
   return {
     masterId: rootId,

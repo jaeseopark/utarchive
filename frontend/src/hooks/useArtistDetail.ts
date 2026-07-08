@@ -8,11 +8,12 @@ export function useArtistDetail(artistId: string) {
   const { artistDetails, isLoading, error, fetchArtistDetail, getArtistDetail } = useArtistsStore();
 
   useEffect(() => {
+    if (!artistId) return;
     const cached = getArtistDetail(artistId);
     if (!cached) {
       fetchArtistDetail(artistId);
     }
-  }, [artistId, fetchArtistDetail, getArtistDetail]);
+  }, [artistId]); // Only depend on artistId, not the store functions
 
   const artist = getArtistDetail(artistId);
 

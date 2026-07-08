@@ -10,6 +10,7 @@ export interface AlbumsState {
   // Data
   albums: Album[];
   albumDetails: Record<string, AlbumDetail>;
+  lastFetchedAt: number;
 
   // Loading/Error
   isLoading: boolean;
@@ -33,6 +34,7 @@ export interface AlbumsState {
 export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   albums: [],
   albumDetails: {},
+  lastFetchedAt: 0,
   isLoading: false,
   error: null,
   pagination: {
@@ -45,6 +47,14 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   setError: (error: string | null) => set({ error }),
 
   fetchAlbums: async (page = 0) => {
+    // Check if cache is still fresh (5 minutes TTL)
+    const now = Date.now();
+    const lastFetch = get().lastFetchedAt;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+    if (get().albums.length > 0 && (now - lastFetch < CACHE_TTL)) {
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const albums = await api.get(
@@ -53,6 +63,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       );
       set({
         albums,
+        lastFetchedAt: now,
         pagination: {
           page,
           limit: 50,

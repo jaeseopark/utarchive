@@ -21,9 +21,16 @@ export const ArtistCreateSchema = z.object({
 export const SongListItemSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
+  platformId: z.string().nullable().optional(),
   releasedAt: z.string().nullable().optional(),
   preferred: z.boolean(),
+  coverArtId: z.string().uuid().nullable().optional(),
+  artistIds: z.array(z.string().uuid()).optional().default([]),
+  artistNames: z.array(z.string()).optional().default([]),
 });
+
+// Response schema for songs list endpoint
+export const SongsResponseSchema = z.array(SongListItemSchema);
 
 export const CoverArtSchema = z.object({
   id: z.string().uuid(),

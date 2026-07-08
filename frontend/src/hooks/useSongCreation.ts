@@ -7,7 +7,7 @@ import { SongSchema, type SongCreateInput } from '../api/schemas';
  * Hook to create a new song and update the store
  */
 export function useSongCreation() {
-  const { addSongDetail, setLoading, setError, isLoading, error } = useSongsStore();
+  const { addSongDetail, addSong, setLoading, setError, isLoading, error } = useSongsStore();
 
   const createSong = useCallback(
     async (data: SongCreateInput) => {
@@ -17,6 +17,7 @@ export function useSongCreation() {
       try {
         const response = await api.post('/api/songs', data, SongSchema);
         addSongDetail(response);
+        addSong(response); // Add to songs list for immediate display
         setLoading(false);
         return response;
       } catch (err) {
@@ -26,7 +27,7 @@ export function useSongCreation() {
         throw err;
       }
     },
-    [addSongDetail, setLoading, setError],
+    [addSongDetail, addSong, setLoading, setError],
   );
 
   return {
