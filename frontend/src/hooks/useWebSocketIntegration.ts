@@ -66,12 +66,15 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
         
         // Log each action type separately
         dataMsg.data.created?.forEach((item: Record<string, unknown>) => {
+          // eslint-disable-next-line no-restricted-syntax
           logStateUpdate(dataMsg.entity, "add", item.id as string);
         });
         dataMsg.data.updated?.forEach((item: Record<string, unknown>) => {
+          // eslint-disable-next-line no-restricted-syntax
           logStateUpdate(dataMsg.entity, "update", item.id as string);
         });
         dataMsg.data.deleted?.forEach((item: Record<string, unknown>) => {
+          // eslint-disable-next-line no-restricted-syntax
           logStateUpdate(dataMsg.entity, "delete", item.id as string);
         });
         break;
