@@ -63,16 +63,16 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
         handleDataChanged(message as DataChangedMessage);
         // eslint-disable-next-line no-restricted-syntax
         const dataMsg = message as DataChangedMessage;
-        const changedIds = [
-          // eslint-disable-next-line no-restricted-syntax
-          ...(dataMsg.data.created?.map((i: Record<string, unknown>) => i.id as string) || []),
-          // eslint-disable-next-line no-restricted-syntax
-          ...(dataMsg.data.updated?.map((i: Record<string, unknown>) => i.id as string) || []),
-          // eslint-disable-next-line no-restricted-syntax
-          ...(dataMsg.data.deleted?.map((i: Record<string, unknown>) => i.id as string) || []),
-        ];
-        changedIds.forEach((id) => {
-          logStateUpdate(dataMsg.entity, "changed", id);
+        
+        // Log each action type separately
+        dataMsg.data.created?.forEach((item: Record<string, unknown>) => {
+          logStateUpdate(dataMsg.entity, "add", item.id as string);
+        });
+        dataMsg.data.updated?.forEach((item: Record<string, unknown>) => {
+          logStateUpdate(dataMsg.entity, "update", item.id as string);
+        });
+        dataMsg.data.deleted?.forEach((item: Record<string, unknown>) => {
+          logStateUpdate(dataMsg.entity, "delete", item.id as string);
         });
         break;
       }
@@ -94,8 +94,7 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
       }
 
       default: {
-        // eslint-disable-next-line no-restricted-syntax
-        console.warn("[WebSocket] Unknown message type:", (message as Record<string, unknown>).type);
+        console.warn("[WebSocket] Unknown message type:", message.type);
       }
     }
   } catch (err) {

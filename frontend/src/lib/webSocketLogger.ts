@@ -33,7 +33,7 @@ export const logWebSocketEvent = (event: Omit<WebSocketEvent, "timestamp">): voi
   }
 
   // Log to console in development
-  if (process.env.NODE_ENV === "development") {
+  if (import.meta.env.DEV) {
     console.log(`[WebSocket Client] ${event.type}`, {
       message: event.message,
       duration: event.duration,
