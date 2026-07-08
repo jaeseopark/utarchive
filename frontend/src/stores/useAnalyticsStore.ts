@@ -85,7 +85,8 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
     }
   },
 
-  updateProgress: (seconds: number) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  updateProgress: (_seconds: number) => {
     // Can be used to track progress in UI
   },
 }));

@@ -16,7 +16,7 @@ export function useCreateArtist() {
         return response;
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to create artist';
-        throw new Error(message);
+        throw new Error(message, { cause: err });
       }
     },
     [],

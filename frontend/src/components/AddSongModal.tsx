@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import CreatableSelect from 'react-select/creatable';
 import { Button } from './ui/Button';
-import { SongCreateSchema, type SongCreateInput, type Artist } from '../api/schemas';
+import { SongCreateSchema, type SongCreateInput } from '../api/schemas';
 import { useSongCreation } from '../hooks/useSongCreation';
 import { useArtistsForSelect } from '../hooks/useArtistsForSelect';
 import { useCreateArtist } from '../hooks/useCreateArtist';
@@ -70,7 +70,7 @@ export function AddSongModal() {
         // Remove empty string values from optional fields before submission
         const cleanedData = Object.fromEntries(
           Object.entries(data).filter(
-            ([_, value]) => value !== '' && value !== undefined
+            ([, value]) => value !== '' && value !== undefined
           )
         );
         

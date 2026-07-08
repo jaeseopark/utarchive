@@ -196,12 +196,16 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
 
       // Remove from state
       set((state) => {
-        const { [id]: _, ...rest } = state.playlistDetails;
-        const { [id]: __, ...counts } = state.songCounts;
+        const playlistDetailsRest = Object.fromEntries(
+          Object.entries(state.playlistDetails).filter(([key]) => key !== id)
+        );
+        const songCountsRest = Object.fromEntries(
+          Object.entries(state.songCounts).filter(([key]) => key !== id)
+        );
         return {
           playlists: state.playlists.filter((p) => p.id !== id),
-          playlistDetails: rest,
-          songCounts: counts,
+          playlistDetails: playlistDetailsRest,
+          songCounts: songCountsRest,
         };
       });
     } catch (error) {

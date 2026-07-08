@@ -5,7 +5,7 @@ import { usePlaylistsStore } from '../stores/usePlaylistsStore';
  * Hook to fetch and manage playlist detail with caching
  */
 export function usePlaylistDetail(playlistId: string) {
-  const { playlistDetails, isLoading, error, fetchPlaylistDetail, getPlaylistDetail, createPlaylist, updatePlaylist, deletePlaylist, addSongToPlaylist, removeSongFromPlaylist } = usePlaylistsStore();
+  const { isLoading, error, fetchPlaylistDetail, getPlaylistDetail, updatePlaylist, deletePlaylist, addSongToPlaylist, removeSongFromPlaylist } = usePlaylistsStore();
 
   useEffect(() => {
     if (!playlistId) return;

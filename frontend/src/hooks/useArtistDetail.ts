@@ -5,7 +5,7 @@ import { useArtistsStore } from '../stores/useArtistsStore';
  * Hook to fetch and manage artist detail with caching
  */
 export function useArtistDetail(artistId: string) {
-  const { artistDetails, isLoading, error, fetchArtistDetail, getArtistDetail } = useArtistsStore();
+  const { isLoading, error, fetchArtistDetail, getArtistDetail } = useArtistsStore();
 
   useEffect(() => {
     if (!artistId) return;

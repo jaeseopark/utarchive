@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { Button } from '../components/ui/Button';
@@ -93,7 +93,7 @@ function PlaylistDetailPage() {
   const handleRemoveSong = async (position: number) => {
     try {
       await removeSong(position);
-    } catch (err) {
+    } catch {
       // Error is already in store
     }
   };
@@ -114,7 +114,7 @@ function PlaylistDetailPage() {
         playlistId: z.string().uuid(),
         songIds: z.array(z.string().uuid()),
       }));
-    } catch (err) {
+    } catch {
       // Handle error
     }
   };
@@ -155,7 +155,7 @@ function PlaylistDetailPage() {
   const handleAddSong = async (songId: string) => {
     try {
       await addSong(songId);
-    } catch (err) {
+    } catch {
       // Error is already in store
     }
   };

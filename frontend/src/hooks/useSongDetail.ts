@@ -5,7 +5,7 @@ import { useSongsStore } from '../stores/useSongsStore';
  * Hook to fetch and manage song detail with caching
  */
 export function useSongDetail(songId: string) {
-  const { songDetails, isLoading, error, fetchSongDetail, getSongDetail, songTrees, fetchSongTree, getSongTree } = useSongsStore();
+  const { isLoading, error, fetchSongDetail, getSongDetail, fetchSongTree, getSongTree } = useSongsStore();
 
   useEffect(() => {
     if (!songId) return;
