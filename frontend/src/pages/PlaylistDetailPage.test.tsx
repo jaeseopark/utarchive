@@ -18,7 +18,7 @@ vi.mock('../api/client', async () => {
 });
 
 // eslint-disable-next-line no-restricted-syntax
-const mockedApi = api as {
+const mockedApi = api as unknown as {
   get: ReturnType<typeof vi.fn>;
   put: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
