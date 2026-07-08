@@ -19,7 +19,7 @@ export const selectPlaylistById = async (playlistId: string) => {
       position: playlistSongs.position,
       songId: songs.id,
       title: songs.title,
-      preferred: songs.preferred,
+      playbackEnabled: songs.playbackEnabled,
       filePath: songs.filePath,
     })
     .from(playlists)
@@ -45,7 +45,7 @@ export const selectPlaylistById = async (playlistId: string) => {
         song: {
           id: row.songId,
           title: row.title,
-          preferred: row.preferred,
+          playbackEnabled: row.playbackEnabled,
           filePath: row.filePath,
         },
       })),

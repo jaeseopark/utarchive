@@ -56,7 +56,7 @@ export const selectSongsByArtistId = (artistId: string) =>
       id: songs.id,
       title: songs.title,
       releasedAt: songs.releasedAt,
-      preferred: songs.preferred,
+      playbackEnabled: songs.playbackEnabled,
     })
     .from(songs)
     .innerJoin(songArtists, eq(songArtists.songId, songs.id))

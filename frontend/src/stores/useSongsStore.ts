@@ -199,7 +199,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         title: song.title,
         platformId: song.platformId,
         releasedAt: song.releasedAt,
-        preferred: song.preferred,
+        playbackEnabled: song.playbackEnabled,
         coverArtId: song.coverArtId,
         artistIds: song.artistIds,
       };
@@ -230,7 +230,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
             title: updates.title ?? song.title,
             platformId: updates.platformId ?? song.platformId,
             releasedAt: updates.releasedAt ?? song.releasedAt,
-            preferred: updates.preferred ?? song.preferred,
+            playbackEnabled: updates.playbackEnabled ?? song.playbackEnabled,
             coverArtId: updates.coverArtId ?? song.coverArtId,
           };
         }

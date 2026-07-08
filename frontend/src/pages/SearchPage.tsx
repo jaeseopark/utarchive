@@ -10,7 +10,7 @@ const SearchSongSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   artistId: z.string().nullable().optional(),
-  preferred: z.boolean(),
+  playbackEnabled: z.boolean(),
 });
 
 const SearchArtistSchema = z.object({
@@ -119,7 +119,7 @@ function SearchPage() {
                       <tr>
                         <th className="px-4 py-3">Title</th>
                         <th className="px-4 py-3">Artist</th>
-                        <th className="px-4 py-3">Preferred</th>
+                        <th className="px-4 py-3">Playback Enabled</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -139,7 +139,7 @@ function SearchPage() {
                               'Unknown'
                             )}
                           </td>
-                          <td className="px-4 py-4 text-slate-700">{song.preferred ? 'Yes' : 'No'}</td>
+                          <td className="px-4 py-4 text-slate-700">{song.playbackEnabled ? 'Yes' : 'No'}</td>
                         </tr>
                       ))}
                     </tbody>

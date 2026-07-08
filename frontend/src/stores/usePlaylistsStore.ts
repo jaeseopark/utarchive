@@ -15,7 +15,7 @@ const PlaylistSongSchema = z.object({
   song: z.object({
     id: z.string().uuid(),
     title: z.string(),
-    preferred: z.boolean(),
+    playbackEnabled: z.boolean(),
     filePath: z.string().nullable().optional(),
   }),
 });

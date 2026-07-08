@@ -56,7 +56,7 @@ function SongsPage() {
                   <td className="px-4 py-4">
                     <Link to={`/songs/${song.id}`} className="font-medium text-slate-900 transition hover:text-sky-500">
                       {song.title}
-                      {song.preferred && (
+                      {song.playbackEnabled && (
                         <span className="ml-2 text-xs font-semibold text-emerald-600">★</span>
                       )}
                     </Link>

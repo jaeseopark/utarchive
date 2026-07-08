@@ -5,7 +5,7 @@ export type SearchSongResult = {
   id: string;
   title: string;
   artistId: string | null;
-  preferred: boolean;
+  playbackEnabled: boolean;
 };
 
 export type SearchArtistResult = {
@@ -61,7 +61,7 @@ export const searchEntities = async (query: string) => {
         ORDER BY sa.display_order
         LIMIT 1
       ) AS "artistId",
-      s.preferred
+      s.playback_enabled AS "playbackEnabled"
     FROM songs s,
       search_query
     WHERE s.search_vector @@ search_query.query

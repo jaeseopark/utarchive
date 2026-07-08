@@ -8,6 +8,7 @@ import {
   type SongTree,
 } from '../api/schemas';
 import { z } from 'zod';
+import { PlaybackEnabledToggle } from '../components/PlaybackEnabledToggle';
 import { Button } from '../components/ui/Button';
 import CoverArt from '../components/CoverArt';
 import FamilyTree from '../components/FamilyTree';
@@ -179,6 +180,22 @@ function SongDetailPage() {
     clearListeningState();
   };
 
+  const handlePlaybackEnabledChange = (songId: string, newPlaybackEnabled: boolean) => {
+    // Update main song if it changed
+    if (song && song.id === songId) {
+      setSong({ ...song, playbackEnabled: newPlaybackEnabled });
+    }
+    // Update tree if the song is in it
+    if (tree) {
+      setTree({
+        ...tree,
+        nodes: tree.nodes.map((node) =>
+          node.id === songId ? { ...node, playbackEnabled: newPlaybackEnabled } : node
+        ),
+      });
+    }
+  };
+
   // Handle browser tab closing
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -259,9 +276,11 @@ function SongDetailPage() {
                 <Link to={`/songs/new?parentId=${song.id}`}>
                   <Button variant="secondary">Add child</Button>
                 </Link>
-                <Button variant="secondary" disabled>
-                  Play
-                </Button>
+                {song.filePath && (
+                  <Button variant="secondary" disabled>
+                    Play
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -287,11 +306,14 @@ function SongDetailPage() {
                 </div>
               </div>
               <div className="rounded-3xl border border-slate-300 bg-slate-100/80 p-4">
-                <div className="text-slate-600">Preferred</div>
-                <div className="mt-2">
-                  <span className={song.preferred ? 'rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white' : 'rounded-full bg-slate-300 px-3 py-1 text-xs text-slate-700'}>
-                    {song.preferred ? 'Preferred' : 'Skip'}
-                  </span>
+                <div className="text-slate-600">Playback Enabled</div>
+                <div className="mt-3 flex items-center gap-3 min-h-8">
+                  <PlaybackEnabledToggle
+                    songId={song.id}
+                    isEnabled={song.playbackEnabled}
+                    filePath={song.filePath}
+                    onPlaybackEnabledChange={handlePlaybackEnabledChange}
+                  />
                 </div>
               </div>
               {formatTrimRange(song.trimRange) ? (
@@ -333,7 +355,7 @@ function SongDetailPage() {
             <h3 className="text-xl font-semibold text-slate-900">Family tree</h3>
             {tree?.nodes.length ? (
               <div className="mt-4">
-                <FamilyTree nodes={tree.nodes} currentSongId={song.id} />
+                <FamilyTree nodes={tree.nodes} currentSongId={song.id} onPlaybackEnabledChange={handlePlaybackEnabledChange} />
               </div>
             ) : (
               <p className="mt-4 text-slate-600">No family tree available.</p>

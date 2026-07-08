@@ -6,7 +6,7 @@ const SearchSongSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   artistId: z.string().nullable().optional(),
-  preferred: z.boolean(),
+  playbackEnabled: z.boolean(),
 });
 
 const SearchArtistSchema = z.object({

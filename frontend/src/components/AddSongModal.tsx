@@ -36,7 +36,7 @@ export function AddSongModal() {
     resolver: zodResolver(SongCreateSchema),
     mode: 'onBlur',
     defaultValues: {
-      preferred: true,
+      playbackEnabled: false,
       artistIds: [],
       tags: [],
     },
@@ -269,35 +269,9 @@ export function AddSongModal() {
             {errors.url && <p className="mt-1 text-sm text-red-500">{errors.url.message}</p>}
           </div>
 
-          {/* File Path */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700">File Path (optional)</label>
-            <input
-              type="text"
-              {...register('filePath')}
-              className={clsx(
-                'mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition',
-                errors.filePath ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400',
-              )}
-              placeholder="/path/to/song.mp3"
-            />
-            {errors.filePath && <p className="mt-1 text-sm text-red-500">{errors.filePath.message}</p>}
-          </div>
+          {/* File Path - hidden, set programmatically */}
 
-          {/* Cover Art ID */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700">Cover Art ID (optional)</label>
-            <input
-              type="text"
-              {...register('coverArtId')}
-              className={clsx(
-                'mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition',
-                errors.coverArtId ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400',
-              )}
-              placeholder="Enter cover art UUID"
-            />
-            {errors.coverArtId && <p className="mt-1 text-sm text-red-500">{errors.coverArtId.message}</p>}
-          </div>
+          {/* Cover Art ID - hidden, set programmatically */}
 
           {/* Description */}
           <div>
@@ -314,41 +288,11 @@ export function AddSongModal() {
             {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description.message}</p>}
           </div>
 
-          {/* Preferred */}
-          <div className="flex items-center gap-2">
-            <input type="checkbox" {...register('preferred')} className="h-4 w-4 rounded border-slate-300 text-sky-500" />
-            <label className="text-sm font-medium text-slate-700">Mark as preferred version</label>
-          </div>
+          {/* PlaybackEnabled - hidden, defaults to false */}
 
-          {/* Trim Range */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700">Trim Range (optional)</label>
-            <input
-              type="text"
-              {...register('trimRange')}
-              className={clsx(
-                'mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition',
-                errors.trimRange ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400',
-              )}
-              placeholder="e.g., 0.0-30.5"
-            />
-            {errors.trimRange && <p className="mt-1 text-sm text-red-500">{errors.trimRange.message}</p>}
-          </div>
+          {/* Trim Range - hidden, set programmatically */}
 
-          {/* File Hash */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700">File Hash (optional)</label>
-            <input
-              type="text"
-              {...register('fileHash')}
-              className={clsx(
-                'mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition',
-                errors.fileHash ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400',
-              )}
-              placeholder="Enter file hash"
-            />
-            {errors.fileHash && <p className="mt-1 text-sm text-red-500">{errors.fileHash.message}</p>}
-          </div>
+          {/* File Hash - hidden, set programmatically */}
 
           {/* Tags */}
           <div>
