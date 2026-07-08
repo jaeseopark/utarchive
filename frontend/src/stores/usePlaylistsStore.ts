@@ -76,13 +76,25 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   fetchPlaylists: async () => {
     set({ isLoading: true, error: null });
     try {
-      const playlists = await api.get('/api/playlists?limit=100&offset=0', PlaylistsResponseSchema);
-      set({ playlists });
+      const allPlaylists: Playlist[] = [];
+      let offset = 0;
+      const limit = 100;
+
+      // Fetch all pages
+      while (true) {
+        const batch = await api.get(`/api/playlists?limit=${limit}&offset=${offset}`, PlaylistsResponseSchema);
+        if (batch.length === 0) break;
+        allPlaylists.push(...batch);
+        if (batch.length < limit) break;
+        offset += limit;
+      }
+
+      set({ playlists: allPlaylists });
 
       // Fetch song counts for each playlist
       const counts: Record<string, number> = {};
       await Promise.all(
-        playlists.map(async (playlist) => {
+        allPlaylists.map(async (playlist) => {
           try {
             const detail = await api.get(`/api/playlists/${playlist.id}`, PlaylistDetailSchema);
             counts[playlist.id] = detail.songs.length;

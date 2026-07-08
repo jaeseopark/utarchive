@@ -27,6 +27,7 @@ export interface ArtistsState {
 
   // Actions
   fetchArtists: (page?: number) => Promise<void>;
+  fetchAllArtists: () => Promise<void>;
   fetchArtistDetail: (id: string) => Promise<void>;
   getArtistDetail: (id: string) => ArtistDetail | undefined;
   addArtist: (artist: Artist) => void;
@@ -74,6 +75,51 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
           page,
           limit: 50,
           total: artists.length,
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch artists';
+      set({ error: message });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  fetchAllArtists: async () => {
+    const now = Date.now();
+    const lastFetch = get().lastFetchedAt;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+    if (get().artists.length > 0 && (now - lastFetch < CACHE_TTL)) {
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      const allArtists: Artist[] = [];
+      let offset = 0;
+      const limit = 100;
+
+      // Fetch all pages
+      while (true) {
+        const batch = await api.get(
+          `/api/artists?limit=${limit}&offset=${offset}`,
+          ArtistsResponseSchema,
+        );
+
+        if (batch.length === 0) break;
+        allArtists.push(...batch);
+
+        if (batch.length < limit) break;
+        offset += limit;
+      }
+
+      set({
+        artists: allArtists,
+        lastFetchedAt: now,
+        pagination: {
+          page: 0,
+          limit: 100,
+          total: allArtists.length,
         },
       });
     } catch (error) {

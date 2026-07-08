@@ -25,6 +25,7 @@ export interface AlbumsState {
 
   // Actions
   fetchAlbums: (page?: number) => Promise<void>;
+  fetchAllAlbums: () => Promise<void>;
   fetchAlbumDetail: (id: string) => Promise<void>;
   getAlbumDetail: (id: string) => AlbumDetail | undefined;
   addAlbum: (album: Album) => void;
@@ -71,6 +72,51 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
           page,
           limit: 50,
           total: albums.length,
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch albums';
+      set({ error: message });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  fetchAllAlbums: async () => {
+    const now = Date.now();
+    const lastFetch = get().lastFetchedAt;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+    if (get().albums.length > 0 && (now - lastFetch < CACHE_TTL)) {
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      const allAlbums: Album[] = [];
+      let offset = 0;
+      const limit = 100;
+
+      // Fetch all pages
+      while (true) {
+        const batch = await api.get(
+          `/api/albums?limit=${limit}&offset=${offset}`,
+          AlbumsResponseSchema,
+        );
+
+        if (batch.length === 0) break;
+        allAlbums.push(...batch);
+
+        if (batch.length < limit) break;
+        offset += limit;
+      }
+
+      set({
+        albums: allAlbums,
+        lastFetchedAt: now,
+        pagination: {
+          page: 0,
+          limit: 100,
+          total: allAlbums.length,
         },
       });
     } catch (error) {
