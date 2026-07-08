@@ -1,6 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { v4 as uuidv4 } from "uuid";
 
+// Extend Express Request with requestId property
+declare global {
+  namespace Express {
+    interface Request {
+      requestId?: string;
+    }
+  }
+}
+
 interface RequestWithId extends Request {
   requestId?: string;
 }
