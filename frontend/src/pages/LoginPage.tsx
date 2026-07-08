@@ -9,6 +9,13 @@ type LocationState = {
   from?: Location;
 };
 
+/**
+ * Type guard to safely check if location.state is LocationState
+ */
+function isLocationState(state: unknown): state is LocationState {
+  return typeof state === 'object' && state !== null && ('from' in state || Object.keys(state).length === 0);
+}
+
 type LoginStep = 'credentials' | 'totp-verify' | 'totp-setup';
 
 const step1ResponseSchema = z.object({
@@ -35,7 +42,7 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const from = (location.state as LocationState | null)?.from?.pathname ?? '/artists';
+  const from = (isLocationState(location.state) ? location.state : null)?.from?.pathname ?? '/artists';
 
   const handleCredentialsChange = (field: 'id' | 'password') => (event: ChangeEvent<HTMLInputElement>) => {
     setCredentials((current) => ({ ...current, [field]: event.target.value }));

@@ -132,6 +132,7 @@ router.get(
       return res.status(404).json({ error: "Cover art not found" });
     }
 
+    // eslint-disable-next-line no-restricted-syntax
     const thumbnailPath = getThumbnailPath(id, sizeNum as 128 | 1024, uploadDir);
 
     if (!existsSync(thumbnailPath)) {

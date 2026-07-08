@@ -441,6 +441,7 @@ export const selectSongTree = async (songId: string) => {
     ORDER BY tree.path
   `);
 
+  // eslint-disable-next-line no-restricted-syntax
   const nodes = (result.rows ?? result) as SongTreeNode[];
 
   return {

@@ -1,6 +1,7 @@
 import { Route, Routes, Navigate } from 'react-router-dom';
 import RootLayout from './layouts/RootLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import { useWebSocketMessageHandling } from './hooks/useWebSocketIntegration';
 import LoginPage from './pages/LoginPage';
 import ArtistsPage from './pages/ArtistsPage';
 import ArtistDetailPage from './pages/ArtistDetailPage';
@@ -13,6 +14,9 @@ import PlaylistDetailPage from './pages/PlaylistDetailPage';
 import SearchPage from './pages/SearchPage';
 
 function App() {
+  // Initialize WebSocket message handlers and cleanup
+  useWebSocketMessageHandling();
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

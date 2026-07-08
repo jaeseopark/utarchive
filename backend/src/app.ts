@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import routes from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
+import { requestIdMiddleware } from "./middleware/requestId";
 
 export const createApp = () => {
   const app = express();
@@ -13,6 +14,9 @@ export const createApp = () => {
   // Handle both JSON and text/plain (for sendBeacon) content types
   app.use(express.json());
   app.use(express.text({ type: ["text/plain", "application/json"] }));
+
+  // Add request ID middleware
+  app.use(requestIdMiddleware);
 
   // Disable caching for all API responses to prevent 304 Not Modified
   app.use((req, res, next) => {

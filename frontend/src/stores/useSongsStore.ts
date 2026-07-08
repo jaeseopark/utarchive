@@ -36,6 +36,8 @@ export interface SongsState {
   getSongTree: (id: string) => SongTree | undefined;
   addSongDetail: (song: Song) => void;
   addSong: (song: Song) => void;
+  updateSong: (id: string, updates: Partial<Song>) => void;
+  removeSong: (id: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -162,6 +164,52 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         pagination: {
           ...state.pagination,
           total: state.pagination.total + 1,
+        },
+      };
+    });
+  },
+
+  updateSong: (id: string, updates: Partial<Song>) => {
+    set((state) => {
+      // Update song details if cached
+      const updatedDetails = { ...state.songDetails };
+      if (updatedDetails[id]) {
+        updatedDetails[id] = { ...updatedDetails[id], ...updates };
+      }
+
+      // Update song list item if present
+      const updatedSongs = state.songs.map((song) => {
+        if (song.id === id) {
+          return {
+            ...song,
+            title: updates.title ?? song.title,
+            platformId: updates.platformId ?? song.platformId,
+            releasedAt: updates.releasedAt ?? song.releasedAt,
+            preferred: updates.preferred ?? song.preferred,
+            coverArtId: updates.coverArtId ?? song.coverArtId,
+          };
+        }
+        return song;
+      });
+
+      return {
+        songs: updatedSongs,
+        songDetails: updatedDetails,
+      };
+    });
+  },
+
+  removeSong: (id: string) => {
+    set((state) => {
+      const updatedDetails = { ...state.songDetails };
+      delete updatedDetails[id];
+
+      return {
+        songs: state.songs.filter((song) => song.id !== id),
+        songDetails: updatedDetails,
+        pagination: {
+          ...state.pagination,
+          total: Math.max(0, state.pagination.total - 1),
         },
       };
     });

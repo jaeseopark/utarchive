@@ -52,6 +52,11 @@ export interface PlaylistsState {
   addSongToPlaylist: (playlistId: string, songId: string) => Promise<void>;
   removeSongFromPlaylist: (playlistId: string, position: number) => Promise<void>;
 
+  // Actions - Remote Updates (WebSocket)
+  addPlaylist: (playlist: Playlist) => void;
+  updatePlaylistFromRemote: (id: string, updates: Partial<Playlist>) => void;
+  removePlaylistFromRemote: (id: string) => void;
+
   // Actions - State
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -261,5 +266,44 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
       set({ error: message });
       throw error;
     }
+  },
+
+  // Remote update handlers (for WebSocket)
+  addPlaylist: (playlist: Playlist) => {
+    set((state) => ({
+      playlists: [...state.playlists, playlist],
+      songCounts: {
+        ...state.songCounts,
+        [playlist.id]: 0,
+      },
+    }));
+  },
+
+  updatePlaylistFromRemote: (id: string, updates: Partial<Playlist>) => {
+    set((state) => ({
+      playlists: state.playlists.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+      playlistDetails: {
+        ...state.playlistDetails,
+        ...(state.playlistDetails[id] && {
+          [id]: { ...state.playlistDetails[id], ...updates },
+        }),
+      },
+    }));
+  },
+
+  removePlaylistFromRemote: (id: string) => {
+    set((state) => {
+      const playlistDetailsRest = Object.fromEntries(
+        Object.entries(state.playlistDetails).filter(([key]) => key !== id)
+      );
+      const songCountsRest = Object.fromEntries(
+        Object.entries(state.songCounts).filter(([key]) => key !== id)
+      );
+      return {
+        playlists: state.playlists.filter((p) => p.id !== id),
+        playlistDetails: playlistDetailsRest,
+        songCounts: songCountsRest,
+      };
+    });
   },
 }));

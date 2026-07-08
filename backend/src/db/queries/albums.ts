@@ -47,11 +47,15 @@ const normalizeTrackList = (value: unknown): AlbumTrackListItem[] => {
     .filter(
       (item): item is { number: unknown; title: unknown } =>
         item !== null && typeof item === "object" &&
+        // eslint-disable-next-line no-restricted-syntax
         typeof (item as { number: unknown }).number === "number" &&
+        // eslint-disable-next-line no-restricted-syntax
         typeof (item as { title: unknown }).title === "string"
     )
     .map((item) => ({
+      // eslint-disable-next-line no-restricted-syntax
       number: (item as { number: number }).number,
+      // eslint-disable-next-line no-restricted-syntax
       title: (item as { title: string }).title,
     }));
 };

@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
+import { ConnectionStatusIndicator } from '../components/ConnectionStatusIndicator';
 import { useSession } from '../context/SessionContext';
 import { AddSongModal } from '../components/AddSongModal';
 import { useAddSongModalStore } from '../stores/useAddSongModalStore';
@@ -18,6 +19,7 @@ function RootLayout() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
+      <ConnectionStatusIndicator />
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between rounded-3xl border border-slate-300 bg-slate-50/90 p-5 shadow-xl shadow-slate-200/40">
           <div>

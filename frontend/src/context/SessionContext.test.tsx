@@ -16,6 +16,7 @@ vi.mock('../api/client', async () => {
   };
 });
 
+// eslint-disable-next-line no-restricted-syntax
 const mockedApi = api as {
   get: ReturnType<typeof vi.fn>;
   post: ReturnType<typeof vi.fn>;

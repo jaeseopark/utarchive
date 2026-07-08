@@ -1,4 +1,6 @@
 import { ZodSchema } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
+import { registerRequestId } from '../lib/requestIdDeduplication';
 
 export class ApiError extends Error {
   public readonly status: number;
@@ -38,10 +40,15 @@ async function request<T>(
   schema: ZodSchema<T>,
   options: RequestOptions = {},
 ): Promise<T> {
+  // Generate request ID for deduplication
+  const requestId = uuidv4();
+  registerRequestId(requestId);
+
   const response = await fetch(input, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      'X-Request-ID': requestId,
       ...init.headers,
     },
     ...init,

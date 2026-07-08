@@ -36,7 +36,15 @@ module.exports = [
     },
     rules: {
       ...ts.configs.recommended.rules,
-      ...prettier.rules
+      ...prettier.rules,
+      '@typescript-eslint/no-explicit-any': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSAsExpression',
+          message: 'Type casting with "as" is not allowed. Use type-safe narrowing or proper typing instead. Only suppress this rule for API response parsing/deserialization with: // eslint-disable-next-line no-restricted-syntax'
+        }
+      ]
     }
   },
   {

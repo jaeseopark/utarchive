@@ -12,6 +12,8 @@ import {
   updateSongTags,
   selectUniqueTags,
 } from "../db/queries/songs";
+import { broadcastMessage } from "../ws";
+import { DataChangedMessage } from "../types/websocket";
 
 const router = Router();
 
@@ -85,6 +87,7 @@ router.get(
   "/songs",
   validateRequest(songListSchema, "query"),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const { limit, offset, artistId, masterId, preferred } = req.query as unknown as z.infer<
       typeof songListSchema
     >;
@@ -105,11 +108,29 @@ router.post(
   "/songs",
   validateRequest(songCreateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const songData = req.body as z.infer<typeof songCreateSchema>;
     const artistIds = songData.artistIds;
+    const requestId = req.requestId;
 
     try {
       const createdSong = await createSong(songData, artistIds);
+      
+      // Broadcast to all connected clients
+      const wss = req.app.locals.wss;
+      if (wss) {
+        const message: DataChangedMessage = {
+          type: "DATA_CHANGED",
+          entity: "song",
+          timestamp: Date.now(),
+          data: {
+            created: [createdSong],
+          },
+          requestId,
+        };
+        broadcastMessage(wss, message);
+      }
+      
       return res.status(201).json(createdSong);
     } catch (error) {
       if (error instanceof Error && error.message === "PARENT_NOT_FOUND") {
@@ -141,10 +162,12 @@ router.patch(
   "/songs/:id",
   validateRequest(songUpdateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const updateData = req.body as z.infer<typeof songUpdateSchema>;
     const songId = Array.isArray(req.params.id)
       ? req.params.id[0]
       : req.params.id;
+    const requestId = req.requestId;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: "No update fields provided" });
@@ -154,6 +177,21 @@ router.patch(
 
     if (!updatedSong) {
       return res.status(404).json({ error: "Song not found" });
+    }
+
+    // Broadcast to all connected clients
+    const wss = req.app.locals.wss;
+    if (wss) {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
+        entity: "song",
+        timestamp: Date.now(),
+        data: {
+          updated: [updatedSong],
+        },
+        requestId,
+      };
+      broadcastMessage(wss, message);
     }
 
     return res.status(200).json(updatedSong);
@@ -178,13 +216,30 @@ router.patch(
   "/songs/:id/tags",
   validateRequest(tagsUpdateSchema),
   async (req, res) => {
+    // eslint-disable-next-line no-restricted-syntax
     const { tags } = req.body as z.infer<typeof tagsUpdateSchema>;
     const songId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const requestId = req.requestId;
 
     const updatedSong = await updateSongTags(songId, tags ?? []);
 
     if (!updatedSong) {
       return res.status(404).json({ error: "Song not found" });
+    }
+
+    // Broadcast to all connected clients
+    const wss = req.app.locals.wss;
+    if (wss) {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
+        entity: "song",
+        timestamp: Date.now(),
+        data: {
+          updated: [{ id: updatedSong.id, tags: updatedSong.tags }],
+        },
+        requestId,
+      };
+      broadcastMessage(wss, message);
     }
 
     return res.status(200).json({

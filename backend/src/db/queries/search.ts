@@ -37,12 +37,16 @@ export const searchEntities = async (query: string) => {
 
   if (!tsQuery) {
     return {
+      // eslint-disable-next-line no-restricted-syntax
       songs: [] as SearchSongResult[],
+      // eslint-disable-next-line no-restricted-syntax
       artists: [] as SearchArtistResult[],
+      // eslint-disable-next-line no-restricted-syntax
       albums: [] as SearchAlbumResult[],
     };
   }
 
+  // eslint-disable-next-line no-restricted-syntax
   const songRows = (await db.execute(sql`
     WITH search_query AS (
       SELECT to_tsquery('english', ${tsQuery}) AS query
@@ -63,8 +67,10 @@ export const searchEntities = async (query: string) => {
     WHERE s.search_vector @@ search_query.query
     ORDER BY ts_rank(s.search_vector, search_query.query) DESC
     LIMIT 20
+  // eslint-disable-next-line no-restricted-syntax
   `)) as unknown as SearchSongResult[];
 
+  // eslint-disable-next-line no-restricted-syntax
   const artistRows = (await db.execute(sql`
     WITH search_query AS (
       SELECT to_tsquery('english', ${tsQuery}) AS query
@@ -78,8 +84,10 @@ export const searchEntities = async (query: string) => {
     WHERE to_tsvector('english', a.name) @@ search_query.query
     ORDER BY ts_rank(to_tsvector('english', a.name), search_query.query) DESC
     LIMIT 20
+  // eslint-disable-next-line no-restricted-syntax
   `)) as unknown as SearchArtistResult[];
 
+  // eslint-disable-next-line no-restricted-syntax
   const albumRows = (await db.execute(sql`
     WITH search_query AS (
       SELECT to_tsquery('english', ${tsQuery}) AS query
@@ -94,6 +102,7 @@ export const searchEntities = async (query: string) => {
     WHERE to_tsvector('english', al.title) @@ search_query.query
     ORDER BY ts_rank(to_tsvector('english', al.title), search_query.query) DESC
     LIMIT 20
+  // eslint-disable-next-line no-restricted-syntax
   `)) as unknown as SearchAlbumResult[];
 
   return {
