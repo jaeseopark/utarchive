@@ -22,7 +22,7 @@ const searchResults = {
     { id: 'artist-1', name: 'Astro Child', aliases: ['A.Child'] },
   ],
   albums: [
-    { id: 'album-1', title: 'Galactic Path', artistIds: ['artist-1'], artistNames: ['Astro Child'], yearReleased: 2024 },
+    { id: 'album-1', title: 'Galactic Path', artistIds: ['artist-1'], yearReleased: 2024 },
   ],
 };
 

@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { z } from 'zod';
+import { useArtistsStore } from '../stores/useArtistsStore';
+import { getArtistNames } from '../lib/artistNames';
 
 const SearchSongSchema = z.object({
   id: z.string().uuid(),
@@ -21,7 +23,6 @@ const SearchAlbumSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   artistIds: z.array(z.string().uuid()).optional().default([]),
-  artistNames: z.array(z.string()).optional().default([]),
   yearReleased: z.number().int().nullable().optional(),
 });
 
@@ -40,6 +41,7 @@ function SearchPage() {
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const artists = useArtistsStore((state) => state.artists);
 
   const trimmedQuery = queryParam.trim();
   const hasQuery = trimmedQuery.length > 0;
@@ -193,30 +195,33 @@ function SearchPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {results.albums.map((album) => (
-                        <tr key={album.id} className="border-b border-slate-300 last:border-b-0">
-                          <td className="px-4 py-4">
-                            <Link to={`/albums/${album.id}`} className="text-slate-900 transition hover:text-sky-500\">
-                              {album.title}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-4 text-slate-700">
-                            {album.artistNames.length > 0 ? (
-                              album.artistNames.map((name, index) => (
-                                <span key={index}>
-                                  {index > 0 && ', '}
-                                  <Link to={`/artists/${album.artistIds[index]}`} className="text-sky-500 hover:underline">
-                                    {name}
-                                  </Link>
-                                </span>
-                              ))
-                            ) : (
-                              'Unknown'
-                            )}
-                          </td>
-                          <td className="px-4 py-4 text-slate-700">{album.yearReleased ?? '—'}</td>
-                        </tr>
-                      ))}
+                      {results.albums.map((album) => {
+                        const albumArtistNames = getArtistNames(album.artistIds ?? [], artists);
+                        return (
+                          <tr key={album.id} className="border-b border-slate-300 last:border-b-0">
+                            <td className="px-4 py-4">
+                              <Link to={`/albums/${album.id}`} className="text-slate-900 transition hover:text-sky-500\">
+                                {album.title}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-4 text-slate-700">
+                              {albumArtistNames.length > 0 ? (
+                                albumArtistNames.map((name, index) => (
+                                  <span key={index}>
+                                    {index > 0 && ', '}
+                                    <Link to={`/artists/${album.artistIds[index]}`} className="text-sky-500 hover:underline">
+                                      {name}
+                                    </Link>
+                                  </span>
+                                ))
+                              ) : (
+                                'Unknown'
+                              )}
+                            </td>
+                            <td className="px-4 py-4 text-slate-700">{album.yearReleased ?? '—'}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

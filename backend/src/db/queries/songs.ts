@@ -64,7 +64,6 @@ export type SongWithHierarchy = Song & {
   parentId: string | null;
   masterId: string;
   artistIds: string[];
-  artistNames: string[];
 };
 
 export const selectSongById = async (id: string) => {
@@ -91,12 +90,6 @@ export const selectSongById = async (id: string) => {
       artistIds: sql`
         (SELECT coalesce(array_agg(sa.artist_id ORDER BY sa.display_order), ARRAY[]::uuid[])
          FROM song_artists sa
-         WHERE sa.song_id = ${songs.id})
-      `,
-      artistNames: sql`
-        (SELECT coalesce(array_agg(a.name ORDER BY sa.display_order), ARRAY[]::text[])
-         FROM song_artists sa
-         JOIN artists a ON a.id = sa.artist_id
          WHERE sa.song_id = ${songs.id})
       `,
     })
@@ -154,9 +147,6 @@ export const selectSongs = async (filters: SongListFilters) => {
     coverArtId: songs.coverArtId,
     artistIds: sql<string[]>`
       coalesce(array_agg("song_artists"."artist_id" ORDER BY "song_artists"."display_order"), ARRAY[]::uuid[])
-    `,
-    artistNames: sql<string[]>`
-      coalesce(array_agg("artists"."name" ORDER BY "song_artists"."display_order"), ARRAY[]::text[])
     `,
   };
 
@@ -287,7 +277,6 @@ export const createSong = async (
       parentId: songData.parentId ?? null,
       masterId: masterId ?? songId,
       artistIds,
-      artistNames: [],
     };
   });
 };
@@ -353,7 +342,6 @@ export const updateSongById = async (
     return {
       ...updatedSong,
       artistIds: updatedArtistIds.map((row) => row.artistId),
-      artistNames: [],
       parentId: hierarchy[0]?.parentId ?? null,
       masterId: hierarchy[0]?.masterId ?? songId,
     };
@@ -424,15 +412,6 @@ export const selectSongTree = async (songId: string) => {
         ),
         ARRAY[]::uuid[]
       ) AS "artistIds",
-      COALESCE(
-        (
-          SELECT array_agg(a.name ORDER BY sa.display_order)
-          FROM song_artists sa
-          JOIN artists a ON a.id = sa.artist_id
-          WHERE sa.song_id = tree.id
-        ),
-        ARRAY[]::text[]
-      ) AS "artistNames",
       tree.cover_art_id AS "coverArtId",
       tree.preferred,
       tree.released_at AS "releasedAt",

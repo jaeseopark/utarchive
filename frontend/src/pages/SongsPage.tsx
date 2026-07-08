@@ -1,22 +1,29 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSongs } from '../hooks/useSongs';
+import { useArtistsStore } from '../stores/useArtistsStore';
+import { getArtistNames } from '../lib/artistNames';
 
 const PAGE_SIZE = 50;
 
 function SongsPage() {
   const [page, setPage] = useState(0);
   const { songs, isLoading, error } = useSongs(page);
+  const artists = useArtistsStore((state) => state.artists);
 
   const canPrevious = page > 0;
 
   const rows = useMemo(
-    () => songs.map((song) => ({
-      ...song,
-      artistText: song.artistNames?.length ? song.artistNames.join(', ') : 'Unknown',
-      releasedYear: song.releasedAt ? new Date(song.releasedAt).getFullYear() : null,
-    })),
-    [songs],
+    () => songs.map((song) => {
+      const artistNames = getArtistNames(song.artistIds ?? [], artists);
+      return {
+        ...song,
+        artistText: artistNames.length ? artistNames.join(', ') : 'Unknown',
+        artistNames,
+        releasedYear: song.releasedAt ? new Date(song.releasedAt).getFullYear() : null,
+      };
+    }),
+    [songs, artists],
   );
 
   return (
