@@ -1,10 +1,12 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 
 export const errorHandler = (
   err: unknown,
   _req: Request,
-  res: Response
+  res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _next: NextFunction
 ) => {
   if (err instanceof ZodError) {
     return res.status(400).json({ error: "Invalid request", details: err.issues });

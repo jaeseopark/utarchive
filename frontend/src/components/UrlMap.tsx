@@ -15,8 +15,8 @@ function UrlMapComponent({ urls }: UrlMapProps) {
   }
 
   return (
-    <div className="rounded-3xl border border-slate-700 bg-slate-950/80 p-4 shadow-inner shadow-slate-950/20">
-      <h3 className="text-lg font-semibold text-slate-100">Links</h3>
+    <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-inner shadow-slate-200/20">
+      <h3 className="text-lg font-semibold text-slate-900">Links</h3>
       <div className="mt-3 grid gap-2">
         {entries.map(([label, href]) => (
           <a
@@ -24,7 +24,7 @@ function UrlMapComponent({ urls }: UrlMapProps) {
             href={href}
             target="_blank"
             rel="noreferrer noopener"
-            className="inline-flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400 hover:text-white"
+            className="inline-flex items-center justify-between rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-700 transition hover:border-sky-400 hover:text-slate-900"
           >
             <span>{label}</span>
             <span className="text-sky-400">→</span>

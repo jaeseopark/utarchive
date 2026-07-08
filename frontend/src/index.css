@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
   min-height: 100%;
-  background: #020617;
+  background: #ffffff;
 }
 
 body {
@@ -20,3 +20,66 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* React Select Styling */
+.react-select__control {
+  border-color: #cbd5e1;
+  border-radius: 0.5rem;
+  min-height: 2.5rem;
+  font-size: 0.875rem;
+}
+
+.react-select__control:hover {
+  border-color: #94a3b8;
+}
+
+.react-select__control--is-focused {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 1px #0ea5e9;
+}
+
+.react-select__control.has-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px #ef4444;
+}
+
+.react-select__multi-value {
+  background-color: #dbeafe;
+  border-radius: 0.375rem;
+}
+
+.react-select__multi-value__label {
+  color: #1e40af;
+  font-size: 0.875rem;
+}
+
+.react-select__multi-value__remove {
+  color: #1e40af;
+}
+
+.react-select__multi-value__remove:hover {
+  background-color: #bfdbfe;
+  color: #1e3a8a;
+}
+
+.react-select__option {
+  font-size: 0.875rem;
+}
+
+.react-select__option--is-selected {
+  background-color: #0ea5e9;
+}
+
+.react-select__option--is-focused {
+  background-color: #e0f2fe;
+}
+
+.react-select__menu {
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.react-select__input {
+  font-size: 0.875rem;
+}
+

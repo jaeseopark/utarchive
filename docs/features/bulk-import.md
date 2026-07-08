@@ -2,11 +2,13 @@
 
 ## Context
 
-as a user, i want to be able to copy-paste a freeform string, containing information about 0...N songs (ex. html source code for a 'top songs' page or a playlist) and create songs in one go. the string is going to be in an arbitrary format as the source is not limited to a specific website. 
+This is an **optional feature** that complements the baseline [Add Song Modal](./add-song-modal.md) experience. While the Add Song Modal allows users to add songs one-by-one through a form, the bulk import feature enables power users to add multiple songs at once using AI-powered extraction.
+
+As a user, I want to be able to copy-paste a freeform string containing information about 0...N songs (ex. html source code for a 'top songs' page or a playlist) and create songs in one go. The string is going to be in an arbitrary format as the source is not limited to a specific website. 
 
 I want the import operation to be idempotent based on platform ID (if provided). This implies that the platform id field needs to have the unique constraint in the database (if not already)
 
-This is an optional feature that gets enabled when OPEN_ROUTER_API_KEY is provided as an environment variable. the enabled flag should be determined during the startup and delivered to the frontend so the experience is gated in the UI (i.e. greyed out) for best UX. if user does not have the key, they will not be able to utilize this optional feature and should only be allowed to enter songs one by one manually (the default experience)
+This is an optional feature that gets enabled when OPEN_ROUTER_API_KEY is provided as an environment variable. The enabled flag should be determined during the startup and delivered to the frontend so the experience is gated in the UI (i.e. greyed out) for best UX. If the user does not have the key, they will not be able to utilize this optional feature and should use the [Add Song Modal](./add-song-modal.md) to enter songs one-by-one (the default baseline experience).
 
 ## proposed flow and important notes
 

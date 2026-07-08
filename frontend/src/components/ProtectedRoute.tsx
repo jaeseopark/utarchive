@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children }: PropsWithChildren) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-slate-300">
+      <div className="flex min-h-screen items-center justify-center text-slate-700">
         Loading...
       </div>
     );

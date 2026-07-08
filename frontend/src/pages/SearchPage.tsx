@@ -77,7 +77,7 @@ function SearchPage() {
     <section className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold">Search</h2>
-        <p className="mt-2 text-slate-400">Search songs, artists, and albums across the archive.</p>
+        <p className="mt-2 text-slate-600">Search songs, artists, and albums across the archive.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -89,31 +89,31 @@ function SearchPage() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search songs, artists, albums"
-          className="min-w-0 rounded-3xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
+          className="min-w-0 rounded-3xl border border-slate-400 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
         />
         <Button type="submit">Search</Button>
       </form>
 
       {isLoading ? (
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-8 text-center text-slate-400">Loading results…</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">Loading results…</div>
       ) : error ? (
-        <div className="rounded-3xl border border-rose-600 bg-rose-950/30 p-6 text-rose-100">Error loading search results: {error}</div>
+        <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">Error loading search results: {error}</div>
       ) : !hasQuery ? (
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-8 text-slate-400">Enter a search query to see songs, artists, and albums.</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">Enter a search query to see songs, artists, and albums.</div>
       ) : noResults ? (
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-8 text-slate-400">No results for &ldquo;{trimmedQuery}&rdquo;.</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">No results for "{trimmedQuery}".</div>
       ) : (
         results && (
           <div className="space-y-8">
             {results.songs.length > 0 ? (
-              <section className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6 shadow-xl shadow-slate-950/20">
+              <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-slate-100">Songs</h3>
-                  <span className="text-sm text-slate-400">{results.songs.length} results</span>
+                  <h3 className="text-xl font-semibold text-slate-900">Songs</h3>
+                  <span className="text-sm text-slate-600">{results.songs.length} results</span>
                 </div>
                 <div className="mt-4 overflow-x-auto">
-                  <table className="min-w-full text-left text-sm text-slate-200">
-                    <thead className="border-b border-slate-700 text-slate-400">
+                  <table className="min-w-full text-left text-sm text-slate-700">
+                    <thead className="border-b border-slate-300 text-slate-600\">
                       <tr>
                         <th className="px-4 py-3">Title</th>
                         <th className="px-4 py-3">Artist</th>
@@ -122,22 +122,22 @@ function SearchPage() {
                     </thead>
                     <tbody>
                       {results.songs.map((song) => (
-                        <tr key={song.id} className="border-b border-slate-800 last:border-b-0">
+                        <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
                           <td className="px-4 py-4">
-                            <Link to={`/songs/${song.id}`} className="text-slate-100 transition hover:text-sky-300">
+                            <Link to={`/songs/${song.id}`} className="text-slate-900 transition hover:text-sky-500">
                               {song.title}
                             </Link>
                           </td>
-                          <td className="px-4 py-4 text-slate-300">
+                          <td className="px-4 py-4 text-slate-700">
                             {song.artistId ? (
-                              <Link to={`/artists/${song.artistId}`} className="text-sky-300 hover:underline">
+                              <Link to={`/artists/${song.artistId}`} className="text-sky-500 hover:underline">
                                 Artist
                               </Link>
                             ) : (
                               'Unknown'
                             )}
                           </td>
-                          <td className="px-4 py-4 text-slate-300">{song.preferred ? 'Yes' : 'No'}</td>
+                          <td className="px-4 py-4 text-slate-700">{song.preferred ? 'Yes' : 'No'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -147,14 +147,14 @@ function SearchPage() {
             ) : null}
 
             {results.artists.length > 0 ? (
-              <section className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6 shadow-xl shadow-slate-950/20">
+              <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-slate-100">Artists</h3>
-                  <span className="text-sm text-slate-400">{results.artists.length} results</span>
+                  <h3 className="text-xl font-semibold text-slate-900">Artists</h3>
+                  <span className="text-sm text-slate-600">{results.artists.length} results</span>
                 </div>
                 <div className="mt-4 overflow-x-auto">
-                  <table className="min-w-full text-left text-sm text-slate-200">
-                    <thead className="border-b border-slate-700 text-slate-400">
+                  <table className="min-w-full text-left text-sm text-slate-700">
+                    <thead className="border-b border-slate-300 text-slate-600">
                       <tr>
                         <th className="px-4 py-3">Name</th>
                         <th className="px-4 py-3">Aliases</th>
@@ -162,13 +162,13 @@ function SearchPage() {
                     </thead>
                     <tbody>
                       {results.artists.map((artist) => (
-                        <tr key={artist.id} className="border-b border-slate-800 last:border-b-0">
+                        <tr key={artist.id} className="border-b border-slate-300 last:border-b-0">
                           <td className="px-4 py-4">
-                            <Link to={`/artists/${artist.id}`} className="text-slate-100 transition hover:text-sky-300">
+                            <Link to={`/artists/${artist.id}`} className="text-slate-900 transition hover:text-sky-500">
                               {artist.name}
                             </Link>
                           </td>
-                          <td className="px-4 py-4 text-slate-300">{artist.aliases.join(', ') || '—'}</td>
+                          <td className="px-4 py-4 text-slate-700">{artist.aliases.join(', ') || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -178,14 +178,14 @@ function SearchPage() {
             ) : null}
 
             {results.albums.length > 0 ? (
-              <section className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6 shadow-xl shadow-slate-950/20">
+              <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-slate-100">Albums</h3>
-                  <span className="text-sm text-slate-400">{results.albums.length} results</span>
+                  <h3 className="text-xl font-semibold text-slate-900">Albums</h3>
+                  <span className="text-sm text-slate-600">{results.albums.length} results</span>
                 </div>
                 <div className="mt-4 overflow-x-auto">
-                  <table className="min-w-full text-left text-sm text-slate-200">
-                    <thead className="border-b border-slate-700 text-slate-400">
+                  <table className="min-w-full text-left text-sm text-slate-700">
+                    <thead className="border-b border-slate-300 text-slate-600">
                       <tr>
                         <th className="px-4 py-3">Title</th>
                         <th className="px-4 py-3">Artist</th>
@@ -194,18 +194,18 @@ function SearchPage() {
                     </thead>
                     <tbody>
                       {results.albums.map((album) => (
-                        <tr key={album.id} className="border-b border-slate-800 last:border-b-0">
+                        <tr key={album.id} className="border-b border-slate-300 last:border-b-0">
                           <td className="px-4 py-4">
-                            <Link to={`/albums/${album.id}`} className="text-slate-100 transition hover:text-sky-300">
+                            <Link to={`/albums/${album.id}`} className="text-slate-900 transition hover:text-sky-500\">
                               {album.title}
                             </Link>
                           </td>
-                          <td className="px-4 py-4 text-slate-300">
+                          <td className="px-4 py-4 text-slate-700">
                             {album.artistNames.length > 0 ? (
                               album.artistNames.map((name, index) => (
                                 <span key={index}>
                                   {index > 0 && ', '}
-                                  <Link to={`/artists/${album.artistIds[index]}`} className="text-sky-300 hover:underline">
+                                  <Link to={`/artists/${album.artistIds[index]}`} className="text-sky-500 hover:underline">
                                     {name}
                                   </Link>
                                 </span>
@@ -214,7 +214,7 @@ function SearchPage() {
                               'Unknown'
                             )}
                           </td>
-                          <td className="px-4 py-4 text-slate-300">{album.yearReleased ?? '—'}</td>
+                          <td className="px-4 py-4 text-slate-700">{album.yearReleased ?? '—'}</td>
                         </tr>
                       ))}
                     </tbody>
