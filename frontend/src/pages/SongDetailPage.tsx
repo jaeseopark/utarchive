@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import {
@@ -12,6 +12,7 @@ import { PlaybackEnabledToggle } from '../components/PlaybackEnabledToggle';
 import { Button } from '../components/ui/Button';
 import CoverArt from '../components/CoverArt';
 import FamilyTree from '../components/FamilyTree';
+import { AddChildModal } from '../components/AddChildModal';
 import { formatDate, formatTrimRange, parseTrimRange } from '../lib/format';
 import { useArtistsStore } from '../stores/useArtistsStore';
 import { getArtistNames } from '../lib/artistNames';
@@ -31,6 +32,8 @@ function SongDetailPage() {
   const [analyticsMessage, setAnalyticsMessage] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<Date | null>(null);
   const [pausedAt, setPausedAt] = useState<Date | null>(null);
+  const [addChildModalOpen, setAddChildModalOpen] = useState(false);
+  const [selectedParentForChild, setSelectedParentForChild] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const artists = useArtistsStore((state) => state.artists);
@@ -196,6 +199,18 @@ function SongDetailPage() {
     }
   };
 
+  const handleAddChildClick = useCallback((parentSongId: string) => {
+    setSelectedParentForChild(parentSongId);
+    setAddChildModalOpen(true);
+  }, []);
+
+  const handleChildAdded = useCallback(() => {
+    // Tree will be automatically updated by the refreshSongTree call in AddChildModal
+    // Close the modal
+    setAddChildModalOpen(false);
+    setSelectedParentForChild(null);
+  }, []);
+
   // Handle browser tab closing
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -273,9 +288,6 @@ function SongDetailPage() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Link to={`/songs/new?parentId=${song.id}`}>
-                  <Button variant="secondary">Add child</Button>
-                </Link>
                 {song.filePath && (
                   <Button variant="secondary" disabled>
                     Play
@@ -355,7 +367,12 @@ function SongDetailPage() {
             <h3 className="text-xl font-semibold text-slate-900">Family tree</h3>
             {tree?.nodes.length ? (
               <div className="mt-4">
-                <FamilyTree nodes={tree.nodes} currentSongId={song.id} onPlaybackEnabledChange={handlePlaybackEnabledChange} />
+                <FamilyTree 
+                  nodes={tree.nodes} 
+                  currentSongId={song.id} 
+                  onPlaybackEnabledChange={handlePlaybackEnabledChange}
+                  onAddChild={handleAddChildClick}
+                />
               </div>
             ) : (
               <p className="mt-4 text-slate-600">No family tree available.</p>
@@ -363,6 +380,17 @@ function SongDetailPage() {
           </section>
         </div>
       ) : null}
+
+      {/* Add Child Modal */}
+      <AddChildModal
+        isOpen={addChildModalOpen}
+        parentSongId={selectedParentForChild ?? ''}
+        onClose={() => {
+          setAddChildModalOpen(false);
+          setSelectedParentForChild(null);
+        }}
+        onChildAdded={handleChildAdded}
+      />
     </section>
   );
 }
