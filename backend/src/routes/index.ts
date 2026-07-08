@@ -10,6 +10,7 @@ import playlistsRouter from "./playlists";
 import searchRouter from "./search";
 import analyticsRouter from "./analytics";
 import adminAnalyticsRouter from "./admin/analytics";
+import adminWebSocketRouter from "./admin/websocket";
 
 const router = Router();
 
@@ -31,5 +32,6 @@ router.use("/api", playlistsRouter);
 router.use("/api", searchRouter);
 router.use("/api", analyticsRouter);
 router.use("/api", adminAnalyticsRouter);
+router.use("/api", adminWebSocketRouter);
 
 export default router;

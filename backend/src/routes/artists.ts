@@ -9,6 +9,8 @@ import {
   selectSongsByArtistId,
   updateArtistById,
 } from "../db/queries/artists";
+import { broadcastMessage } from "../ws";
+import { DataChangedMessage } from "../types/websocket";
 
 const router = Router();
 
@@ -54,7 +56,25 @@ router.post(
   validateRequest(artistCreateSchema),
   async (req, res) => {
     const artist = req.body as z.infer<typeof artistCreateSchema>;
+    const requestId = (req as any).requestId;
+    
     const [createdArtist] = await insertArtist(artist);
+    
+    // Broadcast to all connected clients
+    const wss = req.app.locals.wss;
+    if (wss) {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
+        entity: "artist",
+        timestamp: Date.now(),
+        data: {
+          created: [createdArtist],
+        },
+        requestId,
+      };
+      broadcastMessage(wss, message);
+    }
+    
     return res.status(201).json(createdArtist);
   }
 );
@@ -75,6 +95,7 @@ router.patch(
   async (req, res) => {
     const updateData = req.body as z.infer<typeof artistUpdateSchema>;
     const artistId = String(req.params.id);
+    const requestId = (req as any).requestId;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: "No update fields provided" });
@@ -84,6 +105,21 @@ router.patch(
 
     if (updatedRows.length === 0) {
       return res.status(404).json({ error: "Artist not found" });
+    }
+
+    // Broadcast to all connected clients
+    const wss = req.app.locals.wss;
+    if (wss) {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
+        entity: "artist",
+        timestamp: Date.now(),
+        data: {
+          updated: [updatedRows[0]],
+        },
+        requestId,
+      };
+      broadcastMessage(wss, message);
     }
 
     return res.status(200).json(updatedRows[0]);

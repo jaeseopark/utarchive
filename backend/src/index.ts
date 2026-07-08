@@ -5,7 +5,10 @@ import { config } from "./config";
 
 const app = createApp();
 const server = http.createServer(app);
-createWebSocketServer(server);
+const wss = createWebSocketServer(server);
+
+// Attach WebSocket server to app for access from routes
+app.locals.wss = wss;
 
 const shutdown = (signal: string) => {
   console.log(`Received ${signal}, shutting down...`);

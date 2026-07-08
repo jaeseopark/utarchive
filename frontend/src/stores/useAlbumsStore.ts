@@ -27,6 +27,9 @@ export interface AlbumsState {
   fetchAlbums: (page?: number) => Promise<void>;
   fetchAlbumDetail: (id: string) => Promise<void>;
   getAlbumDetail: (id: string) => AlbumDetail | undefined;
+  addAlbum: (album: Album) => void;
+  updateAlbum: (id: string, updates: Partial<Album>) => void;
+  removeAlbum: (id: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -99,5 +102,54 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
 
   getAlbumDetail: (id: string) => {
     return get().albumDetails[id];
+  },
+
+  addAlbum: (album: Album) => {
+    set((state) => ({
+      albums: [album, ...state.albums],
+      pagination: {
+        ...state.pagination,
+        total: state.pagination.total + 1,
+      },
+    }));
+  },
+
+  updateAlbum: (id: string, updates: Partial<Album>) => {
+    set((state) => {
+      // Update album details if cached
+      const updatedDetails = { ...state.albumDetails };
+      if (updatedDetails[id]) {
+        updatedDetails[id] = { ...updatedDetails[id], ...updates } as AlbumDetail;
+      }
+
+      // Update album list item if present
+      const updatedAlbums = state.albums.map((album) => {
+        if (album.id === id) {
+          return { ...album, ...updates };
+        }
+        return album;
+      });
+
+      return {
+        albums: updatedAlbums,
+        albumDetails: updatedDetails,
+      };
+    });
+  },
+
+  removeAlbum: (id: string) => {
+    set((state) => {
+      const updatedDetails = { ...state.albumDetails };
+      delete updatedDetails[id];
+
+      return {
+        albums: state.albums.filter((album) => album.id !== id),
+        albumDetails: updatedDetails,
+        pagination: {
+          ...state.pagination,
+          total: Math.max(0, state.pagination.total - 1),
+        },
+      };
+    });
   },
 }));

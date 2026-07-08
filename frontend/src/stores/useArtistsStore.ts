@@ -30,6 +30,8 @@ export interface ArtistsState {
   fetchArtistDetail: (id: string) => Promise<void>;
   getArtistDetail: (id: string) => ArtistDetail | undefined;
   addArtist: (artist: Artist) => void;
+  updateArtist: (id: string, updates: Partial<Artist>) => void;
+  removeArtist: (id: string) => void;
   incrementArtistSongCount: (artistId: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -113,6 +115,45 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
         total: state.pagination.total + 1,
       },
     }));
+  },
+
+  updateArtist: (id: string, updates: Partial<Artist>) => {
+    set((state) => {
+      // Update artist details if cached
+      const updatedDetails = { ...state.artistDetails };
+      if (updatedDetails[id]) {
+        updatedDetails[id] = { ...updatedDetails[id], ...updates };
+      }
+
+      // Update artist list item if present
+      const updatedArtists = state.artists.map((artist) => {
+        if (artist.id === id) {
+          return { ...artist, ...updates };
+        }
+        return artist;
+      });
+
+      return {
+        artists: updatedArtists,
+        artistDetails: updatedDetails,
+      };
+    });
+  },
+
+  removeArtist: (id: string) => {
+    set((state) => {
+      const updatedDetails = { ...state.artistDetails };
+      delete updatedDetails[id];
+
+      return {
+        artists: state.artists.filter((artist) => artist.id !== id),
+        artistDetails: updatedDetails,
+        pagination: {
+          ...state.pagination,
+          total: Math.max(0, state.pagination.total - 1),
+        },
+      };
+    });
   },
 
   incrementArtistSongCount: (artistId: string) => {

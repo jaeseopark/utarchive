@@ -1,0 +1,69 @@
+import { Router, Request, Response } from "express";
+import { getEventStats, getRecentEvents } from "../../lib/webSocketLogger";
+import { requireAuth } from "../../middleware/requireAuth";
+
+const router = Router();
+
+// Protected route - requires authentication
+router.use(requireAuth);
+
+/**
+ * Get WebSocket connection statistics
+ */
+router.get("/admin/websocket/stats", (_req: Request, res: Response) => {
+  try {
+    const stats = getEventStats();
+    const wss = _req.app.locals.wss;
+    
+    const response = {
+      ...stats,
+      activeConnections: wss?.clients?.size || 0,
+      timestamp: Date.now(),
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to get WebSocket stats" });
+  }
+});
+
+/**
+ * Get recent WebSocket events (last N)
+ */
+router.get("/admin/websocket/events", (req: Request, res: Response) => {
+  try {
+    const limit = Math.min(
+      parseInt(req.query.limit as string) || 100,
+      500 // Max 500 events
+    );
+
+    const events = getRecentEvents(limit);
+
+    return res.status(200).json({
+      events,
+      count: events.length,
+      timestamp: Date.now(),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to get WebSocket events" });
+  }
+});
+
+/**
+ * Get active connection count
+ */
+router.get("/admin/websocket/connections", (_req: Request, res: Response) => {
+  try {
+    const wss = _req.app.locals.wss;
+    const connections = wss?.clients?.size || 0;
+
+    return res.status(200).json({
+      activeConnections: connections,
+      timestamp: Date.now(),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to get connection count" });
+  }
+});
+
+export default router;
