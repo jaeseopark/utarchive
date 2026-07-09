@@ -285,6 +285,9 @@ export const updateSongById = async (
   songId: string,
   updateData: SongUpdateInput
 ): Promise<SongWithHierarchy | null> => {
+  // Note: When coverArtId is set to null, this unassigns the image from the song
+  // but does NOT delete the underlying cover art entry or image files.
+  // This allows the image to be reused by other songs/albums.
   const { artistIds, releasedAt, ...restSongFields } = updateData;
 
   const songFields = {

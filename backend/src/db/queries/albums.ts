@@ -221,6 +221,9 @@ export const updateAlbumById = async (
   albumId: string,
   updateData: AlbumUpdateInput
 ) => {
+  // Note: When coverArtId is set to null, this unassigns the image from the album
+  // but does NOT delete the underlying cover art entry or image files.
+  // This allows the image to be reused by other songs/albums.
   const dataToUpdate: Partial<AlbumCreateInput> = {};
 
   if (updateData.title !== undefined) {

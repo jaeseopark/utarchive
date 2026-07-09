@@ -35,7 +35,7 @@ export interface SongsState {
   fetchSongTree: (id: string) => Promise<void>;
   refreshSongTree: (id: string) => Promise<void>;
   getSongDetail: (id: string) => Song | undefined;
-  getSongTree: (id: string) => SongTree | undefined;
+  getSongTree: (masterId: string) => SongTree | undefined;
   addSongDetail: (song: Song) => void;
   addSong: (song: Song) => void;
   updateSong: (id: string, updates: Partial<Song>) => void;
@@ -157,11 +157,9 @@ export const useSongsStore = create<SongsState>((set, get) => ({
   },
 
   fetchSongTree: async (id: string) => {
-    const cached = get().songTrees[id];
-    if (cached) {
-      return;
-    }
-
+    // Fetch any song's tree - the API returns the entire family tree
+    // Check cache first using a temporary lookup
+    // We'll cache by masterId, but we don't know it until we fetch
     const store = { setLoading: (val: boolean) => set({ isLoading: val }), setError: (err: string | null) => set({ error: err }) };
     const tree = await withStoreLoadingSilent(store, `/api/songs/${id}/tree`, SongTreeSchema);
 
@@ -169,7 +167,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
       set((state) => ({
         songTrees: {
           ...state.songTrees,
-          [id]: tree,
+          [tree.masterId]: tree,
         },
       }));
     }
@@ -179,8 +177,8 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     return get().songDetails[id];
   },
 
-  getSongTree: (id: string) => {
-    return get().songTrees[id];
+  getSongTree: (masterId: string) => {
+    return get().songTrees[masterId];
   },
 
   addSongDetail: (song: Song) => {
@@ -207,6 +205,10 @@ export const useSongsStore = create<SongsState>((set, get) => ({
 
       return {
         songs: [songListItem, ...state.songs],
+        songDetails: {
+          ...state.songDetails,
+          [song.id]: song,
+        },
         pagination: {
           ...state.pagination,
           total: state.pagination.total + 1,
@@ -270,7 +272,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
       set((state) => ({
         songTrees: {
           ...state.songTrees,
-          [id]: tree,
+          [tree.masterId]: tree,
         },
       }));
     }

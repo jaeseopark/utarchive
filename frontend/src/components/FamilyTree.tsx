@@ -1,19 +1,25 @@
 import { Link } from 'react-router-dom';
-import { useMemo } from 'react';
-import type { SongTreeNode } from '../api/schemas';
+import { useMemo, useState, useCallback } from 'react';
 import { getArtistNames } from '../lib/artistNames';
 import { useArtistsStore } from '../stores/useArtistsStore';
+import { useSongsStore } from '../stores/useSongsStore';
+import { useFamilyTree } from '../hooks/useFamilyTree';
 import { PlaybackEnabledToggle } from './PlaybackEnabledToggle';
+import { AddChildModal } from './AddChildModal';
 
 interface FamilyTreeProps {
-  nodes: SongTreeNode[];
-  currentSongId: string;
-  onPlaybackEnabledChange?: (nodeId: string, newPlaybackEnabled: boolean) => void;
-  onAddChild?: (parentSongId: string) => void;
+  masterId: string;
+  currentSongId?: string;
 }
 
-function FamilyTree({ nodes: nodesWithoutArtistNames, currentSongId, onPlaybackEnabledChange, onAddChild }: FamilyTreeProps) {
+function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
   const artists = useArtistsStore((state) => state.artists);
+  const { updateSong } = useSongsStore();
+  const { tree, isLoading, error, refetch } = useFamilyTree(masterId, currentSongId);
+  const [addChildModalOpen, setAddChildModalOpen] = useState(false);
+  const [selectedParentForChild, setSelectedParentForChild] = useState<string | null>(null);
+
+  const nodesWithoutArtistNames = tree?.nodes ?? [];
 
   const nodes = useMemo(() => {
     const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
@@ -23,20 +29,56 @@ function FamilyTree({ nodes: nodesWithoutArtistNames, currentSongId, onPlaybackE
     }));
   }, [nodesWithoutArtistNames, artists]);
 
+  const handlePlaybackEnabledChange = useCallback(
+    (songId: string, newPlaybackEnabled: boolean) => {
+      updateSong(songId, { playbackEnabled: newPlaybackEnabled });
+    },
+    [updateSong]
+  );
+
+  const handleAddChildClick = useCallback((parentSongId: string) => {
+    setSelectedParentForChild(parentSongId);
+    setAddChildModalOpen(true);
+  }, []);
+
+  const handleChildAdded = useCallback(async () => {
+    // Refetch the tree to reflect the newly added child
+    await refetch();
+    setAddChildModalOpen(false);
+    setSelectedParentForChild(null);
+  }, [refetch]);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-4 text-center text-slate-600">
+        Loading family tree…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-4 text-rose-700">
+        Error loading family tree: {error}
+      </div>
+    );
+  }
+
   if (nodes.length === 0) {
     return null;
   }
 
   return (
-    <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-inner shadow-slate-200/20">
-      <table className="min-w-full border-separate border-spacing-0 text-sm">
+    <>
+      <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-inner shadow-slate-200/20">
+        <table className="min-w-full border-separate border-spacing-0 text-sm">
         <thead>
           <tr className="text-left text-slate-600">
             <th className="px-3 py-2">Title</th>
             <th className="px-3 py-2">Artists</th>
             <th className="px-3 py-2">Released</th>
             <th className="px-3 py-2">Playback Enabled</th>
-            {onAddChild && <th className="px-3 py-2">Actions</th>}
+            <th className="px-3 py-2">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -49,17 +91,12 @@ function FamilyTree({ nodes: nodesWithoutArtistNames, currentSongId, onPlaybackE
               >
                 <td className="px-3 py-3 align-top">
                   {isCurrent ? (
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="block truncate text-slate-900"
-                        style={{ paddingLeft: `${Math.min(node.depth * 18, 72)}px` }}
-                      >
-                        {node.title}
-                      </span>
-                      <span className="flex-shrink-0 inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-800">
-                        current
-                      </span>
-                    </div>
+                    <span
+                      className="block truncate text-slate-900"
+                      style={{ paddingLeft: `${Math.min(node.depth * 18, 72)}px` }}
+                    >
+                      {node.title}
+                    </span>
                   ) : (
                     <Link
                       to={`/songs/${node.id}`}
@@ -79,26 +116,36 @@ function FamilyTree({ nodes: nodesWithoutArtistNames, currentSongId, onPlaybackE
                     <PlaybackEnabledToggle
                       songId={node.id}
                       isEnabled={node.playbackEnabled}
-                      onPlaybackEnabledChange={onPlaybackEnabledChange}
+                      onPlaybackEnabledChange={handlePlaybackEnabledChange}
                     />
                   </div>
                 </td>
-                {onAddChild && (
-                  <td className="px-3 py-3 align-middle">
-                    <button
-                      onClick={() => onAddChild(node.id)}
-                      className="inline-flex items-center rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-sky-600"
-                    >
-                      + Add child
-                    </button>
-                  </td>
-                )}
+                <td className="px-3 py-3 align-middle">
+                  <button
+                    onClick={() => handleAddChildClick(node.id)}
+                    className="inline-flex items-center rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-sky-600"
+                  >
+                    + Add child
+                  </button>
+                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
-    </div>
+      </div>
+
+      {/* Add Child Modal */}
+      <AddChildModal
+        isOpen={addChildModalOpen}
+        parentSongId={selectedParentForChild ?? ''}
+        onClose={() => {
+          setAddChildModalOpen(false);
+          setSelectedParentForChild(null);
+        }}
+        onChildAdded={handleChildAdded}
+      />
+    </>
   );
 }
 

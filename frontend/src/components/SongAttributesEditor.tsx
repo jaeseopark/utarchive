@@ -1,0 +1,489 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import CreatableSelect from 'react-select/creatable';
+import { Button } from './ui/Button';
+import { type Song } from '../api/schemas';
+import { useSongUpdate } from '../hooks/useSongUpdate';
+import { useArtistsForSelect } from '../hooks/useArtistsForSelect';
+import { useCreateArtist } from '../hooks/useCreateArtist';
+import { formatDate } from '../lib/format';
+import { getChangedProperties } from '../lib/compareObjects';
+import { z } from 'zod';
+import clsx from 'clsx';
+
+// Define the update schema - only editable fields (excludes coverArtId which is managed separately)
+const SongUpdateSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(500),
+  platformId: z.string().max(200).nullable().optional(),
+  releasedAt: z.string().nullable().optional(),
+  url: z.string().max(2000).nullable().optional(),
+  description: z.string().nullable().optional(),
+  playbackEnabled: z.boolean().optional(),
+  trimRange: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
+  artistIds: z.array(z.string().uuid()).optional(),
+});
+
+type SongUpdateInput = z.infer<typeof SongUpdateSchema>;
+
+/**
+ * Helper function to convert a Song to form values
+ * Used for both defaultValues and reset operations
+ */
+function getFormValuesFromSong(song: Song): SongUpdateInput {
+  return {
+    title: song.title,
+    platformId: song.platformId ?? '',
+    releasedAt: song.releasedAt ?? '',
+    url: song.url ?? '',
+    description: song.description ?? '',
+    playbackEnabled: song.playbackEnabled ?? false,
+    trimRange: song.trimRange ?? '',
+    tags: song.tags ?? [],
+    artistIds: song.artistIds ?? [],
+  };
+}
+
+type ArtistOption = {
+  value: string;
+  label: string;
+  isNew?: boolean;
+};
+
+interface SongAttributesEditorProps {
+  song: Song;
+}
+
+export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
+  const [isCreatingArtist, setIsCreatingArtist] = useState(false);
+  const { updateSongData } = useSongUpdate();
+  const { artists, isLoading: artistsLoading } = useArtistsForSelect();
+  const { createArtist } = useCreateArtist();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+    setValue,
+  } = useForm<SongUpdateInput>({
+    resolver: zodResolver(SongUpdateSchema),
+    mode: 'onBlur',
+    defaultValues: getFormValuesFromSong(song),
+  });
+
+  // Sync form with updated song data whenever it changes
+  useEffect(() => {
+    reset(getFormValuesFromSong(song));
+  }, [song, reset]);
+
+  // Initialize selectedArtists when edit mode opens
+  useEffect(() => {
+    if (isEditMode && artists.length > 0) {
+      const artistIds = song.artistIds ?? [];
+      // eslint-disable-next-line no-restricted-syntax
+      const selected = artistIds
+        .map((id) => {
+          const artist = artists.find((a) => a.id === id);
+          return artist ? { value: artist.id, label: artist.name } : null;
+        })
+        .filter((a) => a !== null) as ArtistOption[];
+      setSelectedArtists(selected);
+    }
+  }, [isEditMode, song.artistIds, artists]);
+
+  // Update form artistIds whenever selectedArtists changes
+  useEffect(() => {
+    const artistIds = selectedArtists.map((a) => a.value);
+    setValue('artistIds', artistIds);
+  }, [selectedArtists, setValue]);
+
+  const onSubmit = useCallback(
+    async (data: SongUpdateInput) => {
+      setIsSubmitting(true);
+      try {
+        // Step 1: Normalize the form data (convert empty strings to null)
+        const cleanedFormData: Record<string, unknown> = {};
+        Object.entries(data).forEach(([key, value]) => {
+          cleanedFormData[key] = value === '' ? null : value;
+        });
+
+        // Step 2: Create a normalized version of the original song for comparison
+        // Use the same shape as the form data so we can compare them directly
+        const originalSongNormalized: Record<string, unknown> = {
+          title: song.title,
+          platformId: song.platformId ?? null,
+          releasedAt: song.releasedAt ?? null,
+          url: song.url ?? null,
+          description: song.description ?? null,
+          playbackEnabled: song.playbackEnabled ?? false,
+          trimRange: song.trimRange ?? null,
+          tags: song.tags ?? [],
+          artistIds: song.artistIds ?? [],
+        };
+
+        // Step 3: Get only the properties that have changed
+        const changedProperties = getChangedProperties(
+          originalSongNormalized,
+          cleanedFormData,
+        );
+
+        // Step 4: If nothing changed, just close edit mode
+        if (Object.keys(changedProperties).length === 0) {
+          setIsEditMode(false);
+          reset();
+          setSelectedArtists([]);
+          return;
+        }
+
+        // Step 5: Send only the changed properties to the backend
+        // eslint-disable-next-line no-restricted-syntax
+        const result = await updateSongData(song.id, changedProperties as Partial<Song>);
+        if (result.success) {
+          setIsEditMode(false);
+          reset();
+          setSelectedArtists([]);
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [song.id, updateSongData, reset]
+  );
+
+  const handleCancel = () => {
+    setIsEditMode(false);
+    reset();
+    setSelectedArtists([]);
+  };
+
+  const handleCreateArtist = useCallback(
+    async (inputValue: string) => {
+      setIsCreatingArtist(true);
+      try {
+        const newArtist = await createArtist({ name: inputValue });
+        const newOption: ArtistOption = {
+          value: newArtist.id,
+          label: newArtist.name,
+        };
+        setSelectedArtists([...selectedArtists, newOption]);
+      } catch (error) {
+        console.error('Failed to create artist:', error);
+      } finally {
+        setIsCreatingArtist(false);
+      }
+    },
+    [selectedArtists, createArtist],
+  );
+
+  // Define attributes to display in view mode
+  // Always includes Date Added, plus any other non-empty attributes
+  const allAttributes = [
+    {
+      key: 'createdAt',
+      label: 'Date Added',
+      value: formatDate(song.createdAt),
+    },
+    {
+      key: 'releasedAt',
+      label: 'Released',
+      value: song.releasedAt ? formatDate(song.releasedAt) : null,
+    },
+    { key: 'platformId', label: 'Platform ID', value: song.platformId },
+    { key: 'url', label: 'External URL', value: song.url },
+    ...(song.filePath
+      ? [
+          {
+            key: 'playbackEnabled',
+            label: 'Playback Enabled',
+            value: song.playbackEnabled ? 'Yes' : 'No',
+          },
+        ]
+      : []),
+    {
+      key: 'trimRange',
+      label: 'Trim Range',
+      value: song.trimRange,
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      value: song.description,
+    },
+    {
+      key: 'tags',
+      label: 'Tags',
+      value: song.tags?.length ? song.tags.join(', ') : null,
+    },
+  ];
+
+  if (isEditMode) {
+    const artistOptions: ArtistOption[] = artists.map((artist) => ({
+      value: artist.id,
+      label: artist.name,
+    }));
+
+    return (
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4">
+          <table className="min-w-full border-collapse text-sm">
+            <tbody>
+              {/* Title */}
+              <tr className="border-b border-slate-300">
+                <td className="px-4 py-3 font-medium text-slate-600 w-40">
+                  Title
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="text"
+                    {...register('title')}
+                    className={clsx(
+                      'w-full px-3 py-2 rounded-lg border',
+                      errors.title
+                        ? 'border-rose-400 bg-rose-50'
+                        : 'border-slate-300 bg-white'
+                    )}
+                  />
+                  {errors.title && (
+                    <div className="mt-1 text-xs text-rose-600">
+                      {errors.title.message}
+                    </div>
+                  )}
+                </td>
+              </tr>
+
+              {/* Artists */}
+              <tr className="border-b border-slate-300">
+                <td className="px-4 py-3 font-medium text-slate-600 align-top">
+                  Artists
+                </td>
+                <td className="px-4 py-3">
+                  {artistsLoading ? (
+                    <p className="text-sm text-slate-500">Loading artists...</p>
+                  ) : (
+                    <CreatableSelect
+                      isMulti
+                      isClearable
+                      isDisabled={isCreatingArtist}
+                      isLoading={isCreatingArtist}
+                      options={artistOptions}
+                      value={selectedArtists}
+                      onChange={(newValue) => {
+                        setSelectedArtists(newValue ? Array.from(newValue) : []);
+                      }}
+                      onCreateOption={handleCreateArtist}
+                      formatCreateLabel={(inputValue) =>
+                        `Create artist "${inputValue}"`
+                      }
+                      placeholder="Select or create artists..."
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      styles={{
+                        control: (base, state) => ({
+                          ...base,
+                          borderColor: base.borderColor,
+                          boxShadow: state.isFocused
+                            ? '0 0 0 1px #0ea5e9'
+                            : 'none',
+                          borderRadius: '0.5rem',
+                          minHeight: '2.5rem',
+                        }),
+                        multiValue: (base) => ({
+                          ...base,
+                          backgroundColor: '#dbeafe',
+                          borderRadius: '0.375rem',
+                        }),
+                        multiValueLabel: (base) => ({
+                          ...base,
+                          color: '#1e40af',
+                        }),
+                      }}
+                    />
+                  )}
+                </td>
+              </tr>
+
+              {/* Released */}
+              <tr className="border-b border-slate-300">
+                <td className="px-4 py-3 font-medium text-slate-600">
+                  Released
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="datetime-local"
+                    {...register('releasedAt')}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                  />
+                </td>
+              </tr>
+
+              {/* Platform ID */}
+              <tr className="border-b border-slate-300">
+                <td className="px-4 py-3 font-medium text-slate-600">
+                  Platform ID
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="text"
+                    {...register('platformId')}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                  />
+                </td>
+              </tr>
+
+              {/* External URL */}
+              <tr className="border-b border-slate-300">
+                <td className="px-4 py-3 font-medium text-slate-600">
+                  External URL
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="url"
+                    {...register('url')}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                  />
+                </td>
+              </tr>
+
+              {/* Playback Enabled - only show if file exists */}
+              {song.filePath && (
+                <tr className="border-b border-slate-300">
+                  <td className="px-4 py-3 font-medium text-slate-600">
+                    Playback Enabled
+                  </td>
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      {...register('playbackEnabled')}
+                      className="h-4 w-4 rounded border-slate-300"
+                    />
+                  </td>
+                </tr>
+              )}
+
+              {/* Trim Range */}
+              <tr className="border-b border-slate-300">
+                <td className="px-4 py-3 font-medium text-slate-600">
+                  Trim Range
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="text"
+                    {...register('trimRange')}
+                    placeholder="e.g., 10.5-125.8"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                  />
+                </td>
+              </tr>
+
+              {/* Description */}
+              <tr className="border-b border-slate-300">
+                <td className="px-4 py-3 font-medium text-slate-600 align-top">
+                  Description
+                </td>
+                <td className="px-4 py-3">
+                  <textarea
+                    {...register('description')}
+                    rows={4}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                  />
+                </td>
+              </tr>
+
+              {/* Tags */}
+              <tr>
+                <td className="px-4 py-3 font-medium text-slate-600 align-top">
+                  Tags
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="text"
+                    {...register('tags')}
+                    placeholder="Comma-separated tags"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 flex gap-3">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-green-500 hover:bg-green-600"
+          >
+            {isSubmitting ? 'Saving...' : 'OK'}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    );
+  }
+
+  // View mode: filter out empty attributes (keep createdAt since it always has a value)
+  const attributesToDisplay = allAttributes.filter(
+    (attr) => attr.value !== null && attr.value !== ''
+  );
+
+  // View mode
+  return (
+    <div>
+      <div className="mb-4 flex justify-end">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setIsEditMode(true)}
+        >
+          Edit
+        </Button>
+      </div>
+
+      <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4">
+        <table className="min-w-full text-sm">
+          <tbody>
+            {attributesToDisplay.map((attr) => {
+              return (
+                <tr
+                  key={attr.key}
+                  className="border-b border-slate-300 last:border-b-0"
+                >
+                  <td className="px-4 py-3 font-medium text-slate-600 w-40">
+                    {attr.label}
+                  </td>
+                  <td className="px-4 py-3 text-slate-900">
+                    {attr.key === 'url' ? (
+                      <a
+                        // eslint-disable-next-line no-restricted-syntax
+                        href={attr.value as string}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-sky-500 hover:underline"
+                      >
+                        {attr.value}
+                      </a>
+                    ) : (
+                      <div className="break-words">{attr.value}</div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
