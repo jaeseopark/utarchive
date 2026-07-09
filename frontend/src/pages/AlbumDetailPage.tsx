@@ -146,7 +146,7 @@ const AlbumDetailPage = () => {
                                 ) : treeError ? (
                                   <div className="text-rose-600">Error loading tree: {treeError}</div>
                                 ) : tree ? (
-                                  <FamilyTree nodes={tree.nodes} currentSongId={song.id} />
+                                  <FamilyTree masterId={tree.masterId} currentSongId={song.id} />
                                 ) : null}
                               </td>
                             </tr>

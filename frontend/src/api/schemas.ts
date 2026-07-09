@@ -153,6 +153,7 @@ export const LogoutResponseSchema = z.object({
 
 export type Artist = z.infer<typeof ArtistSchema>;
 export type ArtistCreateInput = z.infer<typeof ArtistCreateSchema>;
+export type CoverArt = z.infer<typeof CoverArtSchema>;
 export type Song = z.infer<typeof SongSchema>;
 export type SongCreateInput = z.infer<typeof SongCreateSchema>;
 export type SongListItem = z.infer<typeof SongListItemSchema>;

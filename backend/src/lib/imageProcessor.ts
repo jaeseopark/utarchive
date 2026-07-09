@@ -99,6 +99,11 @@ export const processCoverArtImage = async (
 ): Promise<ProcessedImage> => {
   validateFileSize(buffer.length);
 
+  // Ensure upload directory exists
+  if (!existsSync(uploadDir)) {
+    mkdirSync(uploadDir, { recursive: true });
+  }
+
   const fileHash = calculatefileHash(buffer);
   const { width, height, format } = await getImageMetadata(buffer);
 

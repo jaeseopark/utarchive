@@ -16,7 +16,7 @@ import { readFileSync, existsSync } from "fs";
 
 const router = Router();
 
-const uploadDir = process.env.COVER_ART_UPLOAD_DIR ?? "./uploads/cover-art";
+const uploadDir = process.env.COVER_ART_UPLOAD_DIR ?? "/data/cover-art";
 
 const coverArtUploadSchema = z.object({
   // The file will be handled via multipart/form-data, validated in middleware
@@ -56,10 +56,18 @@ router.post(
         .where(eq(coverArt.fileHash, fileHash))
         .limit(1);
 
+      // If hash exists, return the existing entry
       if (existingCoverArt.length > 0) {
-        return res.status(409).json({
-          error: "Duplicate image",
-          coverArtId: existingCoverArt[0].id,
+        const existing = existingCoverArt[0];
+        return res.status(201).json({
+          id: existing.id,
+          filePath: existing.filePath,
+          width: existing.width,
+          height: existing.height,
+          fileExtension: existing.fileExtension,
+          fileSizeBytes: Number(existing.fileSizeBytes),
+          fileHash: existing.fileHash,
+          createdAt: existing.createdAt,
         });
       }
 
@@ -91,7 +99,7 @@ router.post(
         width: created.width,
         height: created.height,
         fileExtension: created.fileExtension,
-        fileSizeBytes: created.fileSizeBytes,
+        fileSizeBytes: Number(created.fileSizeBytes),
         fileHash: created.fileHash,
         createdAt: created.createdAt,
       });
