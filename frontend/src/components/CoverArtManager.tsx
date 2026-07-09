@@ -90,7 +90,6 @@ export const CoverArtManager: FC<CoverArtManagerProps> = ({
           <Button
             type="button"
             variant="secondary"
-            size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
             className="flex-1"
@@ -101,7 +100,6 @@ export const CoverArtManager: FC<CoverArtManagerProps> = ({
             <Button
               type="button"
               variant="secondary"
-              size="sm"
               onClick={handleDeleteCoverArt}
               disabled={isUploading}
               className="flex-1"

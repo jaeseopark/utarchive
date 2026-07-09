@@ -148,7 +148,6 @@ export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({
           <Button
             type="button"
             variant="secondary"
-            size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
             className="flex-1"
@@ -159,7 +158,6 @@ export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({
             <Button
               type="button"
               variant="secondary"
-              size="sm"
               onClick={handleDeleteCoverArt}
               disabled={isUploading || !canDeleteCoverArt}
               title={!canDeleteCoverArt ? 'Cannot delete transitive cover art' : 'Delete cover art'}
