@@ -5,15 +5,93 @@ import { z } from "zod";
 import { Button } from "../components/ui/Button";
 import CoverArtDisplay from "../components/CoverArtDisplay";
 import FamilyTree from "../components/FamilyTree";
-import { SongAttributesEditor } from "../components/SongAttributesEditor";
+import { useSongAttributesEditor } from "../components/SongAttributesEditor";
 import { parseTrimRange } from "../lib/format";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
 import { useSongDetail } from "../hooks/useSongDetail";
 import { useRecordListening } from "../hooks/useRecordListening";
 import { toBrandId, type SongId } from "../types/brands";
+import type { Song } from "../api/schemas";
 
 const PAUSE_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+interface SongHeaderProps {
+  song: Song;
+}
+
+function SongHeader({ song }: SongHeaderProps) {
+  // Hook call is now unconditional within this component
+  const songEditorState = useSongAttributesEditor(song);
+  const artists = useArtistsStore((state) => state.artists);
+
+  const artistList = useMemo(() => {
+    const artistNames = getArtistNames(song.artistIds ?? [], artists);
+    return artistNames.map((name, index) => ({
+      id: song.artistIds?.[index] ?? "",
+      name,
+    }));
+  }, [song, artists]);
+
+  return (
+    <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          <div className="flex-shrink-0">
+            <CoverArtDisplay
+              owner={{ songId: song.id }}
+              size={128}
+              className="h-32 w-32 rounded-2xl border border-slate-300 bg-slate-50/80 object-cover shadow-lg"
+            />
+          </div>
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900">{song.title}</h1>
+            <div className="mt-3 text-sm text-slate-600">
+              {artistList.length > 0 ? (
+                <span>
+                  Artists:{" "}
+                  {artistList.map((artist, index) => (
+                    <span key={artist.id}>
+                      <Link
+                        to={`/artists/${artist.id}`}
+                        className="text-sky-500 hover:underline"
+                      >
+                        {artist.name}
+                      </Link>
+                      {index < artistList.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                "Artists: Unknown"
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          {song.filePath && (
+            <Button variant="secondary" disabled>
+              Play
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            onClick={songEditorState.enterEditMode}
+            disabled={songEditorState.mode === "edit"}
+          >
+            Edit
+          </Button>
+        </div>
+      </div>
+
+      {/* Song Attributes Editor - replaces metadata cards */}
+      <div className="mt-6">
+        <songEditorState.Component />
+      </div>
+    </div>
+  );
+}
 
 function SongDetailPage() {
   const { id } = useParams<"id">();
@@ -26,19 +104,9 @@ function SongDetailPage() {
   const [pausedAt, setPausedAt] = useState<Date | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const artists = useArtistsStore((state) => state.artists);
 
   // Use song data from hook
   const song = songData;
-
-  const artistList = useMemo(() => {
-    if (!song) return [];
-    const artistNames = getArtistNames(song.artistIds ?? [], artists);
-    return artistNames.map((name, index) => ({
-      id: song.artistIds?.[index] ?? "",
-      name,
-    }));
-  }, [song, artists]);
 
   useEffect(() => {
     if (!isListening) {
@@ -201,75 +269,27 @@ function SongDetailPage() {
         </div>
       ) : song ? (
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-                <div className="flex-shrink-0">
-                  <CoverArtDisplay
-                    owner={{ songId: song.id }}
-                    size={128}
-                    className="h-32 w-32 rounded-2xl border border-slate-300 bg-slate-50/80 object-cover shadow-lg"
-                  />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-semibold text-slate-900">{song.title}</h1>
-                  <div className="mt-3 text-sm text-slate-600">
-                    {artistList.length > 0 ? (
-                      <span>
-                        Artists:{" "}
-                        {artistList.map((artist, index) => (
-                          <span key={artist.id}>
-                            <Link
-                              to={`/artists/${artist.id}`}
-                              className="text-sky-500 hover:underline"
-                            >
-                              {artist.name}
-                            </Link>
-                            {index < artistList.length - 1 ? ", " : ""}
-                          </span>
-                        ))}
-                      </span>
-                    ) : (
-                      "Artists: Unknown"
-                    )}
-                  </div>
-                </div>
-              </div>
+          <SongHeader song={song} />
 
-              <div className="flex flex-wrap gap-3">
-                {song.filePath && (
-                  <Button variant="secondary" disabled>
-                    Play
-                  </Button>
-                )}
+          {song.filePath ? (
+            <div className="mt-6 rounded-3xl border border-slate-300 bg-slate-100/80 p-4 text-slate-900">
+              <div className="mb-3 text-slate-600">Playback analytics</div>
+              <audio
+                ref={audioRef}
+                controls
+                src={song.filePath}
+                className="w-full rounded-3xl bg-white"
+                onPlay={handlePlay}
+                onPause={handlePause}
+                onEnded={handleEnded}
+              />
+              <div className="mt-3 text-sm text-slate-600">
+                {isListening
+                  ? `Listening for ${listenedSeconds}s`
+                  : (analyticsMessage ?? "Start playback to capture analytics.")}
               </div>
             </div>
-
-            {/* Song Attributes Editor - replaces metadata cards */}
-            <div className="mt-6">
-              <SongAttributesEditor song={song} />
-            </div>
-
-            {song.filePath ? (
-              <div className="mt-6 rounded-3xl border border-slate-300 bg-slate-100/80 p-4 text-slate-900">
-                <div className="mb-3 text-slate-600">Playback analytics</div>
-                <audio
-                  ref={audioRef}
-                  controls
-                  src={song.filePath}
-                  className="w-full rounded-3xl bg-white"
-                  onPlay={handlePlay}
-                  onPause={handlePause}
-                  onEnded={handleEnded}
-                />
-                <div className="mt-3 text-sm text-slate-600">
-                  {isListening
-                    ? `Listening for ${listenedSeconds}s`
-                    : (analyticsMessage ?? "Start playback to capture analytics.")}
-                </div>
-              </div>
-            ) : null}
-          </div>
+          ) : null}
 
           <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
             <h3 className="text-xl font-semibold text-slate-900">Family tree</h3>

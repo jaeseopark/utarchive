@@ -81,8 +81,16 @@ export const searchEntities = async (query: string) => {
       a.aliases
     FROM artists a,
       search_query
-    WHERE to_tsvector('english', a.name) @@ search_query.query
-    ORDER BY ts_rank(to_tsvector('english', a.name), search_query.query) DESC
+    WHERE to_tsvector('english', 
+      coalesce(a.name, '') || ' ' || 
+      coalesce(array_to_string(a.aliases, ' '), '') || ' ' || 
+      coalesce(array_to_string(a.urls, ' '), '')
+    ) @@ search_query.query
+    ORDER BY ts_rank(to_tsvector('english', 
+      coalesce(a.name, '') || ' ' || 
+      coalesce(array_to_string(a.aliases, ' '), '') || ' ' || 
+      coalesce(array_to_string(a.urls, ' '), '')
+    ), search_query.query) DESC
     LIMIT 20
   `);
   // eslint-disable-next-line no-restricted-syntax

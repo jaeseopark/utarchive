@@ -32,7 +32,7 @@ export const artists = pgTable("artists", {
   name: varchar("name", { length: 500 }).notNull(),
   aliases: text("aliases").array().$type<string[]>().notNull().default([]),
   description: text("description"),
-  urls: jsonb("urls").$type<Record<string, string>>().notNull().default({}),
+  urls: text("urls").array().$type<string[]>().notNull().default([]),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
