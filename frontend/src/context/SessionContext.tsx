@@ -1,6 +1,14 @@
-import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api } from '../api/client';
-import { LoginResponseSchema, LogoutResponseSchema, SessionSchema } from '../api/schemas';
+import {
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { api } from "../api/client";
+import { LoginResponseSchema, LogoutResponseSchema, SessionSchema } from "../api/schemas";
 
 export interface SessionUser {
   id: string;
@@ -29,7 +37,9 @@ export function SessionProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const data = await api.get('/api/auth/me', SessionSchema, { preventUnauthorizedRedirect: true });
+        const data = await api.get("/api/auth/me", SessionSchema, {
+          preventUnauthorizedRedirect: true,
+        });
         setUser({ id: data.id });
       } catch {
         setUser(null);
@@ -42,7 +52,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }, []);
 
   const login = useCallback(async (credentials: LoginPayload) => {
-    const data = await api.post('/api/auth/login', credentials, LoginResponseSchema, {
+    const data = await api.post("/api/auth/login", credentials, LoginResponseSchema, {
       preventUnauthorizedRedirect: true,
     });
     setUser({ id: data.id });
@@ -50,7 +60,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   const logout = useCallback(async () => {
     try {
-      await api.post('/api/auth/logout', null, LogoutResponseSchema, {
+      await api.post("/api/auth/logout", null, LogoutResponseSchema, {
         preventUnauthorizedRedirect: true,
       });
     } finally {
@@ -60,7 +70,9 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   const refreshSession = useCallback(async () => {
     try {
-      const data = await api.get('/api/auth/me', SessionSchema, { preventUnauthorizedRedirect: true });
+      const data = await api.get("/api/auth/me", SessionSchema, {
+        preventUnauthorizedRedirect: true,
+      });
       setUser({ id: data.id });
     } catch {
       setUser(null);
@@ -78,7 +90,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 export function useSession() {
   const context = useContext(SessionContext);
   if (!context) {
-    throw new Error('useSession must be used within a SessionProvider');
+    throw new Error("useSession must be used within a SessionProvider");
   }
   return context;
 }

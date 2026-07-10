@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
-import { CoverArtSchema, type CoverArt } from '../api/schemas';
-import { v4 as uuidv4 } from 'uuid';
+import { useCallback, useState } from "react";
+import { CoverArtSchema, type CoverArt } from "../api/schemas";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Hook for uploading cover art images
@@ -16,21 +16,21 @@ export function useUploadCoverArt() {
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       const requestId = uuidv4();
 
-      const response = await fetch('/api/cover-art', {
-        method: 'POST',
-        credentials: 'include',
+      const response = await fetch("/api/cover-art", {
+        method: "POST",
+        credentials: "include",
         headers: {
-          'X-Request-ID': requestId,
+          "X-Request-ID": requestId,
         },
         body: formData,
       });
 
       if (response.status === 401) {
-        window.location.assign('/login');
+        window.location.assign("/login");
         return null;
       }
 
@@ -44,12 +44,12 @@ export function useUploadCoverArt() {
       // Validate response
       const parseResult = CoverArtSchema.safeParse(data);
       if (!parseResult.success) {
-        throw new Error('Invalid cover art response');
+        throw new Error("Invalid cover art response");
       }
 
       return parseResult.data;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to upload cover art';
+      const message = err instanceof Error ? err.message : "Failed to upload cover art";
       setError(message);
       return null;
     } finally {

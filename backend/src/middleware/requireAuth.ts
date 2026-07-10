@@ -24,11 +24,7 @@ const extractSessionToken = (cookieHeader: string | undefined): string | null =>
   return decodeURIComponent(cookie.split("=")[1] ?? "");
 };
 
-export const requireAuth = (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const requireAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const token = extractSessionToken(req.headers.cookie);
 
   if (!token) {

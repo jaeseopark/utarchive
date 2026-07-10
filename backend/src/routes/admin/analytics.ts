@@ -20,16 +20,12 @@ router.post("/admin/analytics/flush", async (_req, res) => {
   return res.status(200).json({ ok: true });
 });
 
-router.post(
-  "/admin/analytics/prune",
-  validateRequest(pruneAnalyticsSchema),
-  async (req, res) => {
-    // eslint-disable-next-line no-restricted-syntax
-    const { retentionDays } = req.body as z.infer<typeof pruneAnalyticsSchema>;
+router.post("/admin/analytics/prune", validateRequest(pruneAnalyticsSchema), async (req, res) => {
+  // eslint-disable-next-line no-restricted-syntax
+  const { retentionDays } = req.body as z.infer<typeof pruneAnalyticsSchema>;
 
-    await pruneListeningAnalyticsOlderThanDays(retentionDays);
-    return res.status(200).json({ ok: true });
-  }
-);
+  await pruneListeningAnalyticsOlderThanDays(retentionDays);
+  return res.status(200).json({ ok: true });
+});
 
 export default router;

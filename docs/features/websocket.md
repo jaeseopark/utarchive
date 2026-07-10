@@ -33,8 +33,8 @@ All WebSocket messages follow a consistent structure:
 
 ```typescript
 type WebSocketMessage = {
-  type: 'ENTITY_CREATED' | 'ENTITY_UPDATED' | 'ENTITY_DELETED' | 'BULK_UPDATE';
-  entity: 'song' | 'album' | 'artist' | 'playlist' | 'coverArt';
+  type: "ENTITY_CREATED" | "ENTITY_UPDATED" | "ENTITY_DELETED" | "BULK_UPDATE";
+  entity: "song" | "album" | "artist" | "playlist" | "coverArt";
   timestamp: number; // Unix timestamp in milliseconds
   data: unknown; // Entity-specific payload
   requestId?: string; // Optional client request ID for deduplication
@@ -42,32 +42,32 @@ type WebSocketMessage = {
 
 // Specific message types
 type SongCreatedMessage = {
-  type: 'ENTITY_CREATED';
-  entity: 'song';
+  type: "ENTITY_CREATED";
+  entity: "song";
   timestamp: number;
   data: Song;
   requestId?: string;
 };
 
 type SongUpdatedMessage = {
-  type: 'ENTITY_UPDATED';
-  entity: 'song';
+  type: "ENTITY_UPDATED";
+  entity: "song";
   timestamp: number;
   data: Partial<Song> & { id: string };
   requestId?: string;
 };
 
 type SongDeletedMessage = {
-  type: 'ENTITY_DELETED';
-  entity: 'song';
+  type: "ENTITY_DELETED";
+  entity: "song";
   timestamp: number;
   data: { id: string };
   requestId?: string;
 };
 
 type BulkUpdateMessage = {
-  type: 'BULK_UPDATE';
-  entity: 'song' | 'album' | 'artist' | 'playlist';
+  type: "BULK_UPDATE";
+  entity: "song" | "album" | "artist" | "playlist";
   timestamp: number;
   data: {
     created?: Array<unknown>;
@@ -123,7 +123,7 @@ type BulkUpdateMessage = {
 // After successful database mutation
 const broadcastChange = (wss: WebSocketServer, message: WebSocketMessage) => {
   const payload = JSON.stringify(message);
-  
+
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(payload);
@@ -132,19 +132,19 @@ const broadcastChange = (wss: WebSocketServer, message: WebSocketMessage) => {
 };
 
 // Example usage in route handler
-router.post('/songs', requireAuth, async (req, res) => {
+router.post("/songs", requireAuth, async (req, res) => {
   const song = await db.insert(songs).values(req.body).returning();
-  
+
   // Respond to HTTP request
   res.status(201).json(song);
-  
+
   // Broadcast to all connected clients
   broadcastChange(req.app.locals.wss, {
-    type: 'ENTITY_CREATED',
-    entity: 'song',
+    type: "ENTITY_CREATED",
+    entity: "song",
     timestamp: Date.now(),
     data: song,
-    requestId: req.headers['x-request-id']
+    requestId: req.headers["x-request-id"],
   });
 });
 ```
@@ -164,24 +164,24 @@ router.post('/songs', requireAuth, async (req, res) => {
 // WebSocket message handler
 const handleWebSocketMessage = (message: WebSocketMessage) => {
   const { type, entity, data, requestId } = message;
-  
+
   // Skip if this client initiated the change (deduplication)
   if (requestId && requestId === getCurrentRequestId()) {
     return;
   }
-  
+
   // Apply state update based on message type
   switch (type) {
-    case 'ENTITY_CREATED':
+    case "ENTITY_CREATED":
       store.dispatch(addEntity(entity, data));
       break;
-    case 'ENTITY_UPDATED':
+    case "ENTITY_UPDATED":
       store.dispatch(updateEntity(entity, data));
       break;
-    case 'ENTITY_DELETED':
+    case "ENTITY_DELETED":
       store.dispatch(removeEntity(entity, data.id));
       break;
-    case 'BULK_UPDATE':
+    case "BULK_UPDATE":
       store.dispatch(bulkUpdate(entity, data));
       break;
   }
@@ -203,16 +203,16 @@ const recentRequestIds = new Map<string, number>(); // requestId -> timestamp
 
 const isOwnRequest = (requestId: string | undefined): boolean => {
   if (!requestId) return false;
-  
+
   const timestamp = recentRequestIds.get(requestId);
   if (!timestamp) return false;
-  
+
   // Clean up old entries
   if (Date.now() - timestamp > 5000) {
     recentRequestIds.delete(requestId);
     return false;
   }
-  
+
   return true;
 };
 
@@ -220,20 +220,20 @@ const isOwnRequest = (requestId: string | undefined): boolean => {
 const createSong = async (songData: SongInput) => {
   const requestId = crypto.randomUUID();
   recentRequestIds.set(requestId, Date.now());
-  
-  const response = await fetch('/api/songs', {
-    method: 'POST',
+
+  const response = await fetch("/api/songs", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'X-Request-Id': requestId
+      "Content-Type": "application/json",
+      "X-Request-Id": requestId,
     },
-    body: JSON.stringify(songData)
+    body: JSON.stringify(songData),
   });
-  
+
   // Optimistically update local state
   const newSong = await response.json();
   store.dispatch(addSong(newSong));
-  
+
   return newSong;
 };
 ```
@@ -248,7 +248,7 @@ let reconnectAttempt = 0;
 
 const reconnect = () => {
   const delay = reconnectDelays[Math.min(reconnectAttempt, reconnectDelays.length - 1)];
-  
+
   setTimeout(() => {
     reconnectAttempt++;
     establishConnection();
@@ -257,16 +257,16 @@ const reconnect = () => {
 
 const establishConnection = () => {
   const ws = new WebSocket(`${WS_URL}?token=${getAuthToken()}`);
-  
+
   ws.onopen = () => {
     reconnectAttempt = 0; // Reset on successful connection
     startHeartbeat();
   };
-  
+
   ws.onerror = () => {
     reconnect();
   };
-  
+
   ws.onclose = () => {
     stopHeartbeat();
     reconnect();
@@ -280,13 +280,13 @@ const establishConnection = () => {
 const handleReconnection = async () => {
   const lastSyncTime = getLastSyncTimestamp();
   const now = Date.now();
-  
+
   // If disconnected for more than 5 seconds, do full refresh
   if (now - lastSyncTime > 5000) {
     await fetchAllEntities();
   }
   // Otherwise, trust that queued messages will arrive
-  
+
   setLastSyncTimestamp(now);
 };
 ```
@@ -329,6 +329,7 @@ const handleReconnection = async () => {
 **Scenario:** User makes multiple changes in quick succession while offline.
 
 **Solution:**
+
 - Queue mutations locally
 - When connection restored, replay mutations in order
 - Server processes them atomically and broadcasts results
@@ -339,6 +340,7 @@ const handleReconnection = async () => {
 **Scenario:** User updates song title on Device A while updating album on Device B.
 
 **Solution:**
+
 - Last-write-wins based on server timestamp
 - Database updates are atomic and sequential
 - Broadcasts reflect actual database state
@@ -349,6 +351,7 @@ const handleReconnection = async () => {
 **Scenario:** WebSocket message contains partial entity (only changed fields).
 
 **Solution:**
+
 - Frontend merges partial update with existing state
 - Use spread operator: `{ ...existingEntity, ...partialUpdate }`
 - Ensure `id` field always present for updates
@@ -358,6 +361,7 @@ const handleReconnection = async () => {
 **Scenario:** Server doesn't clean up disconnected WebSocket clients.
 
 **Solution:**
+
 - Check `client.readyState === WebSocket.OPEN` before sending
 - Implement connection timeout (5 minutes idle → disconnect)
 - Periodic cleanup of closed connections

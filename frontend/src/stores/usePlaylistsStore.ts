@@ -1,11 +1,15 @@
-import { create } from 'zustand';
-import { z } from 'zod';
-import { api } from '../api/client';
-import { withStoreLoadingSilent } from '../api/middleware';
+import { create } from "zustand";
+import { z } from "zod";
+import { api } from "../api/client";
+import { withStoreLoadingSilent } from "../api/middleware";
+import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
 
 // Schemas
 const PlaylistSchema = z.object({
-  id: z.string().uuid(),
+  id: z
+    .string()
+    .uuid()
+    .transform((val) => toBrandId<PlaylistId>(val)),
   name: z.string(),
   createdAt: z.string(),
 });
@@ -13,7 +17,10 @@ const PlaylistSchema = z.object({
 const PlaylistSongSchema = z.object({
   position: z.number().int(),
   song: z.object({
-    id: z.string().uuid(),
+    id: z
+      .string()
+      .uuid()
+      .transform((val) => toBrandId<SongId>(val)),
     title: z.string(),
     playbackEnabled: z.boolean(),
     filePath: z.string().nullable().optional(),
@@ -43,20 +50,20 @@ export interface PlaylistsState {
 
   // Actions - Queries
   fetchPlaylists: () => Promise<void>;
-  fetchPlaylistDetail: (id: string) => Promise<void>;
-  getPlaylistDetail: (id: string) => PlaylistDetail | undefined;
+  fetchPlaylistDetail: (id: PlaylistId) => Promise<void>;
+  getPlaylistDetail: (id: PlaylistId) => PlaylistDetail | undefined;
 
   // Actions - Mutations
-  createPlaylist: (name: string) => Promise<string | null>;
-  updatePlaylist: (id: string, name: string) => Promise<void>;
-  deletePlaylist: (id: string) => Promise<void>;
-  addSongToPlaylist: (playlistId: string, songId: string) => Promise<void>;
-  removeSongFromPlaylist: (playlistId: string, position: number) => Promise<void>;
+  createPlaylist: (name: string) => Promise<PlaylistId | null>;
+  updatePlaylist: (id: PlaylistId, name: string) => Promise<void>;
+  deletePlaylist: (id: PlaylistId) => Promise<void>;
+  addSongToPlaylist: (playlistId: PlaylistId, songId: SongId) => Promise<void>;
+  removeSongFromPlaylist: (playlistId: PlaylistId, position: number) => Promise<void>;
 
   // Actions - Remote Updates (WebSocket)
   addPlaylist: (playlist: Playlist) => void;
-  updatePlaylistFromRemote: (id: string, updates: Partial<Playlist>) => void;
-  removePlaylistFromRemote: (id: string) => void;
+  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist>) => void;
+  removePlaylistFromRemote: (id: PlaylistId) => void;
 
   // Actions - State
   setLoading: (loading: boolean) => void;
@@ -84,7 +91,10 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
 
       // Fetch all pages
       while (true) {
-        const batch = await api.get(`/api/playlists?limit=${limit}&offset=${offset}`, PlaylistsResponseSchema);
+        const batch = await api.get(
+          `/api/playlists?limit=${limit}&offset=${offset}`,
+          PlaylistsResponseSchema,
+        );
         if (batch.length === 0) break;
         allPlaylists.push(...batch);
         if (batch.length < limit) break;
@@ -114,7 +124,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
       );
       set({ songCounts: counts });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch playlists';
+      const message = error instanceof Error ? error.message : "Failed to fetch playlists";
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -122,7 +132,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   },
 
   // Fetch playlist detail
-  fetchPlaylistDetail: async (id: string) => {
+  fetchPlaylistDetail: async (id: PlaylistId) => {
     const cached = get().playlistDetails[id];
     if (cached) {
       return;
@@ -132,7 +142,11 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
       setLoading: (val: boolean) => set({ isLoading: val }),
       setError: (err: string | null) => set({ error: err }),
     };
-    const detail = await withStoreLoadingSilent(store, `/api/playlists/${id}`, PlaylistDetailSchema);
+    const detail = await withStoreLoadingSilent(
+      store,
+      `/api/playlists/${id}`,
+      PlaylistDetailSchema,
+    );
 
     if (detail) {
       set((state) => {
@@ -152,7 +166,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }
   },
 
-  getPlaylistDetail: (id: string) => {
+  getPlaylistDetail: (id: PlaylistId) => {
     return get().playlistDetails[id];
   },
 
@@ -160,12 +174,12 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   createPlaylist: async (name: string) => {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      set({ error: 'Playlist name cannot be empty' });
+      set({ error: "Playlist name cannot be empty" });
       return null;
     }
 
     try {
-      const newPlaylist = await api.post('/api/playlists', { name: trimmedName }, PlaylistSchema);
+      const newPlaylist = await api.post("/api/playlists", { name: trimmedName }, PlaylistSchema);
 
       // Optimistic update
       set((state) => ({
@@ -178,17 +192,17 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
 
       return newPlaylist.id;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create playlist';
+      const message = error instanceof Error ? error.message : "Failed to create playlist";
       set({ error: message });
       return null;
     }
   },
 
   // Update playlist
-  updatePlaylist: async (id: string, name: string) => {
+  updatePlaylist: async (id: PlaylistId, name: string) => {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      set({ error: 'Playlist name cannot be empty' });
+      set({ error: "Playlist name cannot be empty" });
       return;
     }
 
@@ -210,24 +224,24 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
         };
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update playlist';
+      const message = error instanceof Error ? error.message : "Failed to update playlist";
       set({ error: message });
       throw error;
     }
   },
 
   // Delete playlist
-  deletePlaylist: async (id: string) => {
+  deletePlaylist: async (id: PlaylistId) => {
     try {
       await api.delete(`/api/playlists/${id}`, PlaylistSchema);
 
       // Remove from state
       set((state) => {
         const playlistDetailsRest = Object.fromEntries(
-          Object.entries(state.playlistDetails).filter(([key]) => key !== id)
+          Object.entries(state.playlistDetails).filter(([key]) => key !== id),
         );
         const songCountsRest = Object.fromEntries(
-          Object.entries(state.songCounts).filter(([key]) => key !== id)
+          Object.entries(state.songCounts).filter(([key]) => key !== id),
         );
         return {
           playlists: state.playlists.filter((p) => p.id !== id),
@@ -237,36 +251,43 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
         };
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete playlist';
+      const message = error instanceof Error ? error.message : "Failed to delete playlist";
       set({ error: message });
       throw error;
     }
   },
 
   // Add song to playlist
-  addSongToPlaylist: async (playlistId: string, songId: string) => {
+  addSongToPlaylist: async (playlistId: PlaylistId, songId: SongId) => {
     const detail = get().playlistDetails[playlistId];
     if (!detail) {
-      set({ error: 'Playlist not found' });
+      set({ error: "Playlist not found" });
       return;
     }
 
     try {
-      await api.post(`/api/playlists/${playlistId}/songs`, { songId }, z.object({ ok: z.literal(true) }));
+      await api.post(
+        `/api/playlists/${playlistId}/songs`,
+        { songId },
+        z.object({ ok: z.literal(true) }),
+      );
 
       // Optimistic: refetch detail to get new position
       await get().fetchPlaylistDetail(playlistId);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to add song to playlist';
+      const message = error instanceof Error ? error.message : "Failed to add song to playlist";
       set({ error: message });
       throw error;
     }
   },
 
   // Remove song from playlist
-  removeSongFromPlaylist: async (playlistId: string, position: number) => {
+  removeSongFromPlaylist: async (playlistId: PlaylistId, position: number) => {
     try {
-      await api.delete(`/api/playlists/${playlistId}/songs/${position}`, z.object({ ok: z.literal(true) }));
+      await api.delete(
+        `/api/playlists/${playlistId}/songs/${position}`,
+        z.object({ ok: z.literal(true) }),
+      );
 
       // Update detail
       set((state) => ({
@@ -275,7 +296,9 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
           ...(state.playlistDetails[playlistId] && {
             [playlistId]: {
               ...state.playlistDetails[playlistId],
-              songs: state.playlistDetails[playlistId]!.songs.filter((s) => s.position !== position),
+              songs: state.playlistDetails[playlistId]!.songs.filter(
+                (s) => s.position !== position,
+              ),
             },
           }),
         },
@@ -285,7 +308,8 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
         },
       }));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to remove song from playlist';
+      const message =
+        error instanceof Error ? error.message : "Failed to remove song from playlist";
       set({ error: message });
       throw error;
     }
@@ -302,7 +326,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }));
   },
 
-  updatePlaylistFromRemote: (id: string, updates: Partial<Playlist>) => {
+  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist>) => {
     set((state) => {
       const newDetails = {
         ...state.playlistDetails,
@@ -318,13 +342,13 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     });
   },
 
-  removePlaylistFromRemote: (id: string) => {
+  removePlaylistFromRemote: (id: PlaylistId) => {
     set((state) => {
       const playlistDetailsRest = Object.fromEntries(
-        Object.entries(state.playlistDetails).filter(([key]) => key !== id)
+        Object.entries(state.playlistDetails).filter(([key]) => key !== id),
       );
       const songCountsRest = Object.fromEntries(
-        Object.entries(state.songCounts).filter(([key]) => key !== id)
+        Object.entries(state.songCounts).filter(([key]) => key !== id),
       );
       return {
         playlists: state.playlists.filter((p) => p.id !== id),

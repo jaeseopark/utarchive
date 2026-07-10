@@ -108,7 +108,9 @@ export const selectSongById = async (id: string) => {
  *           ",45" -> { start: null, end: 45 }
  *           "30,45" -> { start: 30, end: 45 }
  */
-export const parseTrimRange = (trimRange: string | null): { start: number | null; end: number | null } => {
+export const parseTrimRange = (
+  trimRange: string | null,
+): { start: number | null; end: number | null } => {
   if (!trimRange || trimRange.trim() === "") {
     return { start: null, end: null };
   }
@@ -151,12 +153,18 @@ export const selectSongs = async (filters: SongListFilters) => {
   };
 
   if (filters.artistId && filters.masterId) {
-    return db.select(selectObj)
+    return db
+      .select(selectObj)
       .from(songs)
       .innerJoin(songArtists, eq(songArtists.songId, songs.id))
       .innerJoin(artists, eq(artists.id, songArtists.artistId))
       .innerJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
-      .where(and(eq(songArtists.artistId, filters.artistId), eq(songHierarchy.masterId, filters.masterId)))
+      .where(
+        and(
+          eq(songArtists.artistId, filters.artistId),
+          eq(songHierarchy.masterId, filters.masterId),
+        ),
+      )
       .groupBy(songs.id)
       .orderBy(songs.title)
       .limit(filters.limit)
@@ -164,7 +172,8 @@ export const selectSongs = async (filters: SongListFilters) => {
   }
 
   if (filters.artistId) {
-    return db.select(selectObj)
+    return db
+      .select(selectObj)
       .from(songs)
       .innerJoin(songArtists, eq(songArtists.songId, songs.id))
       .innerJoin(artists, eq(artists.id, songArtists.artistId))
@@ -176,7 +185,8 @@ export const selectSongs = async (filters: SongListFilters) => {
   }
 
   if (filters.masterId) {
-    return db.select(selectObj)
+    return db
+      .select(selectObj)
       .from(songs)
       .leftJoin(songArtists, eq(songArtists.songId, songs.id))
       .leftJoin(artists, eq(artists.id, songArtists.artistId))
@@ -189,7 +199,8 @@ export const selectSongs = async (filters: SongListFilters) => {
   }
 
   // Default: no filters, return all songs with artist info
-  return db.select(selectObj)
+  return db
+    .select(selectObj)
     .from(songs)
     .leftJoin(songArtists, eq(songArtists.songId, songs.id))
     .leftJoin(artists, eq(artists.id, songArtists.artistId))
@@ -201,7 +212,7 @@ export const selectSongs = async (filters: SongListFilters) => {
 
 export const createSong = async (
   songData: SongCreateInput,
-  artistIds: string[]
+  artistIds: string[],
 ): Promise<SongWithHierarchy> => {
   const songId = randomUUID();
   let masterId: string | undefined = songData.parentId ? undefined : songId;
@@ -238,8 +249,8 @@ export const createSong = async (
       tags: songData.tags ?? [],
       searchVector: sql`
         setweight(to_tsvector('english', ${songData.title}), 'A') ||
-        setweight(to_tsvector('english', ${(songData.tags ?? []).join(' ')}), 'B') ||
-        setweight(to_tsvector('english', ${songData.description ?? ''}), 'C')
+        setweight(to_tsvector('english', ${(songData.tags ?? []).join(" ")}), 'B') ||
+        setweight(to_tsvector('english', ${songData.description ?? ""}), 'C')
       `,
     };
 
@@ -288,7 +299,7 @@ export const createSong = async (
 
 export const updateSongById = async (
   songId: string,
-  updateData: SongUpdateInput
+  updateData: SongUpdateInput,
 ): Promise<SongWithHierarchy | null> => {
   // Note: When coverArtId is set to null, this unassigns the image from the song
   // but does NOT delete the underlying cover art entry or image files.
@@ -296,32 +307,28 @@ export const updateSongById = async (
   const { artistIds, releasedAt, ...restSongFields } = updateData;
 
   return db.transaction(async (tx) => {
-    const existing = await tx
-      .select()
-      .from(songs)
-      .where(eq(songs.id, songId))
-      .limit(1);
+    const existing = await tx.select().from(songs).where(eq(songs.id, songId)).limit(1);
 
     if (!existing[0]) {
       return null;
     }
 
     // Rebuild searchVector if any of these fields change
-    const hasSearchableFieldChange =
-      Boolean(updateData.title  ||
-      updateData.description  ||
-      updateData.tags);
+    const hasSearchableFieldChange = Boolean(
+      updateData.title || updateData.description || updateData.tags,
+    );
 
     const searchVectorValue = hasSearchableFieldChange
       ? (() => {
           const titleValue = updateData.title ?? existing[0].title;
-          const tagsValue = (updateData.tags ?? existing[0].tags ?? []).join(' ');
-          const descriptionValue = updateData.description !== undefined ? updateData.description : existing[0].description;
+          const tagsValue = (updateData.tags ?? existing[0].tags ?? []).join(" ");
+          const descriptionValue =
+            updateData.description !== undefined ? updateData.description : existing[0].description;
 
           return sql`
             setweight(to_tsvector('english', ${titleValue}), 'A') ||
             setweight(to_tsvector('english', ${tagsValue}), 'B') ||
-            setweight(to_tsvector('english', ${descriptionValue ?? ''}), 'C')
+            setweight(to_tsvector('english', ${descriptionValue ?? ""}), 'C')
           `;
         })()
       : undefined;
@@ -350,11 +357,7 @@ export const updateSongById = async (
       }
     }
 
-    const [updatedSong] = await tx
-      .select()
-      .from(songs)
-      .where(eq(songs.id, songId))
-      .limit(1);
+    const [updatedSong] = await tx.select().from(songs).where(eq(songs.id, songId)).limit(1);
 
     const hierarchy = await tx
       .select({ parentId: songHierarchy.parentId, masterId: songHierarchy.masterId })
@@ -510,11 +513,7 @@ export const updateSongTags = async (songId: string, tags: string[]) => {
     .map((tag) => tag.trim().toLowerCase())
     .filter((tag) => tag.length > 0);
 
-  const existing = await db
-    .select()
-    .from(songs)
-    .where(eq(songs.id, songId))
-    .limit(1);
+  const existing = await db.select().from(songs).where(eq(songs.id, songId)).limit(1);
 
   if (!existing[0]) {
     return null;
@@ -533,7 +532,10 @@ export const updateSongTags = async (songId: string, tags: string[]) => {
  * Link an existing child song to a parent song
  * Creates or updates the song_hierarchy relationship
  */
-export const linkChildToParent = async (childId: string, parentId: string): Promise<SongWithHierarchy> => {
+export const linkChildToParent = async (
+  childId: string,
+  parentId: string,
+): Promise<SongWithHierarchy> => {
   return db.transaction(async (tx) => {
     // Verify both songs exist
     const childSong = await tx.select().from(songs).where(eq(songs.id, childId)).limit(1);

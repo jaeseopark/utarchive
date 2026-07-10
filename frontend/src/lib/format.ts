@@ -3,9 +3,9 @@ export const formatDate = (dateString: string | null | undefined) => {
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
@@ -13,7 +13,9 @@ export const formatDate = (dateString: string | null | undefined) => {
  * Parse trimRange string into start and end values.
  * Format: "start,end" where either can be omitted.
  */
-export const parseTrimRange = (trimRange: string | null | undefined): { start: number | null; end: number | null } => {
+export const parseTrimRange = (
+  trimRange: string | null | undefined,
+): { start: number | null; end: number | null } => {
   if (!trimRange || trimRange.trim() === "") {
     return { start: null, end: null };
   }
@@ -43,7 +45,7 @@ export const formatTrimRange = (trimRange: string | null | undefined) => {
     const whole = Math.max(0, Math.floor(value));
     const minutes = Math.floor(whole / 60);
     const seconds = whole % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   return `${formatSeconds(start)} → ${formatSeconds(end)}`;
@@ -54,5 +56,5 @@ export const combineAliases = (aliases: string[] | undefined | null) => {
     return null;
   }
 
-  return aliases.join(', ');
+  return aliases.join(", ");
 };

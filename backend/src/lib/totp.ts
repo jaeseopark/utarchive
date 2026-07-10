@@ -34,7 +34,7 @@ export const validateTotp = (secret: string, code: string): boolean => {
 export const generateTotpQrCode = async (
   secret: string,
   userId: string,
-  issuer: string = "utarchive"
+  issuer: string = "utarchive",
 ): Promise<string> => {
   // Create the TOTP URI for the QR code
   const otpauth_url = `otpauth://totp/${issuer}:${userId}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;

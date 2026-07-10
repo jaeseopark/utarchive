@@ -46,11 +46,12 @@ const normalizeTrackList = (value: unknown): AlbumTrackListItem[] => {
   return value
     .filter(
       (item): item is { number: unknown; title: unknown } =>
-        item !== null && typeof item === "object" &&
+        item !== null &&
+        typeof item === "object" &&
         // eslint-disable-next-line no-restricted-syntax
         typeof (item as { number: unknown }).number === "number" &&
         // eslint-disable-next-line no-restricted-syntax
-        typeof (item as { title: unknown }).title === "string"
+        typeof (item as { title: unknown }).title === "string",
     )
     .map((item) => ({
       // eslint-disable-next-line no-restricted-syntax
@@ -62,7 +63,7 @@ const normalizeTrackList = (value: unknown): AlbumTrackListItem[] => {
 
 const buildTracks = (
   trackList: unknown,
-  albumSongRows: Array<{ songId: string; trackNumber: number; title: string | null }>
+  albumSongRows: Array<{ songId: string; trackNumber: number; title: string | null }>,
 ): AlbumTrack[] => {
   const normalizedTrackList = normalizeTrackList(trackList);
   const songByTrackNumber = new Map<number, { songId: string; title: string | null }>();
@@ -83,10 +84,7 @@ const buildTracks = (
     return {
       trackNumber: track.number,
       referenceTitle: track.title,
-      song:
-        songRow && songRow.title !== null
-          ? { id: songRow.songId, title: songRow.title }
-          : null,
+      song: songRow && songRow.title !== null ? { id: songRow.songId, title: songRow.title } : null,
       isRegistered: Boolean(songRow && songRow.title !== null),
     };
   });
@@ -99,8 +97,7 @@ const buildTracks = (
     mergedTracks.push({
       trackNumber: row.trackNumber,
       referenceTitle: row.title ?? null,
-      song:
-        row.title !== null ? { id: row.songId, title: row.title } : null,
+      song: row.title !== null ? { id: row.songId, title: row.title } : null,
       isRegistered: row.title !== null,
     });
   }
@@ -182,7 +179,8 @@ export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | nul
     coverArtId: album.coverArtId ?? null,
     trackList: normalizeTrackList(album.trackList),
     urls: album.urls ?? {},
-    createdAt: album.createdAt instanceof Date ? album.createdAt.toISOString() : String(album.createdAt),
+    createdAt:
+      album.createdAt instanceof Date ? album.createdAt.toISOString() : String(album.createdAt),
     tracks: buildTracks(album.trackList, songRows),
   };
 };
@@ -209,7 +207,7 @@ export const createAlbum = async (albumData: AlbumCreateInput) => {
           albumId,
           artistId,
           displayOrder: index,
-        }))
+        })),
       );
     }
 
@@ -217,10 +215,7 @@ export const createAlbum = async (albumData: AlbumCreateInput) => {
   });
 };
 
-export const updateAlbumById = async (
-  albumId: string,
-  updateData: AlbumUpdateInput
-) => {
+export const updateAlbumById = async (albumId: string, updateData: AlbumUpdateInput) => {
   // Note: When coverArtId is set to null, this unassigns the image from the album
   // but does NOT delete the underlying cover art entry or image files.
   // This allows the image to be reused by other songs/albums.
@@ -239,7 +234,7 @@ export const updateAlbumById = async (
           albumId: albumId,
           artistId,
           displayOrder: index,
-        }))
+        })),
       );
     }
   }
@@ -260,20 +255,12 @@ export const updateAlbumById = async (
     dataToUpdate.urls = updateData.urls;
   }
 
-  const rows = await db
-    .update(albums)
-    .set(dataToUpdate)
-    .where(eq(albums.id, albumId))
-    .returning();
+  const rows = await db.update(albums).set(dataToUpdate).where(eq(albums.id, albumId)).returning();
 
   return rows[0] ?? null;
 };
 
-export const upsertAlbumSong = async (
-  albumId: string,
-  songId: string,
-  trackNumber: number
-) => {
+export const upsertAlbumSong = async (albumId: string, songId: string, trackNumber: number) => {
   const [existingAlbum] = await db.select().from(albums).where(eq(albums.id, albumId)).limit(1);
 
   if (!existingAlbum) {

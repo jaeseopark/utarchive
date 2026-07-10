@@ -1,16 +1,16 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
-import { ConnectionStatusIndicator } from '../components/ConnectionStatusIndicator';
-import { useSession } from '../context/SessionContext';
-import { AddSongModal } from '../components/AddSongModal';
-import { useAddSongModalStore } from '../stores/useAddSongModalStore';
+import { NavLink, Outlet } from "react-router-dom";
+import { Button } from "../components/ui/Button";
+import { ConnectionStatusIndicator } from "../components/ConnectionStatusIndicator";
+import { useSession } from "../context/SessionContext";
+import { AddSongModal } from "../components/AddSongModal";
+import { useAddSongModalStore } from "../stores/useAddSongModalStore";
 
 const navItems = [
-  { to: '/artists', label: 'Artists' },
-  { to: '/albums', label: 'Albums' },
-  { to: '/playlists', label: 'Playlists' },
-  { to: '/songs', label: 'Songs' },
-  { to: '/search', label: 'Search' },
+  { to: "/artists", label: "Artists" },
+  { to: "/albums", label: "Albums" },
+  { to: "/playlists", label: "Playlists" },
+  { to: "/songs", label: "Songs" },
+  { to: "/search", label: "Search" },
 ];
 
 function RootLayout() {
@@ -45,7 +45,9 @@ function RootLayout() {
                   to={item.to}
                   className={({ isActive }) =>
                     `block rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                      isActive ? 'bg-slate-300 text-slate-900' : 'text-slate-700 hover:bg-slate-300/70 hover:text-slate-900'
+                      isActive
+                        ? "bg-slate-300 text-slate-900"
+                        : "text-slate-700 hover:bg-slate-300/70 hover:text-slate-900"
                     }`
                   }
                 >

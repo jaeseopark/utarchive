@@ -1,6 +1,6 @@
-import { ZodSchema } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
-import { registerRequestId } from '../lib/requestIdDeduplication';
+import { ZodSchema } from "zod";
+import { v4 as uuidv4 } from "uuid";
+import { registerRequestId } from "../lib/requestIdDeduplication";
 
 export class ApiError extends Error {
   public readonly status: number;
@@ -22,7 +22,7 @@ async function parseJson(response: Response) {
   try {
     return JSON.parse(text);
   } catch {
-    throw new ApiError(response.status, 'Invalid JSON response', text);
+    throw new ApiError(response.status, "Invalid JSON response", text);
   }
 }
 
@@ -31,7 +31,7 @@ type RequestOptions = {
 };
 
 function handleUnauthorized() {
-  window.location.assign('/login');
+  window.location.assign("/login");
 }
 
 async function request<T>(
@@ -45,10 +45,10 @@ async function request<T>(
   registerRequestId(requestId);
 
   const response = await fetch(input, {
-    credentials: 'include',
+    credentials: "include",
     headers: {
-      'Content-Type': 'application/json',
-      'X-Request-ID': requestId,
+      "Content-Type": "application/json",
+      "X-Request-ID": requestId,
       ...init.headers,
     },
     ...init,
@@ -58,19 +58,22 @@ async function request<T>(
     if (!options.preventUnauthorizedRedirect) {
       handleUnauthorized();
     }
-    throw new ApiError(401, 'Unauthorized', null);
+    throw new ApiError(401, "Unauthorized", null);
   }
 
   const payload = await parseJson(response);
 
   if (!response.ok) {
-    const message = typeof payload === 'object' && payload && 'message' in payload && !Array.isArray(payload) ? String(payload.message) : response.statusText;
+    const message =
+      typeof payload === "object" && payload && "message" in payload && !Array.isArray(payload)
+        ? String(payload.message)
+        : response.statusText;
     throw new ApiError(response.status, message, payload);
   }
 
   const parseResult = schema.safeParse(payload);
   if (!parseResult.success) {
-    throw new ApiError(response.status, 'Response validation failed', parseResult.error.format());
+    throw new ApiError(response.status, "Response validation failed", parseResult.error.format());
   }
 
   return parseResult.data;
@@ -78,13 +81,13 @@ async function request<T>(
 
 export const api = {
   get: async <T>(url: string, schema: ZodSchema<T>, options?: RequestOptions) =>
-    request(url, { method: 'GET' }, schema, options),
+    request(url, { method: "GET" }, schema, options),
   post: async <T>(url: string, body: unknown, schema: ZodSchema<T>, options?: RequestOptions) =>
-    request(url, { method: 'POST', body: JSON.stringify(body) }, schema, options),
+    request(url, { method: "POST", body: JSON.stringify(body) }, schema, options),
   put: async <T>(url: string, body: unknown, schema: ZodSchema<T>, options?: RequestOptions) =>
-    request(url, { method: 'PUT', body: JSON.stringify(body) }, schema, options),
+    request(url, { method: "PUT", body: JSON.stringify(body) }, schema, options),
   patch: async <T>(url: string, body: unknown, schema: ZodSchema<T>, options?: RequestOptions) =>
-    request(url, { method: 'PATCH', body: JSON.stringify(body) }, schema, options),
+    request(url, { method: "PATCH", body: JSON.stringify(body) }, schema, options),
   delete: async <T>(url: string, schema: ZodSchema<T>, options?: RequestOptions) =>
-    request(url, { method: 'DELETE' }, schema, options),
+    request(url, { method: "DELETE" }, schema, options),
 };

@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { MemoryRouter } from 'react-router-dom';
-import SearchPage from './SearchPage';
-import { api } from '../api/client';
+import type { ReactNode } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
+import { MemoryRouter } from "react-router-dom";
+import SearchPage from "./SearchPage";
+import { api } from "../api/client";
 
 const meta: Meta<typeof SearchPage> = {
-  title: 'Pages/SearchPage',
+  title: "Pages/SearchPage",
   component: SearchPage,
 };
 
@@ -15,15 +15,11 @@ type Story = StoryObj<typeof SearchPage>;
 
 const searchResults = {
   songs: [
-    { id: 'song-1', title: 'Space Anthem', artistIds: ['artist-1'], playbackEnabled: true },
-    { id: 'song-2', title: 'Moonlight Drive', artistIds: ['artist-2'], playbackEnabled: false },
+    { id: "song-1", title: "Space Anthem", artistIds: ["artist-1"], playbackEnabled: true },
+    { id: "song-2", title: "Moonlight Drive", artistIds: ["artist-2"], playbackEnabled: false },
   ],
-  artists: [
-    { id: 'artist-1', name: 'Astro Child', aliases: ['A.Child'] },
-  ],
-  albums: [
-    { id: 'album-1', title: 'Galactic Path', artistIds: ['artist-1'], yearReleased: 2024 },
-  ],
+  artists: [{ id: "artist-1", name: "Astro Child", aliases: ["A.Child"] }],
+  albums: [{ id: "album-1", title: "Galactic Path", artistIds: ["artist-1"], yearReleased: 2024 }],
 };
 
 const createMockRouterDecorator = (initialEntries: string[], response: unknown) => {
@@ -39,9 +35,11 @@ const createMockRouterDecorator = (initialEntries: string[], response: unknown) 
 };
 
 export const WithResults: Story = {
-  decorators: [createMockRouterDecorator(['/search?q=space'], searchResults)],
+  decorators: [createMockRouterDecorator(["/search?q=space"], searchResults)],
 };
 
 export const NoResults: Story = {
-  decorators: [createMockRouterDecorator(['/search?q=missing'], { songs: [], artists: [], albums: [] })],
+  decorators: [
+    createMockRouterDecorator(["/search?q=missing"], { songs: [], artists: [], albums: [] }),
+  ],
 };

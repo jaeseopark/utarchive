@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { api } from '../api/client';
-import { Button } from '../components/ui/Button';
-import { z } from 'zod';
-import { usePlaylistDetail } from '../hooks/usePlaylistDetail';
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { api } from "../api/client";
+import { Button } from "../components/ui/Button";
+import { z } from "zod";
+import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
+import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
 
 const SearchSongSchema = z.object({
   id: z.string().uuid(),
@@ -34,16 +35,17 @@ const SearchResponseSchema = z.object({
 type SearchResponse = z.infer<typeof SearchResponseSchema>;
 
 function PlaylistDetailPage() {
-  const { id } = useParams<'id'>();
+  const { id } = useParams<"id">();
   const navigate = useNavigate();
-  const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSong, removeSong } = usePlaylistDetail(id || '');
+  const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSong, removeSong } =
+    usePlaylistDetail(toBrandId<PlaylistId>(id || ""));
 
-  const [draftName, setDraftName] = useState('');
+  const [draftName, setDraftName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -54,7 +56,10 @@ function PlaylistDetailPage() {
     }
   }, [playlist]);
 
-  const songIds = useMemo(() => new Set(playlist?.songs.map((item) => item.song.id) ?? []), [playlist]);
+  const songIds = useMemo(
+    () => new Set(playlist?.songs.map((item) => item.song.id) ?? []),
+    [playlist],
+  );
 
   const handleSaveName = async () => {
     if (!playlist) {
@@ -77,14 +82,14 @@ function PlaylistDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this playlist? This cannot be undone.')) {
+    if (!window.confirm("Delete this playlist? This cannot be undone.")) {
       return;
     }
 
     setIsDeleteLoading(true);
     try {
       await deletePlaylist();
-      navigate('/playlists');
+      navigate("/playlists");
     } finally {
       setIsDeleteLoading(false);
     }
@@ -110,10 +115,14 @@ function PlaylistDetailPage() {
     const songIds = nextSongs.map((item) => item.song.id);
 
     try {
-      await api.put(`/api/playlists/${id}/songs`, { songIds }, z.object({
-        playlistId: z.string().uuid(),
-        songIds: z.array(z.string().uuid()),
-      }));
+      await api.put(
+        `/api/playlists/${id}/songs`,
+        { songIds },
+        z.object({
+          playlistId: z.string().uuid(),
+          songIds: z.array(z.string().uuid()),
+        }),
+      );
     } catch {
       // Handle error
     }
@@ -121,7 +130,7 @@ function PlaylistDetailPage() {
 
   useEffect(() => {
     if (!isModalOpen) {
-      setSearchQuery('');
+      setSearchQuery("");
       setSearchResults(null);
       setSearchError(null);
       setSearchLoading(false);
@@ -152,7 +161,7 @@ function PlaylistDetailPage() {
     };
   }, [isModalOpen, searchQuery]);
 
-  const handleAddSong = async (songId: string) => {
+  const handleAddSong = async (songId: SongId) => {
     try {
       await addSong(songId);
     } catch {
@@ -175,19 +184,33 @@ function PlaylistDetailPage() {
           <Button type="button" variant="secondary" onClick={() => setIsModalOpen(true)}>
             Add Songs
           </Button>
-          <Button type="button" variant="secondary" onClick={() => alert('Play all is not yet connected to playback.')} disabled={!playlistSongs.length}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => alert("Play all is not yet connected to playback.")}
+            disabled={!playlistSongs.length}
+          >
             Play All
           </Button>
-          <Button type="button" variant="secondary" onClick={handleDelete} disabled={isDeleteLoading}>
-            {isDeleteLoading ? 'Deleting…' : 'Delete Playlist'}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleDelete}
+            disabled={isDeleteLoading}
+          >
+            {isDeleteLoading ? "Deleting…" : "Delete Playlist"}
           </Button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">Loading playlist…</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">
+          Loading playlist…
+        </div>
       ) : error ? (
-        <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">Error loading playlist: {error}</div>
+        <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">
+          Error loading playlist: {error}
+        </div>
       ) : playlist ? (
         <div className="space-y-6">
           <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
@@ -223,12 +246,18 @@ function PlaylistDetailPage() {
                 ) : (
                   <div className="flex items-center gap-3">
                     <h1 className="text-3xl font-semibold text-slate-900">{playlist.name}</h1>
-                    <Button type="button" variant="secondary" onClick={() => setIsEditingName(true)}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setIsEditingName(true)}
+                    >
                       Rename
                     </Button>
                   </div>
                 )}
-                <p className="text-sm text-slate-600">Created on {new Date(playlist.createdAt).toLocaleDateString()}</p>
+                <p className="text-sm text-slate-600">
+                  Created on {new Date(playlist.createdAt).toLocaleDateString()}
+                </p>
               </div>
             </div>
           </div>
@@ -236,7 +265,9 @@ function PlaylistDetailPage() {
           <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-slate-900">Songs</h3>
-              <span className="text-sm text-slate-600">{playlistSongs.length} track{playlistSongs.length === 1 ? '' : 's'}</span>
+              <span className="text-sm text-slate-600">
+                {playlistSongs.length} track{playlistSongs.length === 1 ? "" : "s"}
+              </span>
             </div>
 
             {playlistSongs.length === 0 ? (
@@ -257,19 +288,38 @@ function PlaylistDetailPage() {
                       <tr key={item.song.id} className="border-b border-slate-300 last:border-b-0">
                         <td className="px-4 py-4 text-slate-700">{index + 1}</td>
                         <td className="px-4 py-4">
-                          <Link to={`/songs/${item.song.id}`} className="text-slate-900 transition hover:text-sky-500">
+                          <Link
+                            to={`/songs/${item.song.id}`}
+                            className="text-slate-900 transition hover:text-sky-500"
+                          >
                             {item.song.title}
                           </Link>
                         </td>
-                        <td className="px-4 py-4 text-slate-700">{item.song.playbackEnabled ? 'Yes' : 'No'}</td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {item.song.playbackEnabled ? "Yes" : "No"}
+                        </td>
                         <td className="px-4 py-4 space-x-2">
-                          <Button type="button" variant="secondary" disabled={index === 0} onClick={() => handleReorder(index, index - 1)}>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={index === 0}
+                            onClick={() => handleReorder(index, index - 1)}
+                          >
                             Up
                           </Button>
-                          <Button type="button" variant="secondary" disabled={index === playlistSongs.length - 1} onClick={() => handleReorder(index, index + 1)}>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={index === playlistSongs.length - 1}
+                            onClick={() => handleReorder(index, index + 1)}
+                          >
                             Down
                           </Button>
-                          <Button type="button" variant="secondary" onClick={() => handleRemoveSong(item.position)}>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => handleRemoveSong(item.position)}
+                          >
                             Remove
                           </Button>
                         </td>
@@ -282,7 +332,9 @@ function PlaylistDetailPage() {
           </section>
         </div>
       ) : (
-        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">Playlist not found.</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">
+          Playlist not found.
+        </div>
       )}
 
       {isModalOpen ? (
@@ -294,7 +346,9 @@ function PlaylistDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-semibold text-slate-900">Add Songs</h3>
-                <p className="mt-1 text-sm text-slate-600">Search for songs and add them to the playlist.</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Search for songs and add them to the playlist.
+                </p>
               </div>
               <button
                 type="button"
@@ -320,13 +374,21 @@ function PlaylistDetailPage() {
               </div>
 
               {searchLoading ? (
-                <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 text-slate-600">Searching for songs…</div>
+                <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 text-slate-600">
+                  Searching for songs…
+                </div>
               ) : searchError ? (
-                <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">Search error: {searchError}</div>
+                <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">
+                  Search error: {searchError}
+                </div>
               ) : !searchQuery.trim() ? (
-                <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 text-slate-600">Enter a search term to find songs.</div>
+                <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 text-slate-600">
+                  Enter a search term to find songs.
+                </div>
               ) : searchSongResults.length === 0 ? (
-                <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 text-slate-600">No song results found.</div>
+                <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 text-slate-600">
+                  No song results found.
+                </div>
               ) : (
                 <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4">
                   <table className="min-w-full text-left text-sm text-slate-700">
@@ -341,15 +403,17 @@ function PlaylistDetailPage() {
                       {searchSongResults.map((song) => (
                         <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
                           <td className="px-4 py-4 text-slate-900">{song.title}</td>
-                          <td className="px-4 py-4 text-slate-700">{song.playbackEnabled ? 'Yes' : 'No'}</td>
+                          <td className="px-4 py-4 text-slate-700">
+                            {song.playbackEnabled ? "Yes" : "No"}
+                          </td>
                           <td className="px-4 py-4">
                             <Button
                               type="button"
                               variant="secondary"
-                              disabled={songIds.has(song.id)}
-                              onClick={() => handleAddSong(song.id)}
+                              disabled={songIds.has(toBrandId<SongId>(song.id))}
+                              onClick={() => handleAddSong(toBrandId<SongId>(song.id))}
                             >
-                              {songIds.has(song.id) ? 'Added' : 'Add'}
+                              {songIds.has(toBrandId<SongId>(song.id)) ? "Added" : "Add"}
                             </Button>
                           </td>
                         </tr>

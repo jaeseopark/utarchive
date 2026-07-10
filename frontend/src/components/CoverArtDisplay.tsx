@@ -1,17 +1,18 @@
-import React, { FC, useRef, useState, useCallback } from 'react';
-import { Button } from './ui/Button';
-import CoverArt from './CoverArt';
-import { useUploadCoverArt } from '../hooks/useUploadCoverArt';
-import { useSongUpdate } from '../hooks/useSongUpdate';
-import { useAlbumUpdate } from '../hooks/useAlbumUpdate';
-import { useResolveCoverArt } from '../hooks/useResolveCoverArt';
-import { useSongDetail } from '../hooks/useSongDetail';
-import { useAlbumDetail } from '../hooks/useAlbumDetail';
+import React, { FC, useRef, useState, useCallback } from "react";
+import { Button } from "./ui/Button";
+import CoverArt from "./CoverArt";
+import { useUploadCoverArt } from "../hooks/useUploadCoverArt";
+import { useSongUpdate } from "../hooks/useSongUpdate";
+import { useAlbumUpdate } from "../hooks/useAlbumUpdate";
+import { useResolveCoverArt } from "../hooks/useResolveCoverArt";
+import { useSongDetail } from "../hooks/useSongDetail";
+import { useAlbumDetail } from "../hooks/useAlbumDetail";
+import { type SongId, type AlbumId } from "../types/brands";
 
 interface CoverArtDisplayProps {
   owner: {
-    songId?: string;
-    albumId?: string;
+    songId?: SongId;
+    albumId?: AlbumId;
   };
   size?: 128 | 1024;
   className?: string;
@@ -27,11 +28,7 @@ interface CoverArtDisplayProps {
  * - Upload/delete operations affect only the immediate owner
  * - Falls back to placeholder if no cover art found
  */
-export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({
-  owner,
-  size = 1024,
-  className,
-}) => {
+export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({ owner, size = 1024, className }) => {
   const { songId, albumId } = owner;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isHovering, setIsHovering] = useState(false);
@@ -41,9 +38,13 @@ export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({
   const { resolvedCoverArtId, isLoading: isResolvingCoverArt } = useResolveCoverArt(owner);
 
   // Get owner's direct cover art ID
-  const { song } = useSongDetail(songId ?? '');
-  const { album } = useAlbumDetail(albumId ?? '');
-  const ownerCoverArtId = songId ? song?.coverArtId ?? null : (albumId ? album?.coverArtId ?? null : null);
+  const { song } = useSongDetail(songId);
+  const { album } = useAlbumDetail(albumId);
+  const ownerCoverArtId = songId
+    ? (song?.coverArtId ?? null)
+    : albumId
+      ? (album?.coverArtId ?? null)
+      : null;
 
   const { uploadCoverArt, isUploading } = useUploadCoverArt();
   const { updateSongData } = useSongUpdate();
@@ -62,22 +63,22 @@ export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({
         if (songId) {
           const result = await updateSongData(songId, { coverArtId: coverArt.id });
           if (!result.success) {
-            setUploadError(result.error || 'Failed to update cover art');
+            setUploadError(result.error || "Failed to update cover art");
           }
           if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+            fileInputRef.current.value = "";
           }
         } else if (albumId) {
           const result = await updateAlbumData(albumId, { coverArtId: coverArt.id });
           if (!result.success) {
-            setUploadError(result.error || 'Failed to update cover art');
+            setUploadError(result.error || "Failed to update cover art");
           }
           if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+            fileInputRef.current.value = "";
           }
         }
       } else {
-        setUploadError('Failed to upload image');
+        setUploadError("Failed to upload image");
       }
     },
     [uploadCoverArt, songId, albumId, updateSongData, updateAlbumData],
@@ -93,22 +94,22 @@ export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({
       if (songId) {
         const result = await updateSongData(songId, { coverArtId: null });
         if (!result.success) {
-          setUploadError(result.error || 'Failed to delete image');
+          setUploadError(result.error || "Failed to delete image");
         }
       } else if (albumId) {
         const result = await updateAlbumData(albumId, { coverArtId: null });
         if (!result.success) {
-          setUploadError(result.error || 'Failed to delete image');
+          setUploadError(result.error || "Failed to delete image");
         }
       }
     } catch {
-      setUploadError('Failed to delete image');
+      setUploadError("Failed to delete image");
     }
   }, [albumId, songId, updateSongData, updateAlbumData]);
 
   // Show the resolved cover art ID
   const displayCoverArtId = resolvedCoverArtId;
-  
+
   // Delete button is visible when there's any cover art, but only enabled if owner has it directly
   const showDeleteButton = displayCoverArtId !== null;
   const canDeleteCoverArt = ownerCoverArtId !== null;
@@ -152,7 +153,7 @@ export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({
             disabled={isUploading}
             className="flex-1"
           >
-            {isUploading ? 'Uploading...' : 'Upload'}
+            {isUploading ? "Uploading..." : "Upload"}
           </Button>
           {showDeleteButton && (
             <Button
@@ -160,7 +161,7 @@ export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({
               variant="secondary"
               onClick={handleDeleteCoverArt}
               disabled={isUploading || !canDeleteCoverArt}
-              title={!canDeleteCoverArt ? 'Cannot delete transitive cover art' : 'Delete cover art'}
+              title={!canDeleteCoverArt ? "Cannot delete transitive cover art" : "Delete cover art"}
               className="flex-1"
             >
               Delete

@@ -1,18 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { MemoryRouter } from 'react-router-dom';
-import LoginPage from './LoginPage';
-import { SessionContext, type SessionContextValue } from '../context/SessionContext';
+import type { Meta, StoryObj } from "@storybook/react";
+import { MemoryRouter } from "react-router-dom";
+import LoginPage from "./LoginPage";
+import { SessionContext, type SessionContextValue } from "../context/SessionContext";
 
 const meta: Meta<typeof LoginPage> = {
-  title: 'Pages/LoginPage',
+  title: "Pages/LoginPage",
   component: LoginPage,
-  decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={['/login']}>
-        {Story()}
-      </MemoryRouter>
-    ),
-  ],
+  decorators: [(Story) => <MemoryRouter initialEntries={["/login"]}>{Story()}</MemoryRouter>],
 };
 
 export default meta;

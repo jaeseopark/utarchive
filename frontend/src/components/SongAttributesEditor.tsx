@@ -1,20 +1,20 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import CreatableSelect from 'react-select/creatable';
-import { Button } from './ui/Button';
-import { type Song } from '../api/schemas';
-import { useSongUpdate } from '../hooks/useSongUpdate';
-import { useArtistsStore } from '../stores/useArtistsStore';
-import { useCreateArtist } from '../hooks/useCreateArtist';
-import { formatDate } from '../lib/format';
-import { getChangedProperties } from '../lib/compareObjects';
-import { z } from 'zod';
-import clsx from 'clsx';
+import React, { useState, useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import CreatableSelect from "react-select/creatable";
+import { Button } from "./ui/Button";
+import { type Song } from "../api/schemas";
+import { useSongUpdate } from "../hooks/useSongUpdate";
+import { useArtistsStore } from "../stores/useArtistsStore";
+import { useCreateArtist } from "../hooks/useCreateArtist";
+import { formatDate } from "../lib/format";
+import { getChangedProperties } from "../lib/compareObjects";
+import { z } from "zod";
+import clsx from "clsx";
 
 // Define the update schema - only editable fields (excludes coverArtId which is managed separately)
 const SongUpdateSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(500),
+  title: z.string().min(1, "Title is required").max(500),
   platformId: z.string().max(200).nullable().optional(),
   releasedAt: z.string().nullable().optional(),
   url: z.string().max(2000).nullable().optional(),
@@ -34,12 +34,12 @@ type SongUpdateInput = z.infer<typeof SongUpdateSchema>;
 function getFormValuesFromSong(song: Song): SongUpdateInput {
   return {
     title: song.title,
-    platformId: song.platformId ?? '',
-    releasedAt: song.releasedAt ?? '',
-    url: song.url ?? '',
-    description: song.description ?? '',
+    platformId: song.platformId ?? "",
+    releasedAt: song.releasedAt ?? "",
+    url: song.url ?? "",
+    description: song.description ?? "",
     playbackEnabled: song.playbackEnabled ?? false,
-    trimRange: song.trimRange ?? '',
+    trimRange: song.trimRange ?? "",
     tags: song.tags ?? [],
     artistIds: song.artistIds ?? [],
   };
@@ -78,14 +78,14 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
     formState: { errors },
   } = useForm<SongUpdateInput>({
     resolver: zodResolver(SongUpdateSchema),
-    mode: 'onBlur',
+    mode: "onBlur",
     defaultValues: getFormValuesFromSong(song),
   });
 
   // Sync form and component state with song data
   useEffect(() => {
     reset(getFormValuesFromSong(song));
-    
+
     // Sync selectedArtists with song.artistIds
     if (artists.length > 0) {
       const artistIds = song.artistIds ?? [];
@@ -101,7 +101,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
       // If song has no artists, clear the selection
       setSelectedArtists([]);
     }
-    
+
     // Sync selectedTags with song.tags
     const tags = song.tags ?? [];
     const selectedTagsList = tags.map((tag) => ({ value: tag, label: tag }));
@@ -116,9 +116,9 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
         // Override artistIds and tags with the current selections from CreatableSelect
         const cleanedFormData: Record<string, unknown> = {};
         Object.entries(data).forEach(([key, value]) => {
-          cleanedFormData[key] = value === '' ? null : value;
+          cleanedFormData[key] = value === "" ? null : value;
         });
-        
+
         // Override with current selections from component state
         cleanedFormData.artistIds = selectedArtists.map((a) => a.value);
         cleanedFormData.tags = selectedTags.map((t) => t.value);
@@ -138,10 +138,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
         };
 
         // Step 3: Get only the properties that have changed
-        const changedProperties = getChangedProperties(
-          originalSongNormalized,
-          cleanedFormData,
-        );
+        const changedProperties = getChangedProperties(originalSongNormalized, cleanedFormData);
 
         // Step 4: If nothing changed, just close edit mode
         if (Object.keys(changedProperties).length === 0) {
@@ -159,7 +156,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
         setIsSubmitting(false);
       }
     },
-    [song, selectedArtists, selectedTags, updateSongData]
+    [song, selectedArtists, selectedTags, updateSongData],
   );
 
   const handleCancel = () => {
@@ -178,7 +175,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
         };
         setSelectedArtists([...selectedArtists, newOption]);
       } catch (error) {
-        console.error('Failed to create artist:', error);
+        console.error("Failed to create artist:", error);
       } finally {
         setIsCreatingArtist(false);
       }
@@ -190,40 +187,40 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
   // Always includes Date Added, plus any other non-empty attributes
   const allAttributes = [
     {
-      key: 'createdAt',
-      label: 'Date Added',
+      key: "createdAt",
+      label: "Date Added",
       value: formatDate(song.createdAt),
     },
     {
-      key: 'releasedAt',
-      label: 'Released',
+      key: "releasedAt",
+      label: "Released",
       value: song.releasedAt ? formatDate(song.releasedAt) : null,
     },
-    { key: 'platformId', label: 'Platform ID', value: song.platformId },
-    { key: 'url', label: 'External URL', value: song.url },
+    { key: "platformId", label: "Platform ID", value: song.platformId },
+    { key: "url", label: "External URL", value: song.url },
     ...(song.filePath
       ? [
           {
-            key: 'playbackEnabled',
-            label: 'Playback Enabled',
-            value: song.playbackEnabled ? 'Yes' : 'No',
+            key: "playbackEnabled",
+            label: "Playback Enabled",
+            value: song.playbackEnabled ? "Yes" : "No",
           },
         ]
       : []),
     {
-      key: 'trimRange',
-      label: 'Trim Range',
+      key: "trimRange",
+      label: "Trim Range",
       value: song.trimRange,
     },
     {
-      key: 'description',
-      label: 'Description',
+      key: "description",
+      label: "Description",
       value: song.description,
     },
     {
-      key: 'tags',
-      label: 'Tags',
-      value: song.tags?.length ? song.tags.join(', ') : null,
+      key: "tags",
+      label: "Tags",
+      value: song.tags?.length ? song.tags.join(", ") : null,
     },
   ];
 
@@ -240,33 +237,25 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
             <tbody>
               {/* Title */}
               <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600 w-40">
-                  Title
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-600 w-40">Title</td>
                 <td className="px-4 py-3">
                   <input
                     type="text"
-                    {...register('title')}
+                    {...register("title")}
                     className={clsx(
-                      'w-full px-3 py-2 rounded-lg border',
-                      errors.title
-                        ? 'border-rose-400 bg-rose-50'
-                        : 'border-slate-300 bg-white'
+                      "w-full px-3 py-2 rounded-lg border",
+                      errors.title ? "border-rose-400 bg-rose-50" : "border-slate-300 bg-white",
                     )}
                   />
                   {errors.title && (
-                    <div className="mt-1 text-xs text-rose-600">
-                      {errors.title.message}
-                    </div>
+                    <div className="mt-1 text-xs text-rose-600">{errors.title.message}</div>
                   )}
                 </td>
               </tr>
 
               {/* Artists */}
               <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600 align-top">
-                  Artists
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-600 align-top">Artists</td>
                 <td className="px-4 py-3">
                   {isLoading ? (
                     <p className="text-sm text-slate-500">Loading artists...</p>
@@ -282,9 +271,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
                         setSelectedArtists(newValue ? Array.from(newValue) : []);
                       }}
                       onCreateOption={handleCreateArtist}
-                      formatCreateLabel={(inputValue) =>
-                        `Create artist "${inputValue}"`
-                      }
+                      formatCreateLabel={(inputValue) => `Create artist "${inputValue}"`}
                       placeholder="Select or create artists..."
                       className="react-select-container"
                       classNamePrefix="react-select"
@@ -292,20 +279,18 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
                         control: (base, state) => ({
                           ...base,
                           borderColor: base.borderColor,
-                          boxShadow: state.isFocused
-                            ? '0 0 0 1px #0ea5e9'
-                            : 'none',
-                          borderRadius: '0.5rem',
-                          minHeight: '2.5rem',
+                          boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
+                          borderRadius: "0.5rem",
+                          minHeight: "2.5rem",
                         }),
                         multiValue: (base) => ({
                           ...base,
-                          backgroundColor: '#dbeafe',
-                          borderRadius: '0.375rem',
+                          backgroundColor: "#dbeafe",
+                          borderRadius: "0.375rem",
                         }),
                         multiValueLabel: (base) => ({
                           ...base,
-                          color: '#1e40af',
+                          color: "#1e40af",
                         }),
                       }}
                     />
@@ -315,13 +300,11 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
 
               {/* Released */}
               <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600">
-                  Released
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-600">Released</td>
                 <td className="px-4 py-3">
                   <input
                     type="datetime-local"
-                    {...register('releasedAt')}
+                    {...register("releasedAt")}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
                   />
                 </td>
@@ -329,13 +312,11 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
 
               {/* Platform ID */}
               <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600">
-                  Platform ID
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-600">Platform ID</td>
                 <td className="px-4 py-3">
                   <input
                     type="text"
-                    {...register('platformId')}
+                    {...register("platformId")}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
                   />
                 </td>
@@ -343,13 +324,11 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
 
               {/* External URL */}
               <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600">
-                  External URL
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-600">External URL</td>
                 <td className="px-4 py-3">
                   <input
                     type="url"
-                    {...register('url')}
+                    {...register("url")}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
                   />
                 </td>
@@ -358,13 +337,11 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
               {/* Playback Enabled - only show if file exists */}
               {song.filePath && (
                 <tr className="border-b border-slate-300">
-                  <td className="px-4 py-3 font-medium text-slate-600">
-                    Playback Enabled
-                  </td>
+                  <td className="px-4 py-3 font-medium text-slate-600">Playback Enabled</td>
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
-                      {...register('playbackEnabled')}
+                      {...register("playbackEnabled")}
                       className="h-4 w-4 rounded border-slate-300"
                     />
                   </td>
@@ -373,13 +350,11 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
 
               {/* Trim Range */}
               <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600">
-                  Trim Range
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-600">Trim Range</td>
                 <td className="px-4 py-3">
                   <input
                     type="text"
-                    {...register('trimRange')}
+                    {...register("trimRange")}
                     placeholder="e.g., 10.5-125.8"
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
                   />
@@ -388,12 +363,10 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
 
               {/* Description */}
               <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600 align-top">
-                  Description
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-600 align-top">Description</td>
                 <td className="px-4 py-3">
                   <textarea
-                    {...register('description')}
+                    {...register("description")}
                     rows={4}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
                   />
@@ -402,9 +375,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
 
               {/* Tags */}
               <tr>
-                <td className="px-4 py-3 font-medium text-slate-600 align-top">
-                  Tags
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-600 align-top">Tags</td>
                 <td className="px-4 py-3">
                   <CreatableSelect
                     isMulti
@@ -421,9 +392,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
                       };
                       setSelectedTags([...selectedTags, newTag]);
                     }}
-                    formatCreateLabel={(inputValue) =>
-                      `Create tag "${inputValue}"`
-                    }
+                    formatCreateLabel={(inputValue) => `Create tag "${inputValue}"`}
                     placeholder="Select or create tags..."
                     className="react-select-container"
                     classNamePrefix="react-select"
@@ -431,20 +400,18 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
                       control: (base, state) => ({
                         ...base,
                         borderColor: base.borderColor,
-                        boxShadow: state.isFocused
-                          ? '0 0 0 1px #0ea5e9'
-                          : 'none',
-                        borderRadius: '0.5rem',
-                        minHeight: '2.5rem',
+                        boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
+                        borderRadius: "0.5rem",
+                        minHeight: "2.5rem",
                       }),
                       multiValue: (base) => ({
                         ...base,
-                        backgroundColor: '#dbeafe',
-                        borderRadius: '0.375rem',
+                        backgroundColor: "#dbeafe",
+                        borderRadius: "0.375rem",
                       }),
                       multiValueLabel: (base) => ({
                         ...base,
-                        color: '#1e40af',
+                        color: "#1e40af",
                       }),
                     }}
                   />
@@ -455,19 +422,10 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
         </div>
 
         <div className="mt-4 flex gap-3">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-green-500 hover:bg-green-600"
-          >
-            {isSubmitting ? 'Saving...' : 'OK'}
+          <Button type="submit" disabled={isSubmitting} className="bg-green-500 hover:bg-green-600">
+            {isSubmitting ? "Saving..." : "OK"}
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-          >
+          <Button type="button" variant="secondary" onClick={handleCancel} disabled={isSubmitting}>
             Cancel
           </Button>
         </div>
@@ -477,18 +435,14 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
 
   // View mode: filter out empty attributes (keep createdAt since it always has a value)
   const attributesToDisplay = allAttributes.filter(
-    (attr) => attr.value !== null && attr.value !== ''
+    (attr) => attr.value !== null && attr.value !== "",
   );
 
   // View mode
   return (
     <div>
       <div className="mb-4 flex justify-end">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => setIsEditMode(true)}
-        >
+        <Button type="button" variant="secondary" onClick={() => setIsEditMode(true)}>
           Edit
         </Button>
       </div>
@@ -498,15 +452,10 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
           <tbody>
             {attributesToDisplay.map((attr) => {
               return (
-                <tr
-                  key={attr.key}
-                  className="border-b border-slate-300 last:border-b-0"
-                >
-                  <td className="px-4 py-3 font-medium text-slate-600 w-40">
-                    {attr.label}
-                  </td>
+                <tr key={attr.key} className="border-b border-slate-300 last:border-b-0">
+                  <td className="px-4 py-3 font-medium text-slate-600 w-40">{attr.label}</td>
                   <td className="px-4 py-3 text-slate-900">
-                    {attr.key === 'url' ? (
+                    {attr.key === "url" ? (
                       <a
                         // eslint-disable-next-line no-restricted-syntax
                         href={attr.value as string}

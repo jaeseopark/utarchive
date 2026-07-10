@@ -1,15 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import CreatableSelect from 'react-select/creatable';
-import { Button } from './ui/Button';
-import { SongCreateSchema, type SongCreateInput } from '../api/schemas';
-import { useSongCreation } from '../hooks/useSongCreation';
-import { useArtistsStore } from '../stores/useArtistsStore';
-import { useCreateArtist } from '../hooks/useCreateArtist';
-import { useLinkChildToParent } from '../hooks/useLinkChildToParent';
-import { SearchExistingSongModal } from './SearchExistingSongModal';
-import clsx from 'clsx';
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import CreatableSelect from "react-select/creatable";
+import { Button } from "./ui/Button";
+import {
+  SongCreateFormSchema,
+  type SongCreateFormInput,
+  type SongCreateInput,
+} from "../api/schemas";
+import { useSongCreation } from "../hooks/useSongCreation";
+import { useArtistsStore } from "../stores/useArtistsStore";
+import { useCreateArtist } from "../hooks/useCreateArtist";
+import { useLinkChildToParent } from "../hooks/useLinkChildToParent";
+import { SearchExistingSongModal } from "./SearchExistingSongModal";
+import { toBrandId, type SongId, type ArtistId, type CoverArtId } from "../types/brands";
+import clsx from "clsx";
 
 type ArtistOption = {
   value: string;
@@ -17,7 +22,7 @@ type ArtistOption = {
   isNew?: boolean;
 };
 
-type ModalMode = 'menu' | 'create-new' | 'link-existing';
+type ModalMode = "menu" | "create-new" | "link-existing";
 
 interface AddChildModalProps {
   isOpen: boolean;
@@ -33,23 +38,18 @@ interface AddChildModalProps {
  *
  * Family tree updates immediately on FE state update without requiring refresh.
  */
-export function AddChildModal({
-  isOpen,
-  parentSongId,
-  onClose,
-  onChildAdded,
-}: AddChildModalProps) {
-  const [mode, setMode] = useState<ModalMode>('menu');
+export function AddChildModal({ isOpen, parentSongId, onClose, onChildAdded }: AddChildModalProps) {
+  const [mode, setMode] = useState<ModalMode>("menu");
   const [isLinking, setIsLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
   const { linkChild } = useLinkChildToParent();
 
   const handleCreateNew = useCallback(() => {
-    setMode('create-new');
+    setMode("create-new");
   }, []);
 
   const handleLinkExisting = useCallback(() => {
-    setMode('link-existing');
+    setMode("link-existing");
   }, []);
 
   const handleSongCreated = useCallback(async () => {
@@ -69,7 +69,7 @@ export function AddChildModal({
         onChildAdded?.();
         handleClose();
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to link song';
+        const message = err instanceof Error ? err.message : "Failed to link song";
         setLinkError(message);
         setIsLinking(false);
       }
@@ -78,14 +78,14 @@ export function AddChildModal({
   );
 
   const handleClose = useCallback(() => {
-    setMode('menu');
+    setMode("menu");
     setLinkError(null);
     setIsLinking(false);
     onClose();
   }, [onClose]);
 
   const handleBackToMenu = useCallback(() => {
-    setMode('menu');
+    setMode("menu");
     setLinkError(null);
   }, []);
 
@@ -96,14 +96,12 @@ export function AddChildModal({
   return (
     <>
       {/* Menu Mode - Choose between creating new or linking existing */}
-      {mode === 'menu' && (
+      {mode === "menu" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
             <h2 className="mb-6 text-2xl font-semibold text-slate-900">Add Child Song</h2>
 
-            <p className="mb-6 text-slate-600">
-              Choose how you want to add a child song:
-            </p>
+            <p className="mb-6 text-slate-600">Choose how you want to add a child song:</p>
 
             <div className="space-y-3 mb-6">
               <button
@@ -137,7 +135,7 @@ export function AddChildModal({
       )}
 
       {/* Create New Mode */}
-      {mode === 'create-new' && (
+      {mode === "create-new" && (
         <CreateNewSongForm
           parentSongId={parentSongId}
           onSuccess={handleSongCreated}
@@ -146,7 +144,7 @@ export function AddChildModal({
       )}
 
       {/* Link Existing Mode */}
-      {mode === 'link-existing' && (
+      {mode === "link-existing" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
             <div className="mb-6 flex items-center justify-between">
@@ -160,9 +158,7 @@ export function AddChildModal({
             </div>
 
             {linkError && (
-              <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">
-                {linkError}
-              </div>
+              <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">{linkError}</div>
             )}
 
             <SearchExistingSongModal
@@ -205,9 +201,9 @@ function CreateNewSongForm({
     formState: { errors, isSubmitting },
     watch,
     setValue,
-  } = useForm<SongCreateInput>({
-    resolver: zodResolver(SongCreateSchema),
-    mode: 'onBlur',
+  } = useForm<SongCreateFormInput>({
+    resolver: zodResolver(SongCreateFormSchema),
+    mode: "onBlur",
     defaultValues: {
       parentId: parentSongId,
       playbackEnabled: false,
@@ -226,10 +222,10 @@ function CreateNewSongForm({
   // Update form artistIds whenever selectedArtists changes
   useEffect(() => {
     const artistIds = selectedArtists.map((a) => a.value);
-    setValue('artistIds', artistIds);
+    setValue("artistIds", artistIds);
   }, [selectedArtists, setValue]);
 
-  const tagInput = watch('tags') || [];
+  const tagInput = watch("tags") || [];
 
   const artistOptions: ArtistOption[] = artists.map((artist) => ({
     value: artist.id,
@@ -237,12 +233,20 @@ function CreateNewSongForm({
   }));
 
   const onSubmit = useCallback(
-    async (data: SongCreateInput) => {
+    async (formData: SongCreateFormInput) => {
       try {
+        // Convert form strings to branded types
+        const apiData: SongCreateInput = {
+          ...formData,
+          artistIds: formData.artistIds.map((id) => toBrandId<ArtistId>(id)),
+          parentId: formData.parentId ? toBrandId<SongId>(formData.parentId) : null,
+          coverArtId: formData.coverArtId ? toBrandId<CoverArtId>(formData.coverArtId) : null,
+        };
+
         const cleanedData = Object.fromEntries(
-          Object.entries(data).filter(
-            ([, value]) => value !== '' && value !== undefined
-          )
+          Object.entries(apiData).filter(
+            ([, value]) => value !== "" && value !== undefined && value !== null,
+          ),
         );
 
         // eslint-disable-next-line no-restricted-syntax
@@ -268,7 +272,7 @@ function CreateNewSongForm({
         };
         setSelectedArtists([...selectedArtists, newOption]);
       } catch (error) {
-        console.error('Failed to create artist:', error);
+        console.error("Failed to create artist:", error);
       } finally {
         setIsCreatingArtist(false);
       }
@@ -278,8 +282,11 @@ function CreateNewSongForm({
 
   const handleTagInput = useCallback(
     (value: string) => {
-      const tags = value.split(',').map((tag) => tag.trim()).filter(Boolean);
-      setValue('tags', tags);
+      const tags = value
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+      setValue("tags", tags);
     },
     [setValue],
   );
@@ -289,10 +296,7 @@ function CreateNewSongForm({
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-slate-900">Create New Child Song</h2>
-          <button
-            onClick={onBack}
-            className="text-slate-500 transition hover:text-slate-700"
-          >
+          <button onClick={onBack} className="text-slate-500 transition hover:text-slate-700">
             ← Back
           </button>
         </div>
@@ -305,10 +309,12 @@ function CreateNewSongForm({
             </label>
             <input
               type="text"
-              {...register('title')}
+              {...register("title")}
               className={clsx(
-                'mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition',
-                errors.title ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400',
+                "mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition",
+                errors.title
+                  ? "border-red-500 ring-1 ring-red-500"
+                  : "border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400",
               )}
               placeholder="Enter song title"
             />
@@ -338,26 +344,29 @@ function CreateNewSongForm({
                   formatCreateLabel={(inputValue) => `Create artist "${inputValue}"`}
                   placeholder="Select or create artists..."
                   className={clsx(
-                    'react-select-container',
-                    selectedArtists.length === 0 && errors.artistIds ? 'has-error' : '',
+                    "react-select-container",
+                    selectedArtists.length === 0 && errors.artistIds ? "has-error" : "",
                   )}
                   classNamePrefix="react-select"
                   styles={{
                     control: (base, state) => ({
                       ...base,
-                      borderColor: selectedArtists.length === 0 && errors.artistIds ? '#ef4444' : base.borderColor,
-                      boxShadow: state.isFocused ? '0 0 0 1px #0ea5e9' : 'none',
-                      borderRadius: '0.5rem',
-                      minHeight: '2.5rem',
+                      borderColor:
+                        selectedArtists.length === 0 && errors.artistIds
+                          ? "#ef4444"
+                          : base.borderColor,
+                      boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
+                      borderRadius: "0.5rem",
+                      minHeight: "2.5rem",
                     }),
                     multiValue: (base) => ({
                       ...base,
-                      backgroundColor: '#dbeafe',
-                      borderRadius: '0.375rem',
+                      backgroundColor: "#dbeafe",
+                      borderRadius: "0.375rem",
                     }),
                     multiValueLabel: (base) => ({
                       ...base,
-                      color: '#1e40af',
+                      color: "#1e40af",
                     }),
                   }}
                 />
@@ -367,7 +376,9 @@ function CreateNewSongForm({
               <p className="mt-1 text-sm text-red-500">{errors.artistIds.message}</p>
             )}
             {selectedArtists.length > 0 && (
-              <p className="mt-1 text-sm text-slate-600">{selectedArtists.length} artist(s) selected</p>
+              <p className="mt-1 text-sm text-slate-600">
+                {selectedArtists.length} artist(s) selected
+              </p>
             )}
           </div>
 
@@ -385,31 +396,43 @@ function CreateNewSongForm({
 
           {/* Platform ID */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">Platform ID (optional)</label>
+            <label className="block text-sm font-medium text-slate-700">
+              Platform ID (optional)
+            </label>
             <input
               type="text"
-              {...register('platformId')}
+              {...register("platformId")}
               className={clsx(
-                'mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition',
-                errors.platformId ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400',
+                "mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition",
+                errors.platformId
+                  ? "border-red-500 ring-1 ring-red-500"
+                  : "border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400",
               )}
               placeholder="e.g., spotify:track:xyz"
             />
-            {errors.platformId && <p className="mt-1 text-sm text-red-500">{errors.platformId.message}</p>}
+            {errors.platformId && (
+              <p className="mt-1 text-sm text-red-500">{errors.platformId.message}</p>
+            )}
           </div>
 
           {/* Released At */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">Release Date (optional)</label>
+            <label className="block text-sm font-medium text-slate-700">
+              Release Date (optional)
+            </label>
             <input
               type="datetime-local"
-              {...register('releasedAt')}
+              {...register("releasedAt")}
               className={clsx(
-                'mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition',
-                errors.releasedAt ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400',
+                "mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition",
+                errors.releasedAt
+                  ? "border-red-500 ring-1 ring-red-500"
+                  : "border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400",
               )}
             />
-            {errors.releasedAt && <p className="mt-1 text-sm text-red-500">{errors.releasedAt.message}</p>}
+            {errors.releasedAt && (
+              <p className="mt-1 text-sm text-red-500">{errors.releasedAt.message}</p>
+            )}
           </div>
 
           {/* URL */}
@@ -417,10 +440,12 @@ function CreateNewSongForm({
             <label className="block text-sm font-medium text-slate-700">URL (optional)</label>
             <input
               type="text"
-              {...register('url')}
+              {...register("url")}
               className={clsx(
-                'mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition',
-                errors.url ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400',
+                "mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition",
+                errors.url
+                  ? "border-red-500 ring-1 ring-red-500"
+                  : "border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400",
               )}
               placeholder="https://example.com/song"
             />
@@ -429,17 +454,23 @@ function CreateNewSongForm({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">Description (optional)</label>
+            <label className="block text-sm font-medium text-slate-700">
+              Description (optional)
+            </label>
             <textarea
-              {...register('description')}
+              {...register("description")}
               className={clsx(
-                'mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition',
-                errors.description ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400',
+                "mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition",
+                errors.description
+                  ? "border-red-500 ring-1 ring-red-500"
+                  : "border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400",
               )}
               placeholder="Enter song description"
               rows={3}
             />
-            {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description.message}</p>}
+            {errors.description && (
+              <p className="mt-1 text-sm text-red-500">{errors.description.message}</p>
+            )}
           </div>
 
           {/* Tags */}
@@ -447,7 +478,7 @@ function CreateNewSongForm({
             <label className="block text-sm font-medium text-slate-700">Tags (optional)</label>
             <input
               type="text"
-              value={tagInput.join(', ')}
+              value={tagInput.join(", ")}
               onChange={(e) => handleTagInput(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
               placeholder="e.g., tag1, tag2, tag3"
@@ -456,7 +487,9 @@ function CreateNewSongForm({
           </div>
 
           {/* Error Messages */}
-          {creationError && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{creationError}</div>}
+          {creationError && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{creationError}</div>
+          )}
 
           {/* Modal Actions */}
           <div className="mt-6 flex gap-3 border-t border-slate-200 pt-4">
@@ -466,7 +499,7 @@ function CreateNewSongForm({
               disabled={isSubmitting || isLoading}
               className="flex-1"
             >
-              {isLoading ? 'Creating...' : 'Create'}
+              {isLoading ? "Creating..." : "Create"}
             </Button>
             <Button
               type="button"
@@ -482,4 +515,3 @@ function CreateNewSongForm({
     </div>
   );
 }
-

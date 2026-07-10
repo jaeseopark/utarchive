@@ -20,11 +20,7 @@ interface RequestWithId extends Request {
  * Uses the X-Request-ID header if provided, otherwise generates a new UUID.
  * This is used for WebSocket message deduplication on the client side.
  */
-export const requestIdMiddleware = (
-  req: RequestWithId,
-  res: Response,
-  next: NextFunction
-) => {
+export const requestIdMiddleware = (req: RequestWithId, res: Response, next: NextFunction) => {
   const headerValue = req.headers["x-request-id"];
   const requestId = typeof headerValue === "string" ? headerValue : uuidv4();
   req.requestId = requestId;

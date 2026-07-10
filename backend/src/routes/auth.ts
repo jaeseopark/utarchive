@@ -32,9 +32,7 @@ const totpHandler = async (req: Request, res: Response) => {
   const { id, totpCode } = req.body;
 
   try {
-    const { totpKey: totpKeyPhrase } = parseAuthCredentials(
-      config.AUTH_CREDENTIALS
-    );
+    const { totpKey: totpKeyPhrase } = parseAuthCredentials(config.AUTH_CREDENTIALS);
     const derivedTotpSecret = deriveTotpSecretFromPassphrase(totpKeyPhrase);
     const currentTotpKeyHash = hashTotpKey(derivedTotpSecret);
 
@@ -96,8 +94,11 @@ const totpHandler = async (req: Request, res: Response) => {
 // Validate credentials (id/password) and check if TOTP is registered
 router.post("/login", validateRequest(loginSchema), async (req, res) => {
   const { id, password } = req.body;
-  const { id: expectedId, password: expectedPassword, totpKey: totpKeyPhrase } =
-    parseAuthCredentials(config.AUTH_CREDENTIALS);
+  const {
+    id: expectedId,
+    password: expectedPassword,
+    totpKey: totpKeyPhrase,
+  } = parseAuthCredentials(config.AUTH_CREDENTIALS);
 
   const idMatches = timingSafeEqual(id, expectedId);
   const passwordMatches = timingSafeEqual(password, expectedPassword);
@@ -156,11 +157,8 @@ router.post("/logout", (_req, res) => {
   return res.status(200).json({ ok: true });
 });
 
-router.get(
-  "/me",
-  (req: AuthenticatedRequest, res) => {
-    return res.status(200).json({ id: req.user?.sub });
-  }
-);
+router.get("/me", (req: AuthenticatedRequest, res) => {
+  return res.status(200).json({ id: req.user?.sub });
+});
 
 export default router;

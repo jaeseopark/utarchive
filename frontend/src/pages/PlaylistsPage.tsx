@@ -1,14 +1,14 @@
-import { useMemo, useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
-import { usePlaylists } from '../hooks/usePlaylists';
-import { usePlaylistsStore } from '../stores/usePlaylistsStore';
+import { useMemo, useState, FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "../components/ui/Button";
+import { usePlaylists } from "../hooks/usePlaylists";
+import { usePlaylistsStore } from "../stores/usePlaylistsStore";
 
 function PlaylistsPage() {
   const { playlists, songCounts, isLoading, error } = usePlaylists();
   const { createPlaylist } = usePlaylistsStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [playlistName, setPlaylistName] = useState('');
+  const [playlistName, setPlaylistName] = useState("");
   const navigate = useNavigate();
 
   const hasPlaylists = playlists.length > 0;
@@ -17,7 +17,7 @@ function PlaylistsPage() {
     event.preventDefault();
     const id = await createPlaylist(playlistName);
     if (id) {
-      setPlaylistName('');
+      setPlaylistName("");
       setIsModalOpen(false);
       navigate(`/playlists/${id}`);
     }
@@ -42,11 +42,17 @@ function PlaylistsPage() {
       </div>
 
       {isLoading ? (
-        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">Loading playlists…</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">
+          Loading playlists…
+        </div>
       ) : error ? (
-        <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">Error loading playlists: {error}</div>
+        <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">
+          Error loading playlists: {error}
+        </div>
       ) : !hasPlaylists ? (
-        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">No playlists found. Create one to get started.</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">
+          No playlists found. Create one to get started.
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-xl shadow-slate-200/20">
           <table className="min-w-full text-left text-sm text-slate-700">
@@ -61,12 +67,17 @@ function PlaylistsPage() {
               {formattedPlaylists.map((playlist) => (
                 <tr key={playlist.id} className="border-b border-slate-300 last:border-b-0">
                   <td className="px-4 py-4">
-                    <Link to={`/playlists/${playlist.id}`} className="text-slate-900 transition hover:text-sky-500">
+                    <Link
+                      to={`/playlists/${playlist.id}`}
+                      className="text-slate-900 transition hover:text-sky-500"
+                    >
                       {playlist.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-4 text-slate-700">{songCounts[playlist.id] ?? '—'}</td>
-                  <td className="px-4 py-4 text-slate-700">{new Date(playlist.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-4 text-slate-700">{songCounts[playlist.id] ?? "—"}</td>
+                  <td className="px-4 py-4 text-slate-700">
+                    {new Date(playlist.createdAt).toLocaleDateString()}
+                  </td>
                 </tr>
               ))}
             </tbody>

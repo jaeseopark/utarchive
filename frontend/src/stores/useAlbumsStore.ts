@@ -1,8 +1,9 @@
-import { create } from 'zustand';
-import { z } from 'zod';
-import { api } from '../api/client';
-import { withStoreLoadingSilent } from '../api/middleware';
-import { AlbumSchema, AlbumDetailSchema, type Album, type AlbumDetail } from '../api/schemas';
+import { create } from "zustand";
+import { z } from "zod";
+import { api } from "../api/client";
+import { withStoreLoadingSilent } from "../api/middleware";
+import { AlbumSchema, AlbumDetailSchema, type Album, type AlbumDetail } from "../api/schemas";
+import { type AlbumId } from "../types/brands";
 
 const AlbumsResponseSchema = z.array(AlbumSchema);
 
@@ -27,11 +28,11 @@ export interface AlbumsState {
   // Actions
   fetchAlbums: (page?: number) => Promise<void>;
   fetchAllAlbums: () => Promise<void>;
-  fetchAlbumDetail: (id: string) => Promise<void>;
-  getAlbumDetail: (id: string) => AlbumDetail | undefined;
+  fetchAlbumDetail: (id: AlbumId) => Promise<void>;
+  getAlbumDetail: (id: AlbumId) => AlbumDetail | undefined;
   addAlbum: (album: Album) => void;
-  updateAlbum: (id: string, updates: Partial<Album>) => void;
-  removeAlbum: (id: string) => void;
+  updateAlbum: (id: AlbumId, updates: Partial<Album>) => void;
+  removeAlbum: (id: AlbumId) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -57,7 +58,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     const now = Date.now();
     const lastFetch = get().lastFetchedAt;
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().albums.length > 0 && (now - lastFetch < CACHE_TTL)) {
+    if (get().albums.length > 0 && now - lastFetch < CACHE_TTL) {
       return;
     }
 
@@ -77,7 +78,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch albums';
+      const message = error instanceof Error ? error.message : "Failed to fetch albums";
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -88,7 +89,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     const now = Date.now();
     const lastFetch = get().lastFetchedAt;
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().albums.length > 0 && (now - lastFetch < CACHE_TTL)) {
+    if (get().albums.length > 0 && now - lastFetch < CACHE_TTL) {
       return;
     }
 
@@ -122,7 +123,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch albums';
+      const message = error instanceof Error ? error.message : "Failed to fetch albums";
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -135,7 +136,10 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       return;
     }
 
-    const store = { setLoading: (val: boolean) => set({ isLoading: val }), setError: (err: string | null) => set({ error: err }) };
+    const store = {
+      setLoading: (val: boolean) => set({ isLoading: val }),
+      setError: (err: string | null) => set({ error: err }),
+    };
     const detail = await withStoreLoadingSilent(store, `/api/albums/${id}`, AlbumDetailSchema);
 
     if (detail) {
@@ -152,7 +156,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     }
   },
 
-  getAlbumDetail: (id: string) => {
+  getAlbumDetail: (id: AlbumId) => {
     return get().albumDetails[id];
   },
 

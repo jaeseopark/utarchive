@@ -14,7 +14,7 @@ router.get("/admin/websocket/stats", (_req: Request, res: Response) => {
   try {
     const stats = getEventStats();
     const wss = _req.app.locals.wss;
-    
+
     const response = {
       ...stats,
       activeConnections: wss?.clients?.size || 0,

@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { MemoryRouter } from 'react-router-dom';
-import PlaylistDetailPage from './PlaylistDetailPage';
-import { api } from '../api/client';
+import type { ReactNode } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
+import { MemoryRouter } from "react-router-dom";
+import PlaylistDetailPage from "./PlaylistDetailPage";
+import { api } from "../api/client";
 
 const meta: Meta<typeof PlaylistDetailPage> = {
-  title: 'Pages/PlaylistDetailPage',
+  title: "Pages/PlaylistDetailPage",
   component: PlaylistDetailPage,
 };
 
@@ -14,12 +14,18 @@ export default meta;
 type Story = StoryObj<typeof PlaylistDetailPage>;
 
 const playlistDetail = {
-  id: '1',
-  name: 'Favorites',
+  id: "1",
+  name: "Favorites",
   createdAt: new Date().toISOString(),
   songs: [
-    { position: 0, song: { id: 'song-1', title: 'Space Anthem', playbackEnabled: true, filePath: null } },
-    { position: 1, song: { id: 'song-2', title: 'Moonlight Drive', playbackEnabled: false, filePath: null } },
+    {
+      position: 0,
+      song: { id: "song-1", title: "Space Anthem", playbackEnabled: true, filePath: null },
+    },
+    {
+      position: 1,
+      song: { id: "song-2", title: "Moonlight Drive", playbackEnabled: false, filePath: null },
+    },
   ],
 };
 
@@ -28,7 +34,7 @@ const createMockRouterDecorator = (response: unknown) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
     api.get = async () => response as any;
     return (
-      <MemoryRouter initialEntries={['/playlists/1']}>
+      <MemoryRouter initialEntries={["/playlists/1"]}>
         <Story />
       </MemoryRouter>
     );

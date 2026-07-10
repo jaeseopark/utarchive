@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
-import { api } from '../api/client';
-import { AnalyticsListenResponseSchema } from '../api/schemas';
+import { useCallback } from "react";
+import { api } from "../api/client";
+import { AnalyticsListenResponseSchema } from "../api/schemas";
 
 export interface ListeningEventParams {
   songId: string;
@@ -17,15 +17,11 @@ export interface ListeningEventParams {
 export function useRecordListening() {
   const recordListening = useCallback(async (params: ListeningEventParams) => {
     try {
-      await api.post(
-        '/api/analytics/listen',
-        params,
-        AnalyticsListenResponseSchema
-      );
+      await api.post("/api/analytics/listen", params, AnalyticsListenResponseSchema);
       return { success: true };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to record listening analytics';
-      console.error('Analytics error:', message);
+      const message = err instanceof Error ? err.message : "Failed to record listening analytics";
+      console.error("Analytics error:", message);
       return { success: false, error: message };
     }
   }, []);

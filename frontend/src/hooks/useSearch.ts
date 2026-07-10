@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useSearchStore } from '../stores/useSearchStore';
+import { useCallback, useEffect, useState } from "react";
+import { useSearchStore } from "../stores/useSearchStore";
 
 /**
  * Hook to manage search with debounce
  */
-export function useSearch(initialQuery = '') {
-  const { query, results, isLoading, error, recentSearches, search, clearResults, setQuery } = useSearchStore();
+export function useSearch(initialQuery = "") {
+  const { query, results, isLoading, error, recentSearches, search, clearResults, setQuery } =
+    useSearchStore();
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 
   useEffect(() => {
@@ -21,10 +22,13 @@ export function useSearch(initialQuery = '') {
     return () => window.clearTimeout(timeout);
   }, [debouncedQuery, search, clearResults]);
 
-  const handleQueryChange = useCallback((q: string) => {
-    setQuery(q);
-    setDebouncedQuery(q);
-  }, [setQuery]);
+  const handleQueryChange = useCallback(
+    (q: string) => {
+      setQuery(q);
+      setDebouncedQuery(q);
+    },
+    [setQuery],
+  );
 
   return {
     query,

@@ -75,13 +75,13 @@ export const deletePlaylistById = async (playlistId: string) =>
     return (result.rowCount ?? 0) > 0;
   });
 
-export const addSongToPlaylist = async (
-  playlistId: string,
-  songId: string,
-  position?: number
-) =>
+export const addSongToPlaylist = async (playlistId: string, songId: string, position?: number) =>
   db.transaction(async (tx) => {
-    const [playlist] = await tx.select().from(playlists).where(eq(playlists.id, playlistId)).limit(1);
+    const [playlist] = await tx
+      .select()
+      .from(playlists)
+      .where(eq(playlists.id, playlistId))
+      .limit(1);
 
     if (!playlist) {
       throw new Error("PLAYLIST_NOT_FOUND");
@@ -113,8 +113,8 @@ export const addSongToPlaylist = async (
         .where(
           and(
             eq(playlistSongs.playlistId, playlistId),
-            gte(playlistSongs.position, insertPosition)
-          )
+            gte(playlistSongs.position, insertPosition),
+          ),
         );
     }
 
@@ -123,10 +123,7 @@ export const addSongToPlaylist = async (
     return { playlistId, songId, position: insertPosition };
   });
 
-export const removeSongFromPlaylist = async (
-  playlistId: string,
-  songId: string
-) =>
+export const removeSongFromPlaylist = async (playlistId: string, songId: string) =>
   db.transaction(async (tx) => {
     const existingRows = await tx
       .select({ songId: playlistSongs.songId })
@@ -183,12 +180,13 @@ const arrayMultisetEquals = (a: string[], b: string[]) => {
   return Array.from(counts.values()).every((value) => value === 0);
 };
 
-export const replacePlaylistSongs = async (
-  playlistId: string,
-  songIds: string[]
-) =>
+export const replacePlaylistSongs = async (playlistId: string, songIds: string[]) =>
   db.transaction(async (tx) => {
-    const [playlist] = await tx.select().from(playlists).where(eq(playlists.id, playlistId)).limit(1);
+    const [playlist] = await tx
+      .select()
+      .from(playlists)
+      .where(eq(playlists.id, playlistId))
+      .limit(1);
 
     if (!playlist) {
       throw new Error("PLAYLIST_NOT_FOUND");

@@ -1,13 +1,14 @@
-import { create } from 'zustand';
-import { z } from 'zod';
-import { api } from '../api/client';
+import { create } from "zustand";
+import { z } from "zod";
+import { api } from "../api/client";
+import { type SongId } from "../types/brands";
 
 const AnalyticsListenSchema = z.object({
   ok: z.literal(true),
 });
 
 export interface ListeningSession {
-  songId: string;
+  songId: SongId;
   startedAt: Date;
   pausedAt: Date | null;
 }
@@ -16,7 +17,7 @@ export interface AnalyticsState {
   currentSession: ListeningSession | null;
   isTracking: boolean;
 
-  startListening: (songId: string) => void;
+  startListening: (songId: SongId) => void;
   pauseListening: () => void;
   resumeListening: () => void;
   stopListening: () => Promise<void>;
@@ -27,7 +28,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
   currentSession: null,
   isTracking: false,
 
-  startListening: (songId: string) => {
+  startListening: (songId: SongId) => {
     set({
       currentSession: {
         songId,
@@ -69,9 +70,11 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
     if (!session) return;
 
     try {
-      const listenedSeconds = Math.floor((new Date().getTime() - session.startedAt.getTime()) / 1000);
+      const listenedSeconds = Math.floor(
+        (new Date().getTime() - session.startedAt.getTime()) / 1000,
+      );
       await api.post(
-        '/api/analytics/listen',
+        "/api/analytics/listen",
         {
           songId: session.songId,
           listenedSeconds: Math.max(listenedSeconds, 0),

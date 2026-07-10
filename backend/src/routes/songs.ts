@@ -58,90 +58,79 @@ const songUpdateSchema = z.object({
 });
 
 const songListSchema = z.object({
-  limit: z
-    .preprocess((value) => {
-      if (typeof value === "string" && value.length > 0) {
-        return Number(value);
-      }
-      return undefined;
-    }, z.number().int().min(1).max(200).default(50)),
-  offset: z
-    .preprocess((value) => {
-      if (typeof value === "string" && value.length > 0) {
-        return Number(value);
-      }
-      return undefined;
-    }, z.number().int().min(0).default(0)),
+  limit: z.preprocess((value) => {
+    if (typeof value === "string" && value.length > 0) {
+      return Number(value);
+    }
+    return undefined;
+  }, z.number().int().min(1).max(200).default(50)),
+  offset: z.preprocess((value) => {
+    if (typeof value === "string" && value.length > 0) {
+      return Number(value);
+    }
+    return undefined;
+  }, z.number().int().min(0).default(0)),
   artistId: z.string().uuid().optional(),
   masterId: z.string().uuid().optional(),
-  playbackEnabled: z
-    .preprocess((value) => {
-      if (value === "true") return true;
-      if (value === "false") return false;
-      return undefined;
-    }, z.boolean().optional()),
+  playbackEnabled: z.preprocess((value) => {
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return undefined;
+  }, z.boolean().optional()),
 });
 
 router.use(requireAuth);
 
-router.get(
-  "/songs",
-  validateRequest(songListSchema, "query"),
-  async (req, res) => {
-    // eslint-disable-next-line no-restricted-syntax
-    const { limit, offset, artistId, masterId, playbackEnabled } = req.query as unknown as z.infer<
-      typeof songListSchema
-    >;
+router.get("/songs", validateRequest(songListSchema, "query"), async (req, res) => {
+  // eslint-disable-next-line no-restricted-syntax
+  const { limit, offset, artistId, masterId, playbackEnabled } = req.query as unknown as z.infer<
+    typeof songListSchema
+  >;
 
-    const songs = await selectSongs({
-      limit,
-      offset,
-      artistId,
-      masterId,
-      playbackEnabled,
-    });
+  const songs = await selectSongs({
+    limit,
+    offset,
+    artistId,
+    masterId,
+    playbackEnabled,
+  });
 
-    return res.status(200).json(songs);
-  }
-);
+  return res.status(200).json(songs);
+});
 
-router.post(
-  "/songs",
-  validateRequest(songCreateSchema),
-  async (req, res) => {
-    // eslint-disable-next-line no-restricted-syntax
-    const songData = req.body as z.infer<typeof songCreateSchema>;
-    const artistIds = songData.artistIds;
-    const requestId = req.requestId;
+router.post("/songs", validateRequest(songCreateSchema), async (req, res) => {
+  // eslint-disable-next-line no-restricted-syntax
+  const songData = req.body as z.infer<typeof songCreateSchema>;
+  const artistIds = songData.artistIds;
+  const requestId = req.requestId;
 
-    try {
-      const createdSong = await createSong(songData, artistIds);
-      
-      // Broadcast to all connected clients
-      const wss = req.app.locals.wss;
-      if (wss) {
-        const message: DataChangedMessage = {
-          type: "DATA_CHANGED",
-          entity: "song",
-          timestamp: Date.now(),
-          data: {
-            created: [createdSong],
-          },
-          requestId,
-        };
-        broadcastMessage(wss, message);
-      }
-      
-      return res.status(201).json(createdSong);
-    } catch (error) {
-      if (error instanceof Error && error.message === "PARENT_NOT_FOUND") {
-        return res.status(400).json({ error: "Parent song not found" });
-      }
+  try {
+    const createdSong = await createSong(songData, artistIds);
 
-      throw error;
+    // Broadcast to all connected clients
+    const wss = req.app.locals.wss;
+    if (wss) {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
+        entity: "song",
+        timestamp: Date.now(),
+        data: {
+          created: [createdSong],
+        },
+        requestId,
+      };
+      broadcastMessage(wss, message);
     }
+
+    return res.status(201).json(createdSong);
+  } catch (error) {
+    if (error instanceof Error && error.message === "PARENT_NOT_FOUND") {
+      return res.status(400).json({ error: "Parent song not found" });
+    }
+
+    throw error;
   }
-);
+});
 
 router.get("/songs/:id", async (req, res) => {
   const song = await selectSongById(req.params.id);
@@ -159,45 +148,39 @@ router.get("/songs/:id", async (req, res) => {
   });
 });
 
-router.patch(
-  "/songs/:id",
-  validateRequest(songUpdateSchema),
-  async (req, res) => {
-    // eslint-disable-next-line no-restricted-syntax
-    const updateData = req.body as z.infer<typeof songUpdateSchema>;
-    const songId = Array.isArray(req.params.id)
-      ? req.params.id[0]
-      : req.params.id;
-    const requestId = req.requestId;
+router.patch("/songs/:id", validateRequest(songUpdateSchema), async (req, res) => {
+  // eslint-disable-next-line no-restricted-syntax
+  const updateData = req.body as z.infer<typeof songUpdateSchema>;
+  const songId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const requestId = req.requestId;
 
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({ error: "No update fields provided" });
-    }
-
-    const updatedSong = await updateSongById(songId, updateData);
-
-    if (!updatedSong) {
-      return res.status(404).json({ error: "Song not found" });
-    }
-
-    // Broadcast to all connected clients
-    const wss = req.app.locals.wss;
-    if (wss) {
-      const message: DataChangedMessage = {
-        type: "DATA_CHANGED",
-        entity: "song",
-        timestamp: Date.now(),
-        data: {
-          updated: [updatedSong],
-        },
-        requestId,
-      };
-      broadcastMessage(wss, message);
-    }
-
-    return res.status(200).json(updatedSong);
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({ error: "No update fields provided" });
   }
-);
+
+  const updatedSong = await updateSongById(songId, updateData);
+
+  if (!updatedSong) {
+    return res.status(404).json({ error: "Song not found" });
+  }
+
+  // Broadcast to all connected clients
+  const wss = req.app.locals.wss;
+  if (wss) {
+    const message: DataChangedMessage = {
+      type: "DATA_CHANGED",
+      entity: "song",
+      timestamp: Date.now(),
+      data: {
+        updated: [updatedSong],
+      },
+      requestId,
+    };
+    broadcastMessage(wss, message);
+  }
+
+  return res.status(200).json(updatedSong);
+});
 
 router.get("/songs/:id/tree", async (req, res) => {
   const songTree = await selectSongTree(req.params.id);
@@ -213,67 +196,14 @@ const linkChildSchema = z.object({
   childId: z.string().uuid(),
 });
 
-router.post(
-  "/songs/:id/children",
-  validateRequest(linkChildSchema),
-  async (req, res) => {
-    const parentId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    // eslint-disable-next-line no-restricted-syntax
-    const { childId } = req.body as z.infer<typeof linkChildSchema>;
-    const requestId = req.requestId;
+router.post("/songs/:id/children", validateRequest(linkChildSchema), async (req, res) => {
+  const parentId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  // eslint-disable-next-line no-restricted-syntax
+  const { childId } = req.body as z.infer<typeof linkChildSchema>;
+  const requestId = req.requestId;
 
-    try {
-      const linkedChild = await linkChildToParent(childId, parentId);
-
-      // Broadcast to all connected clients
-      const wss = req.app.locals.wss;
-      if (wss) {
-        const message: DataChangedMessage = {
-          type: "DATA_CHANGED",
-          entity: "song",
-          timestamp: Date.now(),
-          data: {
-            updated: [linkedChild],
-          },
-          requestId,
-        };
-        broadcastMessage(wss, message);
-      }
-
-      return res.status(200).json(linkedChild);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message === "CHILD_NOT_FOUND") {
-          return res.status(404).json({ error: "Child song not found" });
-        }
-        if (error.message === "PARENT_NOT_FOUND") {
-          return res.status(404).json({ error: "Parent song not found" });
-        }
-      }
-
-      throw error;
-    }
-  }
-);
-
-const tagsUpdateSchema = z.object({
-  tags: z.array(z.string()).optional(),
-});
-
-router.patch(
-  "/songs/:id/tags",
-  validateRequest(tagsUpdateSchema),
-  async (req, res) => {
-    // eslint-disable-next-line no-restricted-syntax
-    const { tags } = req.body as z.infer<typeof tagsUpdateSchema>;
-    const songId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const requestId = req.requestId;
-
-    const updatedSong = await updateSongTags(songId, tags ?? []);
-
-    if (!updatedSong) {
-      return res.status(404).json({ error: "Song not found" });
-    }
+  try {
+    const linkedChild = await linkChildToParent(childId, parentId);
 
     // Broadcast to all connected clients
     const wss = req.app.locals.wss;
@@ -283,24 +213,68 @@ router.patch(
         entity: "song",
         timestamp: Date.now(),
         data: {
-          updated: [{ id: updatedSong.id, tags: updatedSong.tags }],
+          updated: [linkedChild],
         },
         requestId,
       };
       broadcastMessage(wss, message);
     }
 
-    return res.status(200).json({
-      id: updatedSong.id,
-      tags: updatedSong.tags,
-    });
+    return res.status(200).json(linkedChild);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "CHILD_NOT_FOUND") {
+        return res.status(404).json({ error: "Child song not found" });
+      }
+      if (error.message === "PARENT_NOT_FOUND") {
+        return res.status(404).json({ error: "Parent song not found" });
+      }
+    }
+
+    throw error;
   }
-);
+});
+
+const tagsUpdateSchema = z.object({
+  tags: z.array(z.string()).optional(),
+});
+
+router.patch("/songs/:id/tags", validateRequest(tagsUpdateSchema), async (req, res) => {
+  // eslint-disable-next-line no-restricted-syntax
+  const { tags } = req.body as z.infer<typeof tagsUpdateSchema>;
+  const songId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const requestId = req.requestId;
+
+  const updatedSong = await updateSongTags(songId, tags ?? []);
+
+  if (!updatedSong) {
+    return res.status(404).json({ error: "Song not found" });
+  }
+
+  // Broadcast to all connected clients
+  const wss = req.app.locals.wss;
+  if (wss) {
+    const message: DataChangedMessage = {
+      type: "DATA_CHANGED",
+      entity: "song",
+      timestamp: Date.now(),
+      data: {
+        updated: [{ id: updatedSong.id, tags: updatedSong.tags }],
+      },
+      requestId,
+    };
+    broadcastMessage(wss, message);
+  }
+
+  return res.status(200).json({
+    id: updatedSong.id,
+    tags: updatedSong.tags,
+  });
+});
 
 router.get("/tags", async (_req, res) => {
   const tags = await selectUniqueTags();
   return res.status(200).json(tags);
 });
-
 
 export default router;

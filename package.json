@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p frontend/tsconfig.json --noEmit && tsc -p backend/tsconfig.json --noEmit",
-    "format": "prettier --check .",
+    "format": "prettier --write .",
     "storybook": "npm -w frontend run storybook",
     "test:frontend": "npm -w frontend run test",
     "test:backend": "npm -w backend run test",

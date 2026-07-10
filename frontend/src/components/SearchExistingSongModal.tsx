@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api } from '../api/client';
-import { Button } from './ui/Button';
-import { z } from 'zod';
+import { useCallback, useEffect, useState } from "react";
+import { api } from "../api/client";
+import { Button } from "./ui/Button";
+import { z } from "zod";
 
 const SearchResponseSchema = z.object({
-  songs: z.array(z.object({
-    id: z.string().uuid(),
-    title: z.string(),
-    artistId: z.string().nullable().optional(),
-    playbackEnabled: z.boolean(),
-  })),
+  songs: z.array(
+    z.object({
+      id: z.string().uuid(),
+      title: z.string(),
+      artistId: z.string().nullable().optional(),
+      playbackEnabled: z.boolean(),
+    }),
+  ),
   artists: z.array(z.any()),
   albums: z.array(z.any()),
 });
@@ -27,36 +29,33 @@ export function SearchExistingSongModal({
   onSongSelected,
   isLinking = false,
 }: SearchExistingSongModalProps) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<z.infer<typeof SearchResponseSchema> | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = useCallback(
-    async (searchQuery: string) => {
-      if (!searchQuery.trim()) {
-        setResults(null);
-        return;
-      }
+  const handleSearch = useCallback(async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      setResults(null);
+      return;
+    }
 
-      setIsSearching(true);
-      setError(null);
+    setIsSearching(true);
+    setError(null);
 
-      try {
-        const response = await api.get(
-          `/api/search?q=${encodeURIComponent(searchQuery)}`,
-          SearchResponseSchema,
-        );
-        setResults(response);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Search failed';
-        setError(message);
-      } finally {
-        setIsSearching(false);
-      }
-    },
-    [],
-  );
+    try {
+      const response = await api.get(
+        `/api/search?q=${encodeURIComponent(searchQuery)}`,
+        SearchResponseSchema,
+      );
+      setResults(response);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Search failed";
+      setError(message);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -78,7 +77,7 @@ export function SearchExistingSongModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
         <h2 className="mb-4 text-2xl font-semibold text-slate-900">
-          {isLinking ? 'Link Existing Song as Child' : 'Search for Song'}
+          {isLinking ? "Link Existing Song as Child" : "Search for Song"}
         </h2>
 
         {/* Search Input */}
@@ -94,24 +93,14 @@ export function SearchExistingSongModal({
         </div>
 
         {/* Error Message */}
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+        {error && <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
         {/* Loading State */}
-        {isSearching && (
-          <div className="py-8 text-center text-slate-600">
-            Searching...
-          </div>
-        )}
+        {isSearching && <div className="py-8 text-center text-slate-600">Searching...</div>}
 
         {/* No Results */}
         {!isSearching && query && results && results.songs.length === 0 && (
-          <div className="py-8 text-center text-slate-600">
-            No songs found
-          </div>
+          <div className="py-8 text-center text-slate-600">No songs found</div>
         )}
 
         {/* Search Results */}
@@ -125,9 +114,7 @@ export function SearchExistingSongModal({
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-900 truncate">{song.title}</p>
                   {song.artistId && (
-                    <p className="text-sm text-slate-600 truncate">
-                      Artist ID: {song.artistId}
-                    </p>
+                    <p className="text-sm text-slate-600 truncate">Artist ID: {song.artistId}</p>
                   )}
                 </div>
                 <button
@@ -135,7 +122,7 @@ export function SearchExistingSongModal({
                   disabled={isLinking}
                   className="ml-4 flex-shrink-0 rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLinking ? 'Linking...' : 'Select'}
+                  {isLinking ? "Linking..." : "Select"}
                 </button>
               </div>
             ))}

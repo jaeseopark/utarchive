@@ -1,8 +1,9 @@
-import { create } from 'zustand';
-import { z } from 'zod';
-import { api } from '../api/client';
-import { withStoreLoadingSilent } from '../api/middleware';
-import { ArtistSchema, type Artist } from '../api/schemas';
+import { create } from "zustand";
+import { z } from "zod";
+import { api } from "../api/client";
+import { withStoreLoadingSilent } from "../api/middleware";
+import { ArtistSchema, type Artist } from "../api/schemas";
+import { type ArtistId } from "../types/brands";
 
 const ArtistsResponseSchema = z.array(ArtistSchema);
 
@@ -29,12 +30,12 @@ export interface ArtistsState {
   // Actions
   fetchArtists: (page?: number) => Promise<void>;
   fetchAllArtists: () => Promise<void>;
-  fetchArtistDetail: (id: string) => Promise<void>;
-  getArtistDetail: (id: string) => ArtistDetail | undefined;
+  fetchArtistDetail: (id: ArtistId) => Promise<void>;
+  getArtistDetail: (id: ArtistId) => ArtistDetail | undefined;
   addArtist: (artist: Artist) => void;
-  updateArtist: (id: string, updates: Partial<Artist>) => void;
-  removeArtist: (id: string) => void;
-  incrementArtistSongCount: (artistId: string) => void;
+  updateArtist: (id: ArtistId, updates: Partial<Artist>) => void;
+  removeArtist: (id: ArtistId) => void;
+  incrementArtistSongCount: (artistId: ArtistId) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -60,7 +61,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
     const now = Date.now();
     const lastFetch = get().lastFetchedAt;
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().artists.length > 0 && (now - lastFetch < CACHE_TTL)) {
+    if (get().artists.length > 0 && now - lastFetch < CACHE_TTL) {
       return;
     }
 
@@ -81,7 +82,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch artists';
+      const message = error instanceof Error ? error.message : "Failed to fetch artists";
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -92,7 +93,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
     const now = Date.now();
     const lastFetch = get().lastFetchedAt;
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().artists.length > 0 && (now - lastFetch < CACHE_TTL)) {
+    if (get().artists.length > 0 && now - lastFetch < CACHE_TTL) {
       return;
     }
 
@@ -127,7 +128,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch artists';
+      const message = error instanceof Error ? error.message : "Failed to fetch artists";
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -140,7 +141,10 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       return;
     }
 
-    const store = { setLoading: (val: boolean) => set({ isLoading: val }), setError: (err: string | null) => set({ error: err }) };
+    const store = {
+      setLoading: (val: boolean) => set({ isLoading: val }),
+      setError: (err: string | null) => set({ error: err }),
+    };
     const detail = await withStoreLoadingSilent(store, `/api/artists/${id}`, ArtistSchema);
 
     if (detail) {
@@ -217,9 +221,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
   incrementArtistSongCount: (artistId: string) => {
     set((state) => {
       const updatedArtists = state.artists.map((artist) =>
-        artist.id === artistId
-          ? { ...artist, songCount: (artist.songCount ?? 0) + 1 }
-          : artist
+        artist.id === artistId ? { ...artist, songCount: (artist.songCount ?? 0) + 1 } : artist,
       );
       return {
         artists: updatedArtists,
@@ -227,7 +229,10 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
         artistDetails: {
           ...state.artistDetails,
           [artistId]: state.artistDetails[artistId]
-            ? { ...state.artistDetails[artistId], songCount: (state.artistDetails[artistId].songCount ?? 0) + 1 }
+            ? {
+                ...state.artistDetails[artistId],
+                songCount: (state.artistDetails[artistId].songCount ?? 0) + 1,
+              }
             : state.artistDetails[artistId],
         },
       };

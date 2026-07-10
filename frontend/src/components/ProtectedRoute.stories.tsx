@@ -1,18 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { MemoryRouter } from 'react-router-dom';
-import ProtectedRoute from './ProtectedRoute';
-import { SessionContext, type SessionContextValue } from '../context/SessionContext';
+import type { Meta, StoryObj } from "@storybook/react";
+import { MemoryRouter } from "react-router-dom";
+import ProtectedRoute from "./ProtectedRoute";
+import { SessionContext, type SessionContextValue } from "../context/SessionContext";
 
 const content = <div>Protected content</div>;
 
 const meta: Meta<typeof ProtectedRoute> = {
-  title: 'Components/ProtectedRoute',
+  title: "Components/ProtectedRoute",
   component: ProtectedRoute,
-  decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={['/']}>{Story()}</MemoryRouter>
-    ),
-  ],
+  decorators: [(Story) => <MemoryRouter initialEntries={["/"]}>{Story()}</MemoryRouter>],
 };
 
 export default meta;
@@ -37,7 +33,7 @@ const createContextValue = (overrides: Partial<SessionContextValue>): SessionCon
 export const Authenticated: Story = {
   decorators: [
     (Story) => (
-      <SessionContext.Provider value={createContextValue({ user: { id: 'user-1' } })}>
+      <SessionContext.Provider value={createContextValue({ user: { id: "user-1" } })}>
         {Story()}
       </SessionContext.Provider>
     ),
