@@ -52,10 +52,7 @@ function SongHeader({ song }: SongHeaderProps) {
                   Artists:{" "}
                   {artistList.map((artist, index) => (
                     <span key={artist.id}>
-                      <Link
-                        to={`/artists/${artist.id}`}
-                        className="text-sky-500 hover:underline"
-                      >
+                      <Link to={`/artists/${artist.id}`} className="text-sky-500 hover:underline">
                         {artist.name}
                       </Link>
                       {index < artistList.length - 1 ? ", " : ""}

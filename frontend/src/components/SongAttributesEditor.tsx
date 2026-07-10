@@ -505,11 +505,7 @@ export function useSongAttributesEditor(song: Song): UseSongAttributesEditorRetu
   }, []);
 
   const Component = React.memo(() => (
-    <SongAttributesEditorContent
-      song={song}
-      mode={mode}
-      onExitEditMode={exitEditMode}
-    />
+    <SongAttributesEditorContent song={song} mode={mode} onExitEditMode={exitEditMode} />
   ));
 
   return {

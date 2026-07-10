@@ -53,7 +53,11 @@ interface ArtistAttributesEditorProps {
   onExitEditMode: () => void;
 }
 
-function ArtistAttributesEditorContent({ artist, mode, onExitEditMode }: ArtistAttributesEditorProps) {
+function ArtistAttributesEditorContent({
+  artist,
+  mode,
+  onExitEditMode,
+}: ArtistAttributesEditorProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAliases, setSelectedAliases] = useState<AliasOption[]>([]);
   const [selectedUrls, setSelectedUrls] = useState<UrlOption[]>([]);
@@ -372,11 +376,7 @@ export function useArtistAttributesEditor(artist: Artist): UseArtistAttributesEd
   }, []);
 
   const Component = React.memo(() => (
-    <ArtistAttributesEditorContent
-      artist={artist}
-      mode={mode}
-      onExitEditMode={exitEditMode}
-    />
+    <ArtistAttributesEditorContent artist={artist} mode={mode} onExitEditMode={exitEditMode} />
   ));
 
   return {
