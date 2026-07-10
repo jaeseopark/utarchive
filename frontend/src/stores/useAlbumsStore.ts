@@ -9,6 +9,7 @@ const AlbumsResponseSchema = z.array(AlbumSchema);
 export interface AlbumsState {
   // Data
   albums: Album[];
+  albumDetailsMap: Map<string, AlbumDetail>;
   albumDetails: Record<string, AlbumDetail>;
   lastFetchedAt: number;
 
@@ -37,6 +38,7 @@ export interface AlbumsState {
 
 export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   albums: [],
+  albumDetailsMap: new Map(),
   albumDetails: {},
   lastFetchedAt: 0,
   isLoading: false,
@@ -137,12 +139,16 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     const detail = await withStoreLoadingSilent(store, `/api/albums/${id}`, AlbumDetailSchema);
 
     if (detail) {
-      set((state) => ({
-        albumDetails: {
+      set((state) => {
+        const newDetails = {
           ...state.albumDetails,
           [id]: detail,
-        },
-      }));
+        };
+        return {
+          albumDetails: newDetails,
+          albumDetailsMap: new Map(Object.entries(newDetails)),
+        };
+      });
     }
   },
 
@@ -151,13 +157,16 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   },
 
   addAlbum: (album: Album) => {
-    set((state) => ({
-      albums: [album, ...state.albums],
-      pagination: {
-        ...state.pagination,
-        total: state.pagination.total + 1,
-      },
-    }));
+    set((state) => {
+      const newAlbums = [album, ...state.albums];
+      return {
+        albums: newAlbums,
+        pagination: {
+          ...state.pagination,
+          total: state.pagination.total + 1,
+        },
+      };
+    });
   },
 
   updateAlbum: (id: string, updates: Partial<Album>) => {
@@ -180,6 +189,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       return {
         albums: updatedAlbums,
         albumDetails: updatedDetails,
+        albumDetailsMap: new Map(Object.entries(updatedDetails)),
       };
     });
   },
@@ -192,6 +202,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       return {
         albums: state.albums.filter((album) => album.id !== id),
         albumDetails: updatedDetails,
+        albumDetailsMap: new Map(Object.entries(updatedDetails)),
         pagination: {
           ...state.pagination,
           total: Math.max(0, state.pagination.total - 1),

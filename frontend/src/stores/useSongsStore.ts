@@ -13,6 +13,7 @@ import {
 export interface SongsState {
   // Data
   songs: SongListItem[];
+  songDetailsMap: Map<string, Song>;
   songDetails: Record<string, Song>;
   lastFetchedAt: number;
 
@@ -43,6 +44,7 @@ export interface SongsState {
 
 export const useSongsStore = create<SongsState>((set, get) => ({
   songs: [],
+  songDetailsMap: new Map(),
   songDetails: {},
   lastFetchedAt: 0,
   isLoading: false,
@@ -143,12 +145,16 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     const detail = await withStoreLoadingSilent(store, `/api/songs/${id}`, SongSchema);
 
     if (detail) {
-      set((state) => ({
-        songDetails: {
+      set((state) => {
+        const newDetails = {
           ...state.songDetails,
           [id]: detail,
-        },
-      }));
+        };
+        return {
+          songDetails: newDetails,
+          songDetailsMap: new Map(Object.entries(newDetails)),
+        };
+      });
     }
   },
 
@@ -164,12 +170,16 @@ export const useSongsStore = create<SongsState>((set, get) => ({
   },
 
   addSongDetail: (song: Song) => {
-    set((state) => ({
-      songDetails: {
+    set((state) => {
+      const newDetails = {
         ...state.songDetails,
         [song.id]: song,
-      },
-    }));
+      };
+      return {
+        songDetails: newDetails,
+        songDetailsMap: new Map(Object.entries(newDetails)),
+      };
+    });
   },
 
   addSong: (song: Song) => {
@@ -185,12 +195,15 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         artistIds: song.artistIds,
       };
 
+      const newDetails = {
+        ...state.songDetails,
+        [song.id]: song,
+      };
+
       return {
         songs: [songListItem, ...state.songs],
-        songDetails: {
-          ...state.songDetails,
-          [song.id]: song,
-        },
+        songDetails: newDetails,
+        songDetailsMap: new Map(Object.entries(newDetails)),
         pagination: {
           ...state.pagination,
           total: state.pagination.total + 1,
@@ -226,6 +239,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
       return {
         songs: updatedSongs,
         songDetails: updatedDetails,
+        songDetailsMap: new Map(Object.entries(updatedDetails)),
       };
     });
   },
@@ -238,6 +252,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
       return {
         songs: state.songs.filter((song) => song.id !== id),
         songDetails: updatedDetails,
+        songDetailsMap: new Map(Object.entries(updatedDetails)),
         pagination: {
           ...state.pagination,
           total: Math.max(0, state.pagination.total - 1),

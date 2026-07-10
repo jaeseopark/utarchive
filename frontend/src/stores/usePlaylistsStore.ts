@@ -33,6 +33,7 @@ export type PlaylistDetail = z.infer<typeof PlaylistDetailSchema>;
 export interface PlaylistsState {
   // Data
   playlists: Playlist[];
+  playlistDetailsMap: Map<string, PlaylistDetail>;
   playlistDetails: Record<string, PlaylistDetail>;
   songCounts: Record<string, number>;
 
@@ -64,6 +65,7 @@ export interface PlaylistsState {
 
 export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   playlists: [],
+  playlistDetailsMap: new Map(),
   playlistDetails: {},
   songCounts: {},
   isLoading: false,
@@ -133,16 +135,20 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     const detail = await withStoreLoadingSilent(store, `/api/playlists/${id}`, PlaylistDetailSchema);
 
     if (detail) {
-      set((state) => ({
-        playlistDetails: {
+      set((state) => {
+        const newDetails = {
           ...state.playlistDetails,
           [id]: detail,
-        },
-        songCounts: {
-          ...state.songCounts,
-          [id]: detail.songs.length,
-        },
-      }));
+        };
+        return {
+          playlistDetails: newDetails,
+          playlistDetailsMap: new Map(Object.entries(newDetails)),
+          songCounts: {
+            ...state.songCounts,
+            [id]: detail.songs.length,
+          },
+        };
+      });
     }
   },
 
@@ -190,15 +196,19 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
       await api.put(`/api/playlists/${id}`, { name: trimmedName }, PlaylistSchema);
 
       // Update both list and detail
-      set((state) => ({
-        playlists: state.playlists.map((p) => (p.id === id ? { ...p, name: trimmedName } : p)),
-        playlistDetails: {
+      set((state) => {
+        const newDetails = {
           ...state.playlistDetails,
           ...(state.playlistDetails[id] && {
             [id]: { ...state.playlistDetails[id], name: trimmedName },
           }),
-        },
-      }));
+        };
+        return {
+          playlists: state.playlists.map((p) => (p.id === id ? { ...p, name: trimmedName } : p)),
+          playlistDetails: newDetails,
+          playlistDetailsMap: new Map(Object.entries(newDetails)),
+        };
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update playlist';
       set({ error: message });
@@ -222,6 +232,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
         return {
           playlists: state.playlists.filter((p) => p.id !== id),
           playlistDetails: playlistDetailsRest,
+          playlistDetailsMap: new Map(Object.entries(playlistDetailsRest)),
           songCounts: songCountsRest,
         };
       });
@@ -292,15 +303,19 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   },
 
   updatePlaylistFromRemote: (id: string, updates: Partial<Playlist>) => {
-    set((state) => ({
-      playlists: state.playlists.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-      playlistDetails: {
+    set((state) => {
+      const newDetails = {
         ...state.playlistDetails,
         ...(state.playlistDetails[id] && {
           [id]: { ...state.playlistDetails[id], ...updates },
         }),
-      },
-    }));
+      };
+      return {
+        playlists: state.playlists.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+        playlistDetails: newDetails,
+        playlistDetailsMap: new Map(Object.entries(newDetails)),
+      };
+    });
   },
 
   removePlaylistFromRemote: (id: string) => {
@@ -314,6 +329,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
       return {
         playlists: state.playlists.filter((p) => p.id !== id),
         playlistDetails: playlistDetailsRest,
+        playlistDetailsMap: new Map(Object.entries(playlistDetailsRest)),
         songCounts: songCountsRest,
       };
     });

@@ -5,7 +5,7 @@ import CreatableSelect from 'react-select/creatable';
 import { Button } from './ui/Button';
 import { SongCreateSchema, type SongCreateInput } from '../api/schemas';
 import { useSongCreation } from '../hooks/useSongCreation';
-import { useArtistsForSelect } from '../hooks/useArtistsForSelect';
+import { useArtistsStore } from '../stores/useArtistsStore';
 import { useCreateArtist } from '../hooks/useCreateArtist';
 import { useLinkChildToParent } from '../hooks/useLinkChildToParent';
 import { SearchExistingSongModal } from './SearchExistingSongModal';
@@ -191,7 +191,8 @@ function CreateNewSongForm({
   onBack: () => void;
 }) {
   const { createSong, isLoading, error: creationError } = useSongCreation();
-  const { artists, isLoading: artistsLoading } = useArtistsForSelect();
+  const artists = useArtistsStore((state) => state.artists);
+  const artistsLoading = useArtistsStore((state) => state.isLoading);
   const { createArtist } = useCreateArtist();
 
   const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
