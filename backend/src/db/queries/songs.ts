@@ -238,7 +238,7 @@ export const createSong = async (
       tags: songData.tags ?? [],
       searchVector: sql`
         setweight(to_tsvector('english', ${songData.title}), 'A') ||
-        setweight(to_tsvector('english', array_to_string(${songData.tags ?? []}, ' ')), 'B') ||
+        setweight(to_tsvector('english', ${(songData.tags ?? []).join(' ')}), 'B') ||
         setweight(to_tsvector('english', ${songData.description ?? ''}), 'C')
       `,
     };
@@ -315,12 +315,12 @@ export const updateSongById = async (
     const searchVectorValue = hasSearchableFieldChange
       ? (() => {
           const titleValue = updateData.title ?? existing[0].title;
-          const tagsValue = updateData.tags ?? existing[0].tags;
+          const tagsValue = (updateData.tags ?? existing[0].tags ?? []).join(' ');
           const descriptionValue = updateData.description !== undefined ? updateData.description : existing[0].description;
 
           return sql`
             setweight(to_tsvector('english', ${titleValue}), 'A') ||
-            setweight(to_tsvector('english', array_to_string(${tagsValue ?? []}, ' ')), 'B') ||
+            setweight(to_tsvector('english', ${tagsValue}), 'B') ||
             setweight(to_tsvector('english', ${descriptionValue ?? ''}), 'C')
           `;
         })()
