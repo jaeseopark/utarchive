@@ -21,7 +21,7 @@ const SearchArtistSchema = z.object({
 const SearchAlbumSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
-  artistId: z.string().uuid(),
+  artistIds: z.array(z.string().uuid()).optional().default([]),
   yearReleased: z.number().int().nullable().optional(),
 });
 

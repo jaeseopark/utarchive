@@ -13,9 +13,9 @@ while [ $i -le 10 ]; do
   i=$((i+1))
 done
 
-echo "Running database migrations..."
+echo "Synchronizing database schema..."
 cd /app/backend
-npx drizzle-kit migrate
+npx drizzle-kit push
 
 echo "Starting application..."
 cd /app/backend
