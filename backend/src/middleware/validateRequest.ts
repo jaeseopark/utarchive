@@ -3,7 +3,7 @@ import { ZodTypeAny } from "zod";
 
 export const validateRequest = (
   schema: ZodTypeAny,
-  source: "body" | "query" | "params" = "body"
+  source: "body" | "query" | "params" = "body",
 ): RequestHandler => {
   return (req: Request, _res: Response, next: NextFunction) => {
     const result = schema.safeParse(req[source]);

@@ -9,7 +9,7 @@ export const createApp = () => {
   const app = express();
 
   // Disable ETag generation to prevent 304 responses
-  app.disable('etag');
+  app.disable("etag");
 
   // Handle both JSON and text/plain (for sendBeacon) content types
   app.use(express.json());
@@ -20,9 +20,9 @@ export const createApp = () => {
 
   // Disable caching for all API responses to prevent 304 Not Modified
   app.use((req, res, next) => {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate, private');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
+    res.set("Cache-Control", "no-cache, no-store, must-revalidate, private");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
     next();
   });
 

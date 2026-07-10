@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
-import { api } from '../api/client';
-import { SongSchema, type Song } from '../api/schemas';
-import { useSongsStore } from '../stores/useSongsStore';
+import { useCallback } from "react";
+import { api } from "../api/client";
+import { SongSchema, type Song } from "../api/schemas";
+import { useSongsStore } from "../stores/useSongsStore";
 
 /**
  * Hook to link an existing child song to a parent song
@@ -17,7 +17,9 @@ export function useLinkChildToParent() {
         addSongDetail(response);
         return response;
       } catch (err) {
-        throw new Error(err instanceof Error ? err.message : 'Failed to link child song', { cause: err });
+        throw new Error(err instanceof Error ? err.message : "Failed to link child song", {
+          cause: err,
+        });
       }
     },
     [addSongDetail],

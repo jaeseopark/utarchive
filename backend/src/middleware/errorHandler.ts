@@ -6,7 +6,7 @@ export const errorHandler = (
   _req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   if (err instanceof ZodError) {
     return res.status(400).json({ error: "Invalid request", details: err.issues });

@@ -2,12 +2,7 @@ import { WebSocket } from "ws";
 
 export type EntityType = "song" | "album" | "artist" | "playlist" | "coverArt";
 
-export type MessageType =
-  | "DATA_CHANGED"
-  | "PING"
-  | "PONG"
-  | "CONNECTED"
-  | "ERROR";
+export type MessageType = "DATA_CHANGED" | "PING" | "PONG" | "CONNECTED" | "ERROR";
 
 export interface WebSocketMessage {
   type: MessageType;

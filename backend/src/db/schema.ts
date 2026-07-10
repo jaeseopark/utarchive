@@ -48,9 +48,7 @@ export const coverArt = pgTable(
     fileHash: varchar("file_hash", { length: 64 }).notNull(),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
-  (table) => [
-    unique("cover_art_file_hash_unique").on(table.fileHash),
-  ]
+  (table) => [unique("cover_art_file_hash_unique").on(table.fileHash)],
 );
 
 export const albums = pgTable("albums", {
@@ -87,24 +85,28 @@ export const songs = pgTable(
   (table) => [
     unique("songs_file_hash_unique").on(table.fileHash),
     unique("songs_platform_id_unique").on(table.platformId),
-  ]
+  ],
 );
 
 export const songHierarchy = pgTable(
   "song_hierarchy",
   {
-    songId: uuid("song_id").notNull().references(() => songs.id),
+    songId: uuid("song_id")
+      .notNull()
+      .references(() => songs.id),
     parentId: uuid("parent_id").references(() => songs.id),
-    masterId: uuid("master_id").notNull().references(() => songs.id),
+    masterId: uuid("master_id")
+      .notNull()
+      .references(() => songs.id),
   },
-  (table) => [
-    primaryKey(table.songId),
-  ]
+  (table) => [primaryKey(table.songId)],
 );
 
 export const listeningAnalytics = pgTable("listening_analytics", {
   id: uuid("id").primaryKey().defaultRandom(),
-  songId: uuid("song_id").notNull().references(() => songs.id),
+  songId: uuid("song_id")
+    .notNull()
+    .references(() => songs.id),
   startedAt: timestamp("started_at", { mode: "date" }).notNull(),
   durationSeconds: real("duration_seconds").notNull(),
   playbackPercent: real("playback_percent").notNull(),
@@ -114,37 +116,49 @@ export const listeningAnalytics = pgTable("listening_analytics", {
 export const songArtists = pgTable(
   "song_artists",
   {
-    songId: uuid("song_id").notNull().references(() => songs.id),
-    artistId: uuid("artist_id").notNull().references(() => artists.id),
+    songId: uuid("song_id")
+      .notNull()
+      .references(() => songs.id),
+    artistId: uuid("artist_id")
+      .notNull()
+      .references(() => artists.id),
     displayOrder: integer("display_order").notNull().default(0),
   },
   (table) => ({
     pk: primaryKey(table.songId, table.artistId),
-  })
+  }),
 );
 
 export const albumArtists = pgTable(
   "album_artists",
   {
-    albumId: uuid("album_id").notNull().references(() => albums.id),
-    artistId: uuid("artist_id").notNull().references(() => artists.id),
+    albumId: uuid("album_id")
+      .notNull()
+      .references(() => albums.id),
+    artistId: uuid("artist_id")
+      .notNull()
+      .references(() => artists.id),
     displayOrder: integer("display_order").notNull().default(0),
   },
   (table) => ({
     pk: primaryKey(table.albumId, table.artistId),
-  })
+  }),
 );
 
 export const albumSongs = pgTable(
   "album_songs",
   {
-    albumId: uuid("album_id").notNull().references(() => albums.id),
-    songId: uuid("song_id").notNull().references(() => songs.id),
+    albumId: uuid("album_id")
+      .notNull()
+      .references(() => albums.id),
+    songId: uuid("song_id")
+      .notNull()
+      .references(() => songs.id),
     trackNumber: integer("track_number").notNull(),
   },
   (table) => ({
     pk: primaryKey(table.albumId, table.songId),
-  })
+  }),
 );
 
 export const playlists = pgTable("playlists", {
@@ -156,13 +170,17 @@ export const playlists = pgTable("playlists", {
 export const playlistSongs = pgTable(
   "playlist_songs",
   {
-    playlistId: uuid("playlist_id").notNull().references(() => playlists.id),
-    songId: uuid("song_id").notNull().references(() => songs.id),
+    playlistId: uuid("playlist_id")
+      .notNull()
+      .references(() => playlists.id),
+    songId: uuid("song_id")
+      .notNull()
+      .references(() => songs.id),
     position: integer("position").notNull(),
   },
   (table) => ({
     pk: primaryKey(table.playlistId, table.position),
-  })
+  }),
 );
 
 export type Artist = typeof artists.$inferSelect;

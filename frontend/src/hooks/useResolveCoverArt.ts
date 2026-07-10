@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useSongDetail } from './useSongDetail';
-import { useAlbumDetail } from './useAlbumDetail';
-import { type SongId, type AlbumId } from '../types/brands';
+import { useEffect, useState, useCallback } from "react";
+import { useSongDetail } from "./useSongDetail";
+import { useAlbumDetail } from "./useAlbumDetail";
+import { type SongId, type AlbumId } from "../types/brands";
 
 interface CoverArtOwner {
   songId?: SongId;
@@ -22,36 +22,33 @@ export function useResolveCoverArt(owner: CoverArtOwner) {
   const [isLoading, setIsLoading] = useState(false);
 
   // Recursive function to walk up the parent chain
-  const resolveFromParent = useCallback(
-    async (parentId: string): Promise<string | null> => {
-      try {
-        const response = await fetch(`/api/songs/${parentId}`, {
-          credentials: 'include',
-        });
-        if (!response.ok) return null;
-        const parentSong = await response.json();
+  const resolveFromParent = useCallback(async (parentId: string): Promise<string | null> => {
+    try {
+      const response = await fetch(`/api/songs/${parentId}`, {
+        credentials: "include",
+      });
+      if (!response.ok) return null;
+      const parentSong = await response.json();
 
-        // Check parent's own cover art
-        if (parentSong.coverArtId) {
-          return parentSong.coverArtId;
-        }
-
-        // Check parent's albums (if any)
-        // For now, we'll skip this as it requires additional API calls
-        // The backend's resolveSongCoverArtId does this automatically
-
-        // Continue up the chain if parent has a parent
-        if (parentSong.parentId) {
-          return resolveFromParent(parentSong.parentId);
-        }
-
-        return null;
-      } catch {
-        return null;
+      // Check parent's own cover art
+      if (parentSong.coverArtId) {
+        return parentSong.coverArtId;
       }
-    },
-    [],
-  );
+
+      // Check parent's albums (if any)
+      // For now, we'll skip this as it requires additional API calls
+      // The backend's resolveSongCoverArtId does this automatically
+
+      // Continue up the chain if parent has a parent
+      if (parentSong.parentId) {
+        return resolveFromParent(parentSong.parentId);
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     if (albumId && album) {
@@ -74,7 +71,7 @@ export function useResolveCoverArt(owner: CoverArtOwner) {
           // This handles album traversal and parent chain automatically
           try {
             const response = await fetch(`/api/songs/${songId}`, {
-              credentials: 'include',
+              credentials: "include",
             });
             if (response.ok) {
               const freshSong = await response.json();

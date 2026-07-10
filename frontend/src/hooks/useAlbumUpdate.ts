@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
-import { api } from '../api/client';
-import { AlbumDetailSchema, type AlbumDetail } from '../api/schemas';
-import { useAlbumsStore } from '../stores/useAlbumsStore';
-import { type AlbumId } from '../types/brands';
+import { useCallback } from "react";
+import { api } from "../api/client";
+import { AlbumDetailSchema, type AlbumDetail } from "../api/schemas";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
+import { type AlbumId } from "../types/brands";
 
 /**
  * Hook to update an album via API with store integration
@@ -16,22 +16,15 @@ export function useAlbumUpdate() {
         // Filter out fields that shouldn't be sent to API
         const fieldsToUpdate = Object.fromEntries(
           Object.entries(updates).filter(
-            ([key]) =>
-              ![
-                'id',
-                'createdAt',
-                'trackList',
-                'tracks',
-                'urls',
-              ].includes(key)
-          )
+            ([key]) => !["id", "createdAt", "trackList", "tracks", "urls"].includes(key),
+          ),
         );
 
         // Make the API call
         const updatedAlbum = await api.patch(
           `/api/albums/${albumId}`,
           fieldsToUpdate,
-          AlbumDetailSchema
+          AlbumDetailSchema,
         );
 
         // Update local store
@@ -39,12 +32,12 @@ export function useAlbumUpdate() {
 
         return { success: true, data: updatedAlbum };
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to update album';
-        console.error('Album update error:', message);
+        const message = err instanceof Error ? err.message : "Failed to update album";
+        console.error("Album update error:", message);
         return { success: false, error: message };
       }
     },
-    [updateAlbum]
+    [updateAlbum],
   );
 
   return {

@@ -4,9 +4,9 @@ proposed shape:
 
 ```json
 {
-    "error": {
-        "message": "string", // mandatory field
-        "metadata": {} // optional freeform object suited for each use case
-    }
+  "error": {
+    "message": "string", // mandatory field
+    "metadata": {} // optional freeform object suited for each use case
+  }
 }
 ```

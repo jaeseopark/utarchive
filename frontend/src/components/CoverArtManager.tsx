@@ -1,9 +1,9 @@
-import React, { FC, useRef, useState, useCallback } from 'react';
-import { Button } from './ui/Button';
-import CoverArt from './CoverArt';
-import { useUploadCoverArt } from '../hooks/useUploadCoverArt';
-import { useSongUpdate } from '../hooks/useSongUpdate';
-import { createSongId, type SongId } from '../types/brands';
+import React, { FC, useRef, useState, useCallback } from "react";
+import { Button } from "./ui/Button";
+import CoverArt from "./CoverArt";
+import { useUploadCoverArt } from "../hooks/useUploadCoverArt";
+import { useSongUpdate } from "../hooks/useSongUpdate";
+import { toBrandId, type SongId } from "../types/brands";
 
 interface CoverArtManagerProps {
   songId: string;
@@ -26,8 +26,8 @@ export const CoverArtManager: FC<CoverArtManagerProps> = ({
   onCoverArtChange,
 }) => {
   // Convert string ID to branded type
-  const songId: SongId = createSongId(songIdStr);
-  
+  const songId: SongId = toBrandId<SongId>(songIdStr);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -47,10 +47,10 @@ export const CoverArtManager: FC<CoverArtManagerProps> = ({
         await updateSongData(songId, { coverArtId: coverArt.id });
         onCoverArtChange?.(coverArt.id);
         if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
       } else {
-        setUploadError('Failed to upload image');
+        setUploadError("Failed to upload image");
       }
     },
     [uploadCoverArt, updateSongData, songId, onCoverArtChange],
@@ -65,7 +65,7 @@ export const CoverArtManager: FC<CoverArtManagerProps> = ({
       await updateSongData(songId, { coverArtId: null });
       onCoverArtChange?.(null);
     } catch {
-      setUploadError('Failed to delete image');
+      setUploadError("Failed to delete image");
     }
   }, [coverArtId, songId, updateSongData, onCoverArtChange]);
 
@@ -98,7 +98,7 @@ export const CoverArtManager: FC<CoverArtManagerProps> = ({
             disabled={isUploading}
             className="flex-1"
           >
-            {isUploading ? 'Uploading...' : 'Upload'}
+            {isUploading ? "Uploading..." : "Upload"}
           </Button>
           {coverArtId && (
             <Button

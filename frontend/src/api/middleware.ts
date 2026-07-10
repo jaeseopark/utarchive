@@ -1,5 +1,5 @@
-import { ZodSchema } from 'zod';
-import { api, ApiError } from './client';
+import { ZodSchema } from "zod";
+import { api, ApiError } from "./client";
 
 export type StoreWithLoadingAndError = {
   setLoading: (loading: boolean) => void;
@@ -13,7 +13,7 @@ export const withStoreLoading = async <T>(
   store: StoreWithLoadingAndError,
   endpoint: string,
   schema: ZodSchema<T>,
-  method: 'get' | 'post' | 'put' | 'delete' = 'get',
+  method: "get" | "post" | "put" | "delete" = "get",
   body?: unknown,
 ): Promise<T> => {
   store.setLoading(true);
@@ -22,16 +22,16 @@ export const withStoreLoading = async <T>(
   try {
     let result: T;
     switch (method) {
-      case 'post':
+      case "post":
         result = await api.post(endpoint, body, schema);
         break;
-      case 'put':
+      case "put":
         result = await api.put(endpoint, body, schema);
         break;
-      case 'delete':
+      case "delete":
         result = await api.delete(endpoint, schema);
         break;
-      case 'get':
+      case "get":
       default:
         result = await api.get(endpoint, schema);
     }
@@ -42,7 +42,7 @@ export const withStoreLoading = async <T>(
         ? error.message
         : error instanceof Error
           ? error.message
-          : 'Unknown error occurred';
+          : "Unknown error occurred";
     store.setError(message);
     throw error;
   } finally {
@@ -57,7 +57,7 @@ export const withStoreLoadingSilent = async <T>(
   store: StoreWithLoadingAndError,
   endpoint: string,
   schema: ZodSchema<T>,
-  method: 'get' | 'post' | 'put' | 'delete' = 'get',
+  method: "get" | "post" | "put" | "delete" = "get",
   body?: unknown,
 ): Promise<T | null> => {
   store.setLoading(true);
@@ -66,16 +66,16 @@ export const withStoreLoadingSilent = async <T>(
   try {
     let result: T;
     switch (method) {
-      case 'post':
+      case "post":
         result = await api.post(endpoint, body, schema);
         break;
-      case 'put':
+      case "put":
         result = await api.put(endpoint, body, schema);
         break;
-      case 'delete':
+      case "delete":
         result = await api.delete(endpoint, schema);
         break;
-      case 'get':
+      case "get":
       default:
         result = await api.get(endpoint, schema);
     }
@@ -86,7 +86,7 @@ export const withStoreLoadingSilent = async <T>(
         ? error.message
         : error instanceof Error
           ? error.message
-          : 'Unknown error occurred';
+          : "Unknown error occurred";
     store.setError(message);
     return null;
   } finally {

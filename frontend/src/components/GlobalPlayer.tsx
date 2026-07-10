@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import { usePlayer } from '../hooks/usePlayer';
-import { getArtistNames } from '../lib/artistNames';
-import { useArtistsStore } from '../stores/useArtistsStore';
+import { useMemo } from "react";
+import { usePlayer } from "../hooks/usePlayer";
+import { getArtistNames } from "../lib/artistNames";
+import { useArtistsStore } from "../stores/useArtistsStore";
 
 /**
  * Global player component (v1 - stub)
@@ -26,7 +26,7 @@ export function GlobalPlayer() {
       <div className="mx-auto flex max-w-6xl items-center gap-4">
         <div className="flex-1 truncate">
           <p className="truncate text-sm font-medium text-slate-900">{currentSong.title}</p>
-          <p className="truncate text-xs text-slate-600">{artistNames.join(', ')}</p>
+          <p className="truncate text-xs text-slate-600">{artistNames.join(", ")}</p>
         </div>
 
         <button
@@ -34,7 +34,7 @@ export function GlobalPlayer() {
           onClick={() => (isPlaying ? pause() : play(currentSong))}
           className="rounded-full border border-slate-400 bg-sky-500 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-500 hover:bg-sky-600"
         >
-          {isPlaying ? 'Pause' : 'Play'}
+          {isPlaying ? "Pause" : "Play"}
         </button>
       </div>
     </div>

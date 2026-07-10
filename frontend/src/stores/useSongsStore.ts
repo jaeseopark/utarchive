@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { api } from '../api/client';
-import { withStoreLoadingSilent } from '../api/middleware';
+import { create } from "zustand";
+import { api } from "../api/client";
+import { withStoreLoadingSilent } from "../api/middleware";
 import {
   SongSchema,
   SongTreeSchema,
@@ -8,8 +8,8 @@ import {
   type Song,
   type SongTree,
   type SongListItem,
-} from '../api/schemas';
-import { type SongId } from '../types/brands';
+} from "../api/schemas";
+import { type SongId } from "../types/brands";
 
 export interface SongsState {
   // Data
@@ -64,16 +64,13 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     const now = Date.now();
     const lastFetch = get().lastFetchedAt;
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().songs.length > 0 && (now - lastFetch < CACHE_TTL)) {
+    if (get().songs.length > 0 && now - lastFetch < CACHE_TTL) {
       return;
     }
 
     set({ isLoading: true, error: null });
     try {
-      const songs = await api.get(
-        `/api/songs?limit=50&offset=${page * 50}`,
-        SongsResponseSchema,
-      );
+      const songs = await api.get(`/api/songs?limit=50&offset=${page * 50}`, SongsResponseSchema);
       set({
         songs,
         lastFetchedAt: now,
@@ -84,7 +81,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch songs';
+      const message = error instanceof Error ? error.message : "Failed to fetch songs";
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -95,7 +92,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     const now = Date.now();
     const lastFetch = get().lastFetchedAt;
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().songs.length > 0 && (now - lastFetch < CACHE_TTL)) {
+    if (get().songs.length > 0 && now - lastFetch < CACHE_TTL) {
       return;
     }
 
@@ -129,7 +126,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch songs';
+      const message = error instanceof Error ? error.message : "Failed to fetch songs";
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -142,7 +139,10 @@ export const useSongsStore = create<SongsState>((set, get) => ({
       return;
     }
 
-    const store = { setLoading: (val: boolean) => set({ isLoading: val }), setError: (err: string | null) => set({ error: err }) };
+    const store = {
+      setLoading: (val: boolean) => set({ isLoading: val }),
+      setError: (err: string | null) => set({ error: err }),
+    };
     const detail = await withStoreLoadingSilent(store, `/api/songs/${id}`, SongSchema);
 
     if (detail) {
@@ -161,7 +161,10 @@ export const useSongsStore = create<SongsState>((set, get) => ({
 
   fetchSongTree: async (id: string) => {
     // Fetch tree without caching - always returns fresh data
-    const store = { setLoading: (val: boolean) => set({ isLoading: val }), setError: (err: string | null) => set({ error: err }) };
+    const store = {
+      setLoading: (val: boolean) => set({ isLoading: val }),
+      setError: (err: string | null) => set({ error: err }),
+    };
     const tree = await withStoreLoadingSilent(store, `/api/songs/${id}/tree`, SongTreeSchema);
     return tree;
   },

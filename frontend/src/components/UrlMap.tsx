@@ -1,5 +1,5 @@
-import { type z } from 'zod';
-import { UrlMapSchema } from '../api/schemas';
+import { type z } from "zod";
+import { UrlMapSchema } from "../api/schemas";
 
 type UrlMapType = z.infer<typeof UrlMapSchema>;
 

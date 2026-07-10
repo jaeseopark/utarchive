@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useAlbumsStore } from '../stores/useAlbumsStore';
+import { useEffect } from "react";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
 
 /**
  * Hook to fetch and manage albums list with pagination

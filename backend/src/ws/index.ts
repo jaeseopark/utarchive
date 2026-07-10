@@ -63,9 +63,7 @@ export const createWebSocketServer = (server: http.Server) => {
 
   // Connection handler
   wss.on("connection", (socket: AuthenticatedWebSocket) => {
-    console.log(
-      `[WebSocket] Client connected: ${socket.userId}`
-    );
+    console.log(`[WebSocket] Client connected: ${socket.userId}`);
     logConnection(socket.userId || "unknown", "connected");
 
     // Send connection confirmation
@@ -87,7 +85,12 @@ export const createWebSocketServer = (server: http.Server) => {
       try {
         const parsed = JSON.parse(data.toString());
         // Validate message has required fields
-        if (typeof parsed === "object" && parsed !== null && "type" in parsed && "timestamp" in parsed) {
+        if (
+          typeof parsed === "object" &&
+          parsed !== null &&
+          "type" in parsed &&
+          "timestamp" in parsed
+        ) {
           // eslint-disable-next-line no-restricted-syntax
           const message = parsed as WebSocketMessage;
 
@@ -112,18 +115,13 @@ export const createWebSocketServer = (server: http.Server) => {
 
     // Error handler
     socket.on("error", (err) => {
-      console.error(
-        `[WebSocket] Client error (${socket.userId}):`,
-        err
-      );
+      console.error(`[WebSocket] Client error (${socket.userId}):`, err);
       logError(socket.userId || "unknown", err);
     });
 
     // Close handler
     socket.on("close", () => {
-      console.log(
-        `[WebSocket] Client disconnected: ${socket.userId}`
-      );
+      console.log(`[WebSocket] Client disconnected: ${socket.userId}`);
       logConnection(socket.userId || "unknown", "disconnected");
     });
   });
@@ -135,9 +133,7 @@ export const createWebSocketServer = (server: http.Server) => {
       const authWs = socket as AuthenticatedWebSocket;
 
       if (authWs.isAlive === false) {
-        console.log(
-          `[WebSocket] Terminating unresponsive client: ${authWs.userId}`
-        );
+        console.log(`[WebSocket] Terminating unresponsive client: ${authWs.userId}`);
         authWs.terminate();
         return;
       }
@@ -161,7 +157,7 @@ export const createWebSocketServer = (server: http.Server) => {
 export const broadcastMessage = (
   wss: WebSocketServer,
   message: WebSocketMessage,
-  excludeSocketId?: string
+  excludeSocketId?: string,
 ) => {
   const payload = JSON.stringify(message);
   let clientCount = 0;
@@ -184,11 +180,7 @@ export const broadcastMessage = (
 /**
  * Broadcast to a specific client by user ID
  */
-export const sendToClient = (
-  wss: WebSocketServer,
-  userId: string,
-  message: WebSocketMessage
-) => {
+export const sendToClient = (wss: WebSocketServer, userId: string, message: WebSocketMessage) => {
   const payload = JSON.stringify(message);
 
   wss.clients.forEach((client) => {

@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { type Song } from '../api/schemas';
+import { create } from "zustand";
+import { type Song } from "../api/schemas";
 
 export interface PlayerState {
   currentSong: Song | null;
@@ -11,7 +11,7 @@ export interface PlayerState {
   queue: Song[];
   queueIndex: number;
   shuffleEnabled: boolean;
-  repeatMode: 'off' | 'one' | 'all';
+  repeatMode: "off" | "one" | "all";
 
   play: (song: Song) => void;
   pause: () => void;
@@ -24,7 +24,7 @@ export interface PlayerState {
   addToQueue: (song: Song) => void;
   removeFromQueue: (index: number) => void;
   toggleShuffle: () => void;
-  setRepeatMode: (mode: 'off' | 'one' | 'all') => void;
+  setRepeatMode: (mode: "off" | "one" | "all") => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -37,7 +37,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   queue: [],
   queueIndex: -1,
   shuffleEnabled: false,
-  repeatMode: 'off',
+  repeatMode: "off",
 
   play: (song: Song) => {
     set({
@@ -71,7 +71,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     let nextIndex = queueIndex + 1;
     if (nextIndex >= queue.length) {
-      if (repeatMode === 'all') {
+      if (repeatMode === "all") {
         nextIndex = 0;
       } else {
         set({ isPlaying: false });
@@ -146,7 +146,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     set((state) => ({ shuffleEnabled: !state.shuffleEnabled }));
   },
 
-  setRepeatMode: (mode: 'off' | 'one' | 'all') => {
+  setRepeatMode: (mode: "off" | "one" | "all") => {
     set({ repeatMode: mode });
   },
 }));

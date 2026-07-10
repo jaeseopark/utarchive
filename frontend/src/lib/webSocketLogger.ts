@@ -100,7 +100,11 @@ export const logError = (error: Error | string): void => {
 /**
  * Log state update
  */
-export const logStateUpdate = (entity: string, action: "add" | "update" | "delete", id: string): void => {
+export const logStateUpdate = (
+  entity: string,
+  action: "add" | "update" | "delete",
+  id: string,
+): void => {
   logWebSocketEvent({
     type: "STATE_UPDATE",
     message: `${action.toUpperCase()} ${entity} ${id}`,

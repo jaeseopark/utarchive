@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useArtistsStore } from '../stores/useArtistsStore';
+import { useEffect } from "react";
+import { useArtistsStore } from "../stores/useArtistsStore";
 
 /**
  * Hook to fetch and manage artists list with pagination

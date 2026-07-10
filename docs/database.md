@@ -26,11 +26,11 @@ Edit `backend/src/db/schema.ts` with your changes:
 
 ```ts
 // Example: adding a new column
-export const songs = pgTable('songs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  title: varchar('title', { length: 500 }).notNull(),
+export const songs = pgTable("songs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 500 }).notNull(),
   // ... existing columns ...
-  coverArtId: uuid('cover_art_id').references(() => coverArt.id), // NEW
+  coverArtId: uuid("cover_art_id").references(() => coverArt.id), // NEW
 });
 ```
 
@@ -44,6 +44,7 @@ npx drizzle-kit push
 ```
 
 This will:
+
 - Introspect the current database schema
 - Compare it to your TypeScript schema definition
 - Display a preview of changes
@@ -102,16 +103,19 @@ node dist/index.js
 These changes are backward-compatible and safe to deploy immediately:
 
 - **Add new nullable columns**
+
   ```ts
   newColumn: varchar('new_column').default(sql`'default_value'`),
   ```
 
 - **Add new tables**
+
   ```ts
-  export const newTable = pgTable('new_table', { /* columns */ });
+  export const newTable = pgTable("new_table", {/* columns */});
   ```
 
 - **Add indexes**
+
   ```ts
   indexes: {
     idx_name: index('idx_name').on(table.columnName),
@@ -201,33 +205,48 @@ If a schema change causes issues:
 ### Adding a Junction Table
 
 ```ts
-export const songArtists = pgTable('song_artists', {
-  songId: uuid('song_id').notNull().references(() => songs.id),
-  artistId: uuid('artist_id').notNull().references(() => artists.id),
-  displayOrder: integer('display_order').notNull().default(0),
-}, (table) => ({
-  pk: primaryKey({ columns: [table.songId, table.artistId] }),
-}));
+export const songArtists = pgTable(
+  "song_artists",
+  {
+    songId: uuid("song_id")
+      .notNull()
+      .references(() => songs.id),
+    artistId: uuid("artist_id")
+      .notNull()
+      .references(() => artists.id),
+    displayOrder: integer("display_order").notNull().default(0),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.songId, table.artistId] }),
+  }),
+);
 ```
 
 ### Adding a JSONB Column
 
 ```ts
-export const albums = pgTable('albums', {
+export const albums = pgTable("albums", {
   // ... other columns ...
-  urls: jsonb('urls').$type<Record<string, string>>().notNull().default(sql`'{}'::jsonb`),
+  urls: jsonb("urls")
+    .$type<Record<string, string>>()
+    .notNull()
+    .default(sql`'{}'::jsonb`),
 });
 ```
 
 ### Adding an Index
 
 ```ts
-export const songs = pgTable('songs', {
-  // ... columns ...
-}, (table) => ({
-  idx_title: index('idx_songs_title').on(table.title),
-  idx_artist: index('idx_songs_artist_id').on(table.artistId),
-}));
+export const songs = pgTable(
+  "songs",
+  {
+    // ... columns ...
+  },
+  (table) => ({
+    idx_title: index("idx_songs_title").on(table.title),
+    idx_artist: index("idx_songs_artist_id").on(table.artistId),
+  }),
+);
 ```
 
 ## Migration File Archive
@@ -244,7 +263,7 @@ export const songs = pgTable('songs', {
 });
 
 // In migration SQL
-ALTER TABLE songs ADD COLUMN search_vector tsvector 
+ALTER TABLE songs ADD COLUMN search_vector tsvector
   GENERATED ALWAYS AS (
     to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, ''))
   ) STORED;

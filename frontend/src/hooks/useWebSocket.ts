@@ -55,7 +55,7 @@ export const useWebSocket = ({
             JSON.stringify({
               type: "PING",
               timestamp: Date.now(),
-            })
+            }),
           );
         } catch (err) {
           console.error("[WebSocket] Failed to send heartbeat:", err);
@@ -76,12 +76,12 @@ export const useWebSocket = ({
       // Note: Session cookie will be sent automatically by the browser
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const hostname = window.location.hostname;
-      
+
       // In development, frontend runs on 5173, backend on 3000
       // In production, both are on same origin (usually proxied)
       const port = window.location.port === "5173" ? "3000" : window.location.port || "";
       const hostWithPort = port ? `${hostname}:${port}` : hostname;
-      
+
       const wsUrl = `${protocol}//${hostWithPort}/ws`;
 
       console.log("[WebSocket] Connecting to", wsUrl);
@@ -135,14 +135,22 @@ export const useWebSocket = ({
       onError?.(error);
       setIsConnecting(false);
     }
-  }, [isConnecting, isConnected, onConnect, onDisconnect, onError, onMessage, startHeartbeat, clearHeartbeat]);
+  }, [
+    isConnecting,
+    isConnected,
+    onConnect,
+    onDisconnect,
+    onError,
+    onMessage,
+    startHeartbeat,
+    clearHeartbeat,
+  ]);
 
   const reconnect = useCallback(() => {
     clearReconnectTimeout();
 
-    const delay = RECONNECT_DELAYS[
-      Math.min(reconnectAttemptRef.current, RECONNECT_DELAYS.length - 1)
-    ];
+    const delay =
+      RECONNECT_DELAYS[Math.min(reconnectAttemptRef.current, RECONNECT_DELAYS.length - 1)];
     reconnectAttemptRef.current++;
 
     console.log(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptRef.current})`);

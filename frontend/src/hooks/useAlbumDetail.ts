@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { useAlbumsStore } from '../stores/useAlbumsStore';
-import { type AlbumId } from '../types/brands';
+import { useEffect } from "react";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
+import { type AlbumId } from "../types/brands";
 
 /**
  * Hook to fetch and manage album detail with caching

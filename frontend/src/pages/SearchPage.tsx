@@ -1,10 +1,10 @@
-import { FormEvent, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { api } from '../api/client';
-import { Button } from '../components/ui/Button';
-import { z } from 'zod';
-import { useArtistsStore } from '../stores/useArtistsStore';
-import { getArtistNames } from '../lib/artistNames';
+import { FormEvent, useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { api } from "../api/client";
+import { Button } from "../components/ui/Button";
+import { z } from "zod";
+import { useArtistsStore } from "../stores/useArtistsStore";
+import { getArtistNames } from "../lib/artistNames";
 
 const SearchSongSchema = z.object({
   id: z.string().uuid(),
@@ -36,7 +36,7 @@ type SearchResponse = z.infer<typeof SearchResponseSchema>;
 
 function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const queryParam = searchParams.get('q') ?? '';
+  const queryParam = searchParams.get("q") ?? "";
   const [query, setQuery] = useState(queryParam);
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +73,14 @@ function SearchPage() {
     setSearchParams(nextQuery ? { q: nextQuery } : {});
   };
 
-  const noResults = !isLoading && !error && hasQuery && results && results.songs.length === 0 && results.artists.length === 0 && results.albums.length === 0;
+  const noResults =
+    !isLoading &&
+    !error &&
+    hasQuery &&
+    results &&
+    results.songs.length === 0 &&
+    results.artists.length === 0 &&
+    results.albums.length === 0;
 
   return (
     <section className="space-y-6">
@@ -97,13 +104,21 @@ function SearchPage() {
       </form>
 
       {isLoading ? (
-        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">Loading results…</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">
+          Loading results…
+        </div>
       ) : error ? (
-        <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">Error loading search results: {error}</div>
+        <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">
+          Error loading search results: {error}
+        </div>
       ) : !hasQuery ? (
-        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">Enter a search query to see songs, artists, and albums.</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">
+          Enter a search query to see songs, artists, and albums.
+        </div>
       ) : noResults ? (
-        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">No results for "{trimmedQuery}".</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">
+          No results for "{trimmedQuery}".
+        </div>
       ) : (
         results && (
           <div className="space-y-8">
@@ -130,20 +145,28 @@ function SearchPage() {
                         return (
                           <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
                             <td className="px-4 py-4">
-                              <Link to={`/songs/${song.id}`} className="text-slate-900 transition hover:text-sky-500">
+                              <Link
+                                to={`/songs/${song.id}`}
+                                className="text-slate-900 transition hover:text-sky-500"
+                              >
                                 {song.title}
                               </Link>
                             </td>
                             <td className="px-4 py-4 text-slate-700">
                               {song.artistId ? (
-                                <Link to={`/artists/${song.artistId}`} className="text-sky-500 hover:underline">
+                                <Link
+                                  to={`/artists/${song.artistId}`}
+                                  className="text-sky-500 hover:underline"
+                                >
                                   {artistName}
                                 </Link>
                               ) : (
-                                'Unknown'
+                                "Unknown"
                               )}
                             </td>
-                            <td className="px-4 py-4 text-slate-700">{song.playbackEnabled ? 'Yes' : 'No'}</td>
+                            <td className="px-4 py-4 text-slate-700">
+                              {song.playbackEnabled ? "Yes" : "No"}
+                            </td>
                           </tr>
                         );
                       })}
@@ -171,11 +194,16 @@ function SearchPage() {
                       {results.artists.map((artist) => (
                         <tr key={artist.id} className="border-b border-slate-300 last:border-b-0">
                           <td className="px-4 py-4">
-                            <Link to={`/artists/${artist.id}`} className="text-slate-900 transition hover:text-sky-500">
+                            <Link
+                              to={`/artists/${artist.id}`}
+                              className="text-slate-900 transition hover:text-sky-500"
+                            >
                               {artist.name}
                             </Link>
                           </td>
-                          <td className="px-4 py-4 text-slate-700">{artist.aliases.join(', ') || '—'}</td>
+                          <td className="px-4 py-4 text-slate-700">
+                            {artist.aliases.join(", ") || "—"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -205,25 +233,31 @@ function SearchPage() {
                         return (
                           <tr key={album.id} className="border-b border-slate-300 last:border-b-0">
                             <td className="px-4 py-4">
-                              <Link to={`/albums/${album.id}`} className="text-slate-900 transition hover:text-sky-500\">
+                              <Link
+                                to={`/albums/${album.id}`}
+                                className="text-slate-900 transition hover:text-sky-500\"
+                              >
                                 {album.title}
                               </Link>
                             </td>
                             <td className="px-4 py-4 text-slate-700">
-                              {albumArtistNames.length > 0 ? (
-                                albumArtistNames.map((name, index) => (
-                                  <span key={index}>
-                                    {index > 0 && ', '}
-                                    <Link to={`/artists/${album.artistIds[index]}`} className="text-sky-500 hover:underline">
-                                      {name}
-                                    </Link>
-                                  </span>
-                                ))
-                              ) : (
-                                'Unknown'
-                              )}
+                              {albumArtistNames.length > 0
+                                ? albumArtistNames.map((name, index) => (
+                                    <span key={index}>
+                                      {index > 0 && ", "}
+                                      <Link
+                                        to={`/artists/${album.artistIds[index]}`}
+                                        className="text-sky-500 hover:underline"
+                                      >
+                                        {name}
+                                      </Link>
+                                    </span>
+                                  ))
+                                : "Unknown"}
                             </td>
-                            <td className="px-4 py-4 text-slate-700">{album.yearReleased ?? '—'}</td>
+                            <td className="px-4 py-4 text-slate-700">
+                              {album.yearReleased ?? "—"}
+                            </td>
                           </tr>
                         );
                       })}

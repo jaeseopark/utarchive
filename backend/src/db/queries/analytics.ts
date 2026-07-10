@@ -10,9 +10,7 @@ export type ListeningAnalyticsInsert = {
   userAgent?: string | null;
 };
 
-export const insertListeningAnalytics = async (
-  record: ListeningAnalyticsInsert
-) => {
+export const insertListeningAnalytics = async (record: ListeningAnalyticsInsert) => {
   return await db.transaction(async (tx) => {
     await tx.insert(listeningAnalytics).values({
       songId: record.songId,
@@ -21,22 +19,15 @@ export const insertListeningAnalytics = async (
       playbackPercent: record.playbackPercent,
       userAgent: record.userAgent ?? null,
     });
-
   });
 };
 
-export const deleteAllListeningAnalytics = async () =>
-  await db.delete(listeningAnalytics);
+export const deleteAllListeningAnalytics = async () => await db.delete(listeningAnalytics);
 
 export const pruneListeningAnalyticsOlderThanDays = async (days: number) =>
   await db
     .delete(listeningAnalytics)
-    .where(
-      lt(
-        listeningAnalytics.startedAt,
-        new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-      )
-    );
+    .where(lt(listeningAnalytics.startedAt, new Date(Date.now() - days * 24 * 60 * 60 * 1000)));
 
 export const countListeningAnalytics = async () => {
   const rows = await db

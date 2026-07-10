@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useArtists } from '../hooks/useArtists';
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { useArtists } from "../hooks/useArtists";
 
 const PAGE_SIZE = 50;
 
@@ -11,11 +11,12 @@ function ArtistsPage() {
   const canPrevious = page > 0;
 
   const rows = useMemo(
-    () => artists.map((artist) => ({
-      ...artist,
-      aliasText: artist.aliases?.length ? artist.aliases.join(', ') : '—',
-      songCount: artist.songCount ?? 0,
-    })),
+    () =>
+      artists.map((artist) => ({
+        ...artist,
+        aliasText: artist.aliases?.length ? artist.aliases.join(", ") : "—",
+        songCount: artist.songCount ?? 0,
+      })),
     [artists],
   );
 
@@ -28,11 +29,17 @@ function ArtistsPage() {
 
       <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-xl shadow-slate-200/20">
         {isLoading ? (
-          <div className="min-h-[240px] flex items-center justify-center text-slate-600">Loading artists…</div>
+          <div className="min-h-[240px] flex items-center justify-center text-slate-600">
+            Loading artists…
+          </div>
         ) : error ? (
-          <div className="min-h-[240px] rounded-2xl border border-rose-400 bg-rose-100/30 p-4 text-rose-700">Error loading artists: {error}</div>
+          <div className="min-h-[240px] rounded-2xl border border-rose-400 bg-rose-100/30 p-4 text-rose-700">
+            Error loading artists: {error}
+          </div>
         ) : rows.length === 0 ? (
-          <div className="min-h-[240px] flex items-center justify-center text-slate-600">No artists found.</div>
+          <div className="min-h-[240px] flex items-center justify-center text-slate-600">
+            No artists found.
+          </div>
         ) : (
           <table className="min-w-full text-left text-sm text-slate-700">
             <thead className="border-b border-slate-300 text-slate-600">
@@ -46,7 +53,10 @@ function ArtistsPage() {
               {rows.map((artist) => (
                 <tr key={artist.id} className="border-b border-slate-300 last:border-b-0">
                   <td className="px-4 py-4">
-                    <Link to={`/artists/${artist.id}`} className="font-medium text-slate-900 transition hover:text-sky-500">
+                    <Link
+                      to={`/artists/${artist.id}`}
+                      className="font-medium text-slate-900 transition hover:text-sky-500"
+                    >
                       {artist.name}
                     </Link>
                   </td>

@@ -63,7 +63,7 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
         handleDataChanged(message as DataChangedMessage);
         // eslint-disable-next-line no-restricted-syntax
         const dataMsg = message as DataChangedMessage;
-        
+
         // Log each action type separately
         dataMsg.data.created?.forEach((item: Record<string, unknown>) => {
           // eslint-disable-next-line no-restricted-syntax

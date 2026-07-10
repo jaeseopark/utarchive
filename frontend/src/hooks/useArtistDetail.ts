@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { useArtistsStore } from '../stores/useArtistsStore';
-import { type ArtistId } from '../types/brands';
+import { useEffect } from "react";
+import { useArtistsStore } from "../stores/useArtistsStore";
+import { type ArtistId } from "../types/brands";
 
 /**
  * Hook to fetch and manage artist detail with caching

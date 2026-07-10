@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useSongsStore } from '../stores/useSongsStore';
-import { type SongId } from '../types/brands';
+import { useEffect, useState } from "react";
+import { useSongsStore } from "../stores/useSongsStore";
+import { type SongId } from "../types/brands";
 
 /**
  * Hook to fetch and manage song detail with caching
- * 
+ *
  * Fetches song detail from the store. Tree fetching is handled separately by useFamilyTree.
  */
 export function useSongDetail(songId: SongId | undefined) {
@@ -16,7 +16,7 @@ export function useSongDetail(songId: SongId | undefined) {
    */
   useEffect(() => {
     if (!songId) return;
-    
+
     const cached = getSongDetail(songId);
     if (cached) {
       return; // Already have it

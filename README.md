@@ -44,9 +44,10 @@ docker compose -f docker-compose-dev.yml up --build
 ```
 
 The `docker-compose-dev.yml` file includes default environment variables for development. To use your own `.env` file instead:
-   - Create a `.env` file with your variables
-   - Remove the `environment` section from `docker-compose-dev.yml`
-   - Add `env_file: .env` to the `app` service in the compose file
+
+- Create a `.env` file with your variables
+- Remove the `environment` section from `docker-compose-dev.yml`
+- Add `env_file: .env` to the `app` service in the compose file
 
 2. If you want to mount local audio files, add a host mount to the compose file or use the example below.
 
@@ -54,14 +55,14 @@ The `docker-compose-dev.yml` file includes default environment variables for dev
 
 ## Environment variables
 
-| Variable | Required | Description |
-|---|:---:|---|
-| `DATABASE_URL` | ✅ | Postgres connection string |
-| `AUTH_CREDENTIALS` | ✅ | `id,password,totp_key` |
-| `JWT_SECRET` | ✅ | Random secret for JWT signing (min 32 chars recommended) |
-| `JWT_TTL_SECONDS` | — | JWT lifetime in seconds (default: 3600) |
-| `PORT` | — | HTTP server port (default: 3000) |
-| `NODE_ENV` | — | `production` or `development` (default: `development`) |
+| Variable           | Required | Description                                              |
+| ------------------ | :------: | -------------------------------------------------------- |
+| `DATABASE_URL`     |    ✅    | Postgres connection string                               |
+| `AUTH_CREDENTIALS` |    ✅    | `id,password,totp_key`                                   |
+| `JWT_SECRET`       |    ✅    | Random secret for JWT signing (min 32 chars recommended) |
+| `JWT_TTL_SECONDS`  |    —     | JWT lifetime in seconds (default: 3600)                  |
+| `PORT`             |    —     | HTTP server port (default: 3000)                         |
+| `NODE_ENV`         |    —     | `production` or `development` (default: `development`)   |
 
 ## Audio file storage
 

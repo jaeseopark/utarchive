@@ -1,25 +1,47 @@
-import { create } from 'zustand';
-import { z } from 'zod';
-import { api } from '../api/client';
-import { createSongId, createArtistId, createAlbumId } from '../types/brands';
+import { create } from "zustand";
+import { z } from "zod";
+import { api } from "../api/client";
+import { toBrandId, type SongId, type ArtistId, type AlbumId } from "../types/brands";
 
 const SearchSongSchema = z.object({
-  id: z.string().uuid().transform(createSongId),
+  id: z
+    .string()
+    .uuid()
+    .transform((val) => toBrandId<SongId>(val)),
   title: z.string(),
-  artistId: z.string().uuid().nullable().optional().transform((val) => val ? createArtistId(val) : null),
+  artistId: z
+    .string()
+    .uuid()
+    .nullable()
+    .optional()
+    .transform((val) => (val ? toBrandId<ArtistId>(val) : null)),
   playbackEnabled: z.boolean(),
 });
 
 const SearchArtistSchema = z.object({
-  id: z.string().uuid().transform(createArtistId),
+  id: z
+    .string()
+    .uuid()
+    .transform((val) => toBrandId<ArtistId>(val)),
   name: z.string(),
   aliases: z.array(z.string()).optional().default([]),
 });
 
 const SearchAlbumSchema = z.object({
-  id: z.string().uuid().transform(createAlbumId),
+  id: z
+    .string()
+    .uuid()
+    .transform((val) => toBrandId<AlbumId>(val)),
   title: z.string(),
-  artistIds: z.array(z.string().uuid().transform(createArtistId)).optional().default([]),
+  artistIds: z
+    .array(
+      z
+        .string()
+        .uuid()
+        .transform((val) => toBrandId<ArtistId>(val)),
+    )
+    .optional()
+    .default([]),
   yearReleased: z.number().int().nullable().optional(),
 });
 
@@ -46,7 +68,7 @@ export interface SearchState {
 }
 
 export const useSearchStore = create<SearchState>((set, get) => ({
-  query: '',
+  query: "",
   results: null,
   isLoading: false,
   error: null,
@@ -63,11 +85,14 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const results = await api.get(`/api/search?q=${encodeURIComponent(trimmed)}`, SearchResponseSchema);
+      const results = await api.get(
+        `/api/search?q=${encodeURIComponent(trimmed)}`,
+        SearchResponseSchema,
+      );
       set({ results, query: trimmed });
       get().addRecentSearch(trimmed);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Search failed';
+      const message = error instanceof Error ? error.message : "Search failed";
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -75,7 +100,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   },
 
   clearResults: () => {
-    set({ results: null, query: '', error: null });
+    set({ results: null, query: "", error: null });
   },
 
   addRecentSearch: (query: string) => {

@@ -1,4 +1,4 @@
-import { usePlayerStore } from '../stores/usePlayerStore';
+import { usePlayerStore } from "../stores/usePlayerStore";
 
 /**
  * Hook to access and control music player

@@ -1,17 +1,17 @@
-import { useEffect, useRef } from 'react';
-import { useSession } from '../context/SessionContext';
-import { useArtistsStore } from '../stores/useArtistsStore';
-import { usePlaylistsStore } from '../stores/usePlaylistsStore';
-import { useSongsStore } from '../stores/useSongsStore';
-import { useAlbumsStore } from '../stores/useAlbumsStore';
+import { useEffect, useRef } from "react";
+import { useSession } from "../context/SessionContext";
+import { useArtistsStore } from "../stores/useArtistsStore";
+import { usePlaylistsStore } from "../stores/usePlaylistsStore";
+import { useSongsStore } from "../stores/useSongsStore";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
 
 /**
  * Initialize frontend data on app boot.
- * 
+ *
  * Hydrates stores in dependency order:
  * - Level 0 (parallel): Artists, Playlists (no dependencies)
  * - Level 1 (parallel): Songs, Albums (depend on Level 0)
- * 
+ *
  * Fetches all pages for each entity since the database is small.
  */
 export function useAppInitialization() {
@@ -33,18 +33,12 @@ export function useAppInitialization() {
     const initializeApp = async () => {
       try {
         // Level 0: Load foundation entities (parallel)
-        await Promise.all([
-          artistsStore.fetchAllArtists(),
-          playlistsStore.fetchPlaylists(),
-        ]);
+        await Promise.all([artistsStore.fetchAllArtists(), playlistsStore.fetchPlaylists()]);
 
         // Level 1: Load primary entities (parallel, depends on Level 0)
-        await Promise.all([
-          songsStore.fetchAllSongs(),
-          albumsStore.fetchAllAlbums(),
-        ]);
+        await Promise.all([songsStore.fetchAllSongs(), albumsStore.fetchAllAlbums()]);
       } catch (error) {
-        console.error('Failed to initialize app data:', error);
+        console.error("Failed to initialize app data:", error);
       }
     };
 

@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useSongsStore } from '../stores/useSongsStore';
+import { useEffect } from "react";
+import { useSongsStore } from "../stores/useSongsStore";
 
 /**
  * Hook to fetch and manage songs list with pagination

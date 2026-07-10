@@ -1,18 +1,18 @@
-import { Route, Routes, Navigate } from 'react-router-dom';
-import RootLayout from './layouts/RootLayout';
-import ProtectedRoute from './components/ProtectedRoute';
-import { useWebSocketMessageHandling } from './hooks/useWebSocketIntegration';
-import { useAppInitialization } from './hooks/useAppInitialization';
-import LoginPage from './pages/LoginPage';
-import ArtistsPage from './pages/ArtistsPage';
-import ArtistDetailPage from './pages/ArtistDetailPage';
-import SongDetailPage from './pages/SongDetailPage';
-import SongsPage from './pages/SongsPage';
-import AlbumsPage from './pages/AlbumsPage';
-import AlbumDetailPage from './pages/AlbumDetailPage';
-import PlaylistsPage from './pages/PlaylistsPage';
-import PlaylistDetailPage from './pages/PlaylistDetailPage';
-import SearchPage from './pages/SearchPage';
+import { Route, Routes, Navigate } from "react-router-dom";
+import RootLayout from "./layouts/RootLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { useWebSocketMessageHandling } from "./hooks/useWebSocketIntegration";
+import { useAppInitialization } from "./hooks/useAppInitialization";
+import LoginPage from "./pages/LoginPage";
+import ArtistsPage from "./pages/ArtistsPage";
+import ArtistDetailPage from "./pages/ArtistDetailPage";
+import SongDetailPage from "./pages/SongDetailPage";
+import SongsPage from "./pages/SongsPage";
+import AlbumsPage from "./pages/AlbumsPage";
+import AlbumDetailPage from "./pages/AlbumDetailPage";
+import PlaylistsPage from "./pages/PlaylistsPage";
+import PlaylistDetailPage from "./pages/PlaylistDetailPage";
+import SearchPage from "./pages/SearchPage";
 
 function App() {
   // Boot-time initialization: hydrate stores in dependency order

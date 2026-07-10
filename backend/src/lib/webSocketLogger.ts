@@ -49,7 +49,7 @@ export const logWebSocketEvent = (event: Omit<WebSocketEvent, "timestamp">): voi
 export const logBroadcast = (
   userId: string | undefined,
   message: WebSocketMessage,
-  clientCount: number
+  clientCount: number,
 ): void => {
   logWebSocketEvent({
     type: "BROADCAST",

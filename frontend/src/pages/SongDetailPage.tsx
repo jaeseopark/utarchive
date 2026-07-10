@@ -1,25 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import {
-  SongSchema,
-} from '../api/schemas';
-import { z } from 'zod';
-import { Button } from '../components/ui/Button';
-import CoverArtDisplay from '../components/CoverArtDisplay';
-import FamilyTree from '../components/FamilyTree';
-import { SongAttributesEditor } from '../components/SongAttributesEditor';
-import { parseTrimRange } from '../lib/format';
-import { useArtistsStore } from '../stores/useArtistsStore';
-import { getArtistNames } from '../lib/artistNames';
-import { useSongDetail } from '../hooks/useSongDetail';
-import { useRecordListening } from '../hooks/useRecordListening';
-import { createSongId } from '../types/brands';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { SongSchema } from "../api/schemas";
+import { z } from "zod";
+import { Button } from "../components/ui/Button";
+import CoverArtDisplay from "../components/CoverArtDisplay";
+import FamilyTree from "../components/FamilyTree";
+import { SongAttributesEditor } from "../components/SongAttributesEditor";
+import { parseTrimRange } from "../lib/format";
+import { useArtistsStore } from "../stores/useArtistsStore";
+import { getArtistNames } from "../lib/artistNames";
+import { useSongDetail } from "../hooks/useSongDetail";
+import { useRecordListening } from "../hooks/useRecordListening";
+import { toBrandId, type SongId } from "../types/brands";
 
 const PAUSE_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function SongDetailPage() {
-  const { id } = useParams<'id'>();
-  const { song: songData, isLoading, error } = useSongDetail(createSongId(id || ''));
+  const { id } = useParams<"id">();
+  const { song: songData, isLoading, error } = useSongDetail(toBrandId<SongId>(id || ""));
   const { recordListening } = useRecordListening();
   const [isListening, setIsListening] = useState(false);
   const [listenedSeconds, setListenedSeconds] = useState(0);
@@ -37,7 +35,7 @@ function SongDetailPage() {
     if (!song) return [];
     const artistNames = getArtistNames(song.artistIds ?? [], artists);
     return artistNames.map((name, index) => ({
-      id: song.artistIds?.[index] ?? '',
+      id: song.artistIds?.[index] ?? "",
       name,
     }));
   }, [song, artists]);
@@ -76,7 +74,7 @@ function SongDetailPage() {
     }
   };
 
-  const sendAnalytics = async (stopReason: 'pause' | 'ended') => {
+  const sendAnalytics = async (stopReason: "pause" | "ended") => {
     if (!song || !startedAt) {
       return;
     }
@@ -95,10 +93,10 @@ function SongDetailPage() {
 
     if (result.success) {
       setAnalyticsMessage(
-        `Recorded listening session (${stopReason}) — ${durationSeconds}s, ${Math.round(playbackPercent)}%`
+        `Recorded listening session (${stopReason}) — ${durationSeconds}s, ${Math.round(playbackPercent)}%`,
       );
     } else {
-      setAnalyticsMessage('Failed to record listening analytics.');
+      setAnalyticsMessage("Failed to record listening analytics.");
     }
   };
 
@@ -110,7 +108,7 @@ function SongDetailPage() {
     // Check if there's an existing paused session that's too old (24+ hours)
     if (pausedAt && Date.now() - pausedAt.getTime() >= PAUSE_TIMEOUT_MS) {
       clearListeningState();
-      setAnalyticsMessage('Listening session expired. Please start a new session.');
+      setAnalyticsMessage("Listening session expired. Please start a new session.");
       return;
     }
 
@@ -122,12 +120,12 @@ function SongDetailPage() {
 
     if (audioRef.current) {
       await audioRef.current.play().catch(() => {
-        setAnalyticsMessage('Unable to start audio playback.');
+        setAnalyticsMessage("Unable to start audio playback.");
       });
     }
 
     setStartedAt(new Date());
-    setAnalyticsMessage('Listening started...');
+    setAnalyticsMessage("Listening started...");
     setIsListening(true);
     setPausedAt(null);
   };
@@ -141,10 +139,10 @@ function SongDetailPage() {
     // Set timeout to clear state after 24 hours of inactivity
     pauseTimeoutRef.current = setTimeout(() => {
       clearListeningState();
-      setAnalyticsMessage('Listening session expired after 24 hours of inactivity.');
+      setAnalyticsMessage("Listening session expired after 24 hours of inactivity.");
     }, PAUSE_TIMEOUT_MS);
 
-    void sendAnalytics('pause');
+    void sendAnalytics("pause");
   };
 
   const handleEnded = () => {
@@ -152,11 +150,9 @@ function SongDetailPage() {
       return;
     }
 
-    void sendAnalytics('ended');
+    void sendAnalytics("ended");
     clearListeningState();
   };
-
-
 
   // Handle browser tab closing
   useEffect(() => {
@@ -174,13 +170,13 @@ function SongDetailPage() {
           playbackPercent,
           userAgent: navigator.userAgent,
         });
-        navigator.sendBeacon('/api/analytics/listen', data);
+        navigator.sendBeacon("/api/analytics/listen", data);
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       // Clean up any pending timeout on unmount
       if (pauseTimeoutRef.current) {
         clearTimeout(pauseTimeoutRef.current);
@@ -196,9 +192,13 @@ function SongDetailPage() {
       </div>
 
       {isLoading ? (
-        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">Loading song…</div>
+        <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">
+          Loading song…
+        </div>
       ) : error ? (
-        <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">Error loading song: {error}</div>
+        <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">
+          Error loading song: {error}
+        </div>
       ) : song ? (
         <div className="space-y-6">
           <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
@@ -216,18 +216,21 @@ function SongDetailPage() {
                   <div className="mt-3 text-sm text-slate-600">
                     {artistList.length > 0 ? (
                       <span>
-                        Artists:{' '}
+                        Artists:{" "}
                         {artistList.map((artist, index) => (
                           <span key={artist.id}>
-                            <Link to={`/artists/${artist.id}`} className="text-sky-500 hover:underline">
+                            <Link
+                              to={`/artists/${artist.id}`}
+                              className="text-sky-500 hover:underline"
+                            >
                               {artist.name}
                             </Link>
-                            {index < artistList.length - 1 ? ', ' : ''}
+                            {index < artistList.length - 1 ? ", " : ""}
                           </span>
                         ))}
                       </span>
                     ) : (
-                      'Artists: Unknown'
+                      "Artists: Unknown"
                     )}
                   </div>
                 </div>
@@ -262,7 +265,7 @@ function SongDetailPage() {
                 <div className="mt-3 text-sm text-slate-600">
                   {isListening
                     ? `Listening for ${listenedSeconds}s`
-                    : analyticsMessage ?? 'Start playback to capture analytics.'}
+                    : (analyticsMessage ?? "Start playback to capture analytics.")}
                 </div>
               </div>
             ) : null}
@@ -272,10 +275,7 @@ function SongDetailPage() {
             <h3 className="text-xl font-semibold text-slate-900">Family tree</h3>
             {song.masterId ? (
               <div className="mt-4">
-                <FamilyTree 
-                  masterId={song.masterId} 
-                  currentSongId={song.id}
-                />
+                <FamilyTree masterId={song.masterId} currentSongId={song.id} />
               </div>
             ) : (
               <p className="mt-4 text-slate-600">No family tree available.</p>
