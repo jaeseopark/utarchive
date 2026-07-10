@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { api } from '../api/client';
 import { SongSchema, type Song } from '../api/schemas';
 import { useSongsStore } from '../stores/useSongsStore';
+import { type SongId } from '../types/brands';
 
 /**
  * Hook to update a song via API with store integration
@@ -10,7 +11,7 @@ export function useSongUpdate() {
   const { updateSong } = useSongsStore();
 
   const updateSongData = useCallback(
-    async (songId: string, updates: Partial<Song>) => {
+    async (songId: SongId, updates: Partial<Song>) => {
       try {
         // Filter out fields that shouldn't be sent to API
         const fieldsToUpdate = Object.fromEntries(

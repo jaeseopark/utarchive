@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { z } from 'zod';
 import { usePlaylistDetail } from '../hooks/usePlaylistDetail';
+import { createPlaylistId, createSongId, type SongId } from '../types/brands';
 
 const SearchSongSchema = z.object({
   id: z.string().uuid(),
@@ -36,7 +37,7 @@ type SearchResponse = z.infer<typeof SearchResponseSchema>;
 function PlaylistDetailPage() {
   const { id } = useParams<'id'>();
   const navigate = useNavigate();
-  const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSong, removeSong } = usePlaylistDetail(id || '');
+  const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSong, removeSong } = usePlaylistDetail(createPlaylistId(id || ''));
 
   const [draftName, setDraftName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
@@ -152,7 +153,7 @@ function PlaylistDetailPage() {
     };
   }, [isModalOpen, searchQuery]);
 
-  const handleAddSong = async (songId: string) => {
+  const handleAddSong = async (songId: SongId) => {
     try {
       await addSong(songId);
     } catch {
@@ -346,10 +347,10 @@ function PlaylistDetailPage() {
                             <Button
                               type="button"
                               variant="secondary"
-                              disabled={songIds.has(song.id)}
-                              onClick={() => handleAddSong(song.id)}
+                              disabled={songIds.has(createSongId(song.id))}
+                              onClick={() => handleAddSong(createSongId(song.id))}
                             >
-                              {songIds.has(song.id) ? 'Added' : 'Add'}
+                              {songIds.has(createSongId(song.id)) ? 'Added' : 'Add'}
                             </Button>
                           </td>
                         </tr>

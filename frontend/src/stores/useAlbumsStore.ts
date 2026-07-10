@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { api } from '../api/client';
 import { withStoreLoadingSilent } from '../api/middleware';
 import { AlbumSchema, AlbumDetailSchema, type Album, type AlbumDetail } from '../api/schemas';
+import { type AlbumId } from '../types/brands';
 
 const AlbumsResponseSchema = z.array(AlbumSchema);
 
@@ -27,11 +28,11 @@ export interface AlbumsState {
   // Actions
   fetchAlbums: (page?: number) => Promise<void>;
   fetchAllAlbums: () => Promise<void>;
-  fetchAlbumDetail: (id: string) => Promise<void>;
-  getAlbumDetail: (id: string) => AlbumDetail | undefined;
+  fetchAlbumDetail: (id: AlbumId) => Promise<void>;
+  getAlbumDetail: (id: AlbumId) => AlbumDetail | undefined;
   addAlbum: (album: Album) => void;
-  updateAlbum: (id: string, updates: Partial<Album>) => void;
-  removeAlbum: (id: string) => void;
+  updateAlbum: (id: AlbumId, updates: Partial<Album>) => void;
+  removeAlbum: (id: AlbumId) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -152,7 +153,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     }
   },
 
-  getAlbumDetail: (id: string) => {
+  getAlbumDetail: (id: AlbumId) => {
     return get().albumDetails[id];
   },
 

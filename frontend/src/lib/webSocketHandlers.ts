@@ -4,6 +4,7 @@ import { useSongsStore } from "../stores/useSongsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
+import { createSongId, createAlbumId, createArtistId, createPlaylistId } from "../types/brands";
 
 /**
  * Helper function to call the appropriate store method based on entity type and action
@@ -28,9 +29,9 @@ const updateStoreByAction = (
           useSongsStore.getState().addSong(item as never);
         } else if (action === "updated") {
           // eslint-disable-next-line no-restricted-syntax
-          useSongsStore.getState().updateSong(id, item as never);
+          useSongsStore.getState().updateSong(createSongId(id), item as never);
         } else if (action === "deleted") {
-          useSongsStore.getState().removeSong(id);
+          useSongsStore.getState().removeSong(createSongId(id));
         }
         break;
       case "album":
@@ -39,9 +40,9 @@ const updateStoreByAction = (
           useAlbumsStore.getState().addAlbum(item as never);
         } else if (action === "updated") {
           // eslint-disable-next-line no-restricted-syntax
-          useAlbumsStore.getState().updateAlbum(id, item as never);
+          useAlbumsStore.getState().updateAlbum(createAlbumId(id), item as never);
         } else if (action === "deleted") {
-          useAlbumsStore.getState().removeAlbum(id);
+          useAlbumsStore.getState().removeAlbum(createAlbumId(id));
         }
         break;
       case "artist":
@@ -50,9 +51,9 @@ const updateStoreByAction = (
           useArtistsStore.getState().addArtist(item as never);
         } else if (action === "updated") {
           // eslint-disable-next-line no-restricted-syntax
-          useArtistsStore.getState().updateArtist(id, item as never);
+          useArtistsStore.getState().updateArtist(createArtistId(id), item as never);
         } else if (action === "deleted") {
-          useArtistsStore.getState().removeArtist(id);
+          useArtistsStore.getState().removeArtist(createArtistId(id));
         }
         break;
       case "playlist":
@@ -61,9 +62,9 @@ const updateStoreByAction = (
           usePlaylistsStore.getState().addPlaylist(item as never);
         } else if (action === "updated") {
           // eslint-disable-next-line no-restricted-syntax
-          usePlaylistsStore.getState().updatePlaylistFromRemote(id, item as never);
+          usePlaylistsStore.getState().updatePlaylistFromRemote(createPlaylistId(id), item as never);
         } else if (action === "deleted") {
-          usePlaylistsStore.getState().removePlaylistFromRemote(id);
+          usePlaylistsStore.getState().removePlaylistFromRemote(createPlaylistId(id));
         }
         break;
       default:

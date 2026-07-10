@@ -3,12 +3,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import CreatableSelect from 'react-select/creatable';
 import { Button } from './ui/Button';
-import { SongCreateSchema, type SongCreateInput } from '../api/schemas';
+import { SongCreateFormSchema, type SongCreateFormInput, type SongCreateInput } from '../api/schemas';
 import { useSongCreation } from '../hooks/useSongCreation';
 import { useArtistsStore } from '../stores/useArtistsStore';
 import { useCreateArtist } from '../hooks/useCreateArtist';
 import { useLinkChildToParent } from '../hooks/useLinkChildToParent';
 import { SearchExistingSongModal } from './SearchExistingSongModal';
+import { createSongId, createArtistId, createCoverArtId } from '../types/brands';
 import clsx from 'clsx';
 
 type ArtistOption = {
@@ -205,8 +206,8 @@ function CreateNewSongForm({
     formState: { errors, isSubmitting },
     watch,
     setValue,
-  } = useForm<SongCreateInput>({
-    resolver: zodResolver(SongCreateSchema),
+  } = useForm<SongCreateFormInput>({
+    resolver: zodResolver(SongCreateFormSchema),
     mode: 'onBlur',
     defaultValues: {
       parentId: parentSongId,
@@ -237,11 +238,19 @@ function CreateNewSongForm({
   }));
 
   const onSubmit = useCallback(
-    async (data: SongCreateInput) => {
+    async (formData: SongCreateFormInput) => {
       try {
+        // Convert form strings to branded types
+        const apiData: SongCreateInput = {
+          ...formData,
+          artistIds: formData.artistIds.map(createArtistId),
+          parentId: formData.parentId ? createSongId(formData.parentId) : null,
+          coverArtId: formData.coverArtId ? createCoverArtId(formData.coverArtId) : null,
+        };
+
         const cleanedData = Object.fromEntries(
-          Object.entries(data).filter(
-            ([, value]) => value !== '' && value !== undefined
+          Object.entries(apiData).filter(
+            ([, value]) => value !== '' && value !== undefined && value !== null
           )
         );
 

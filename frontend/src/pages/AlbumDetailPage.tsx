@@ -9,12 +9,13 @@ import { Button } from '../components/ui/Button';
 import { useAlbumDetail } from '../hooks/useAlbumDetail';
 import { useArtistsStore } from '../stores/useArtistsStore';
 import { getArtistNames } from '../lib/artistNames';
+import { createAlbumId, createSongId } from '../types/brands';
 
 const SongTreeResponseSchema = SongTreeSchema;
 
 const AlbumDetailPage = () => {
   const { id } = useParams();
-  const { album, isLoading, error } = useAlbumDetail(id || '');
+  const { album, isLoading, error } = useAlbumDetail(createAlbumId(id || ''));
   const [expandedSongId, setExpandedSongId] = useState<string | null>(null);
   const [tree, setTree] = useState<SongTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);

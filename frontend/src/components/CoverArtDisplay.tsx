@@ -7,11 +7,12 @@ import { useAlbumUpdate } from '../hooks/useAlbumUpdate';
 import { useResolveCoverArt } from '../hooks/useResolveCoverArt';
 import { useSongDetail } from '../hooks/useSongDetail';
 import { useAlbumDetail } from '../hooks/useAlbumDetail';
+import { type SongId, type AlbumId } from '../types/brands';
 
 interface CoverArtDisplayProps {
   owner: {
-    songId?: string;
-    albumId?: string;
+    songId?: SongId;
+    albumId?: AlbumId;
   };
   size?: 128 | 1024;
   className?: string;
@@ -41,8 +42,8 @@ export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({
   const { resolvedCoverArtId, isLoading: isResolvingCoverArt } = useResolveCoverArt(owner);
 
   // Get owner's direct cover art ID
-  const { song } = useSongDetail(songId ?? '');
-  const { album } = useAlbumDetail(albumId ?? '');
+  const { song } = useSongDetail(songId);
+  const { album } = useAlbumDetail(albumId);
   const ownerCoverArtId = songId ? song?.coverArtId ?? null : (albumId ? album?.coverArtId ?? null : null);
 
   const { uploadCoverArt, isUploading } = useUploadCoverArt();

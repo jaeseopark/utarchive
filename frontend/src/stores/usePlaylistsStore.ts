@@ -2,10 +2,11 @@ import { create } from 'zustand';
 import { z } from 'zod';
 import { api } from '../api/client';
 import { withStoreLoadingSilent } from '../api/middleware';
+import { createPlaylistId, createSongId, type PlaylistId, type SongId } from '../types/brands';
 
 // Schemas
 const PlaylistSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().transform(createPlaylistId),
   name: z.string(),
   createdAt: z.string(),
 });
@@ -13,7 +14,7 @@ const PlaylistSchema = z.object({
 const PlaylistSongSchema = z.object({
   position: z.number().int(),
   song: z.object({
-    id: z.string().uuid(),
+    id: z.string().uuid().transform(createSongId),
     title: z.string(),
     playbackEnabled: z.boolean(),
     filePath: z.string().nullable().optional(),
@@ -43,20 +44,20 @@ export interface PlaylistsState {
 
   // Actions - Queries
   fetchPlaylists: () => Promise<void>;
-  fetchPlaylistDetail: (id: string) => Promise<void>;
-  getPlaylistDetail: (id: string) => PlaylistDetail | undefined;
+  fetchPlaylistDetail: (id: PlaylistId) => Promise<void>;
+  getPlaylistDetail: (id: PlaylistId) => PlaylistDetail | undefined;
 
   // Actions - Mutations
-  createPlaylist: (name: string) => Promise<string | null>;
-  updatePlaylist: (id: string, name: string) => Promise<void>;
-  deletePlaylist: (id: string) => Promise<void>;
-  addSongToPlaylist: (playlistId: string, songId: string) => Promise<void>;
-  removeSongFromPlaylist: (playlistId: string, position: number) => Promise<void>;
+  createPlaylist: (name: string) => Promise<PlaylistId | null>;
+  updatePlaylist: (id: PlaylistId, name: string) => Promise<void>;
+  deletePlaylist: (id: PlaylistId) => Promise<void>;
+  addSongToPlaylist: (playlistId: PlaylistId, songId: SongId) => Promise<void>;
+  removeSongFromPlaylist: (playlistId: PlaylistId, position: number) => Promise<void>;
 
   // Actions - Remote Updates (WebSocket)
   addPlaylist: (playlist: Playlist) => void;
-  updatePlaylistFromRemote: (id: string, updates: Partial<Playlist>) => void;
-  removePlaylistFromRemote: (id: string) => void;
+  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist>) => void;
+  removePlaylistFromRemote: (id: PlaylistId) => void;
 
   // Actions - State
   setLoading: (loading: boolean) => void;
@@ -122,7 +123,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   },
 
   // Fetch playlist detail
-  fetchPlaylistDetail: async (id: string) => {
+  fetchPlaylistDetail: async (id: PlaylistId) => {
     const cached = get().playlistDetails[id];
     if (cached) {
       return;
@@ -152,7 +153,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }
   },
 
-  getPlaylistDetail: (id: string) => {
+  getPlaylistDetail: (id: PlaylistId) => {
     return get().playlistDetails[id];
   },
 
@@ -185,7 +186,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   },
 
   // Update playlist
-  updatePlaylist: async (id: string, name: string) => {
+  updatePlaylist: async (id: PlaylistId, name: string) => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       set({ error: 'Playlist name cannot be empty' });
@@ -217,7 +218,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   },
 
   // Delete playlist
-  deletePlaylist: async (id: string) => {
+  deletePlaylist: async (id: PlaylistId) => {
     try {
       await api.delete(`/api/playlists/${id}`, PlaylistSchema);
 
@@ -244,7 +245,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   },
 
   // Add song to playlist
-  addSongToPlaylist: async (playlistId: string, songId: string) => {
+  addSongToPlaylist: async (playlistId: PlaylistId, songId: SongId) => {
     const detail = get().playlistDetails[playlistId];
     if (!detail) {
       set({ error: 'Playlist not found' });
@@ -264,7 +265,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   },
 
   // Remove song from playlist
-  removeSongFromPlaylist: async (playlistId: string, position: number) => {
+  removeSongFromPlaylist: async (playlistId: PlaylistId, position: number) => {
     try {
       await api.delete(`/api/playlists/${playlistId}/songs/${position}`, z.object({ ok: z.literal(true) }));
 
@@ -302,7 +303,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }));
   },
 
-  updatePlaylistFromRemote: (id: string, updates: Partial<Playlist>) => {
+  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist>) => {
     set((state) => {
       const newDetails = {
         ...state.playlistDetails,
@@ -318,7 +319,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     });
   },
 
-  removePlaylistFromRemote: (id: string) => {
+  removePlaylistFromRemote: (id: PlaylistId) => {
     set((state) => {
       const playlistDetailsRest = Object.fromEntries(
         Object.entries(state.playlistDetails).filter(([key]) => key !== id)

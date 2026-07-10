@@ -3,6 +3,7 @@ import { Button } from './ui/Button';
 import CoverArt from './CoverArt';
 import { useUploadCoverArt } from '../hooks/useUploadCoverArt';
 import { useSongUpdate } from '../hooks/useSongUpdate';
+import { createSongId, type SongId } from '../types/brands';
 
 interface CoverArtManagerProps {
   songId: string;
@@ -18,12 +19,15 @@ interface CoverArtManagerProps {
  * Upload and delete operations happen immediately without requiring form submission.
  */
 export const CoverArtManager: FC<CoverArtManagerProps> = ({
-  songId,
+  songId: songIdStr,
   coverArtId,
   size = 1024,
   className,
   onCoverArtChange,
 }) => {
+  // Convert string ID to branded type
+  const songId: SongId = createSongId(songIdStr);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);

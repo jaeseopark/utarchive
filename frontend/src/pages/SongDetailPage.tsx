@@ -13,12 +13,13 @@ import { useArtistsStore } from '../stores/useArtistsStore';
 import { getArtistNames } from '../lib/artistNames';
 import { useSongDetail } from '../hooks/useSongDetail';
 import { useRecordListening } from '../hooks/useRecordListening';
+import { createSongId } from '../types/brands';
 
 const PAUSE_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function SongDetailPage() {
   const { id } = useParams<'id'>();
-  const { song: songData, isLoading, error } = useSongDetail(id || '');
+  const { song: songData, isLoading, error } = useSongDetail(createSongId(id || ''));
   const { recordListening } = useRecordListening();
   const [isListening, setIsListening] = useState(false);
   const [listenedSeconds, setListenedSeconds] = useState(0);

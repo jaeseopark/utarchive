@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { api } from '../api/client';
 import { AlbumDetailSchema, type AlbumDetail } from '../api/schemas';
 import { useAlbumsStore } from '../stores/useAlbumsStore';
+import { type AlbumId } from '../types/brands';
 
 /**
  * Hook to update an album via API with store integration
@@ -10,7 +11,7 @@ export function useAlbumUpdate() {
   const { updateAlbum } = useAlbumsStore();
 
   const updateAlbumData = useCallback(
-    async (albumId: string, updates: Partial<AlbumDetail>) => {
+    async (albumId: AlbumId, updates: Partial<AlbumDetail>) => {
       try {
         // Filter out fields that shouldn't be sent to API
         const fieldsToUpdate = Object.fromEntries(

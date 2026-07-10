@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 import { api } from '../api/client';
 import { withStoreLoadingSilent } from '../api/middleware';
-import { 
-  SongSchema, 
-  SongTreeSchema, 
+import {
+  SongSchema,
+  SongTreeSchema,
   SongsResponseSchema,
-  type Song, 
+  type Song,
   type SongTree,
-  type SongListItem 
+  type SongListItem,
 } from '../api/schemas';
+import { type SongId } from '../types/brands';
 
 export interface SongsState {
   // Data
@@ -31,13 +32,13 @@ export interface SongsState {
   // Actions
   fetchSongs: (page?: number) => Promise<void>;
   fetchAllSongs: () => Promise<void>;
-  fetchSongDetail: (id: string) => Promise<void>;
-  fetchSongTree: (id: string) => Promise<SongTree | null>;
-  getSongDetail: (id: string) => Song | undefined;
+  fetchSongDetail: (id: SongId) => Promise<void>;
+  fetchSongTree: (id: SongId) => Promise<SongTree | null>;
+  getSongDetail: (id: SongId) => Song | undefined;
   addSongDetail: (song: Song) => void;
   addSong: (song: Song) => void;
-  updateSong: (id: string, updates: Partial<Song>) => void;
-  removeSong: (id: string) => void;
+  updateSong: (id: SongId, updates: Partial<Song>) => void;
+  removeSong: (id: SongId) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -165,7 +166,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     return tree;
   },
 
-  getSongDetail: (id: string) => {
+  getSongDetail: (id: SongId) => {
     return get().songDetails[id];
   },
 

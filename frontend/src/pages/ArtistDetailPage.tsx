@@ -7,12 +7,13 @@ import UrlMap from '../components/UrlMap';
 import { combineAliases, formatDate } from '../lib/format';
 import { useArtistDetail } from '../hooks/useArtistDetail';
 import { PlaybackEnabledToggle } from '../components/PlaybackEnabledToggle';
+import { createArtistId } from '../types/brands';
 
 const ArtistSongsSchema = z.array(SongListItemSchema);
 
 function ArtistDetailPage() {
   const { id } = useParams<'id'>();
-  const { artist, isLoading: artistLoading, error: artistError } = useArtistDetail(id || '');
+  const { artist, isLoading: artistLoading, error: artistError } = useArtistDetail(createArtistId(id || ''));
   const [songs, setSongs] = useState<SongListItem[]>([]);
   const [songsLoading, setSongsLoading] = useState(false);
   const [songsError, setSongsError] = useState<string | null>(null);

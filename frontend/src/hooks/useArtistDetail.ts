@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useArtistsStore } from '../stores/useArtistsStore';
+import { type ArtistId } from '../types/brands';
 
 /**
  * Hook to fetch and manage artist detail with caching
  */
-export function useArtistDetail(artistId: string) {
+export function useArtistDetail(artistId: ArtistId) {
   const { isLoading, error, fetchArtistDetail, getArtistDetail } = useArtistsStore();
 
   useEffect(() => {

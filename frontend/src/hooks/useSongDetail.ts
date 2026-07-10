@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSongsStore } from '../stores/useSongsStore';
+import { type SongId } from '../types/brands';
 
 /**
  * Hook to fetch and manage song detail with caching
  * 
  * Fetches song detail from the store. Tree fetching is handled separately by useFamilyTree.
  */
-export function useSongDetail(songId: string) {
+export function useSongDetail(songId: SongId | undefined) {
   const { error, fetchSongDetail, getSongDetail } = useSongsStore();
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -27,7 +28,7 @@ export function useSongDetail(songId: string) {
     });
   }, [songId, fetchSongDetail, getSongDetail]);
 
-  const song = getSongDetail(songId);
+  const song = songId ? getSongDetail(songId) : undefined;
 
   return { song, isLoading: detailLoading, error };
 }

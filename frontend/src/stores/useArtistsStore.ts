@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { api } from '../api/client';
 import { withStoreLoadingSilent } from '../api/middleware';
 import { ArtistSchema, type Artist } from '../api/schemas';
+import { type ArtistId } from '../types/brands';
 
 const ArtistsResponseSchema = z.array(ArtistSchema);
 
@@ -29,12 +30,12 @@ export interface ArtistsState {
   // Actions
   fetchArtists: (page?: number) => Promise<void>;
   fetchAllArtists: () => Promise<void>;
-  fetchArtistDetail: (id: string) => Promise<void>;
-  getArtistDetail: (id: string) => ArtistDetail | undefined;
+  fetchArtistDetail: (id: ArtistId) => Promise<void>;
+  getArtistDetail: (id: ArtistId) => ArtistDetail | undefined;
   addArtist: (artist: Artist) => void;
-  updateArtist: (id: string, updates: Partial<Artist>) => void;
-  removeArtist: (id: string) => void;
-  incrementArtistSongCount: (artistId: string) => void;
+  updateArtist: (id: ArtistId, updates: Partial<Artist>) => void;
+  removeArtist: (id: ArtistId) => void;
+  incrementArtistSongCount: (artistId: ArtistId) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }

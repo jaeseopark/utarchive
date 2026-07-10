@@ -1,24 +1,25 @@
 import { create } from 'zustand';
 import { z } from 'zod';
 import { api } from '../api/client';
+import { createSongId, createArtistId, createAlbumId } from '../types/brands';
 
 const SearchSongSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().transform(createSongId),
   title: z.string(),
-  artistId: z.string().nullable().optional(),
+  artistId: z.string().uuid().nullable().optional().transform((val) => val ? createArtistId(val) : null),
   playbackEnabled: z.boolean(),
 });
 
 const SearchArtistSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().transform(createArtistId),
   name: z.string(),
   aliases: z.array(z.string()).optional().default([]),
 });
 
 const SearchAlbumSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().transform(createAlbumId),
   title: z.string(),
-  artistIds: z.array(z.string().uuid()).optional().default([]),
+  artistIds: z.array(z.string().uuid().transform(createArtistId)).optional().default([]),
   yearReleased: z.number().int().nullable().optional(),
 });
 

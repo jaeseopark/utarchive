@@ -6,6 +6,7 @@ import { useSongsStore } from '../stores/useSongsStore';
 import { useFamilyTree } from '../hooks/useFamilyTree';
 import { PlaybackEnabledToggle } from './PlaybackEnabledToggle';
 import { AddChildModal } from './AddChildModal';
+import { createSongId, type SongId } from '../types/brands';
 
 interface FamilyTreeProps {
   masterId: string;
@@ -15,7 +16,7 @@ interface FamilyTreeProps {
 function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
   const artists = useArtistsStore((state) => state.artists);
   const { updateSong } = useSongsStore();
-  const { tree, isLoading, error, refetch } = useFamilyTree(masterId, currentSongId);
+  const { tree, isLoading, error, refetch } = useFamilyTree(createSongId(masterId), currentSongId ? createSongId(currentSongId) : undefined);
   const [addChildModalOpen, setAddChildModalOpen] = useState(false);
   const [selectedParentForChild, setSelectedParentForChild] = useState<string | null>(null);
 
@@ -31,7 +32,7 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
 
   const handlePlaybackEnabledChange = useCallback(
     (songId: string, newPlaybackEnabled: boolean) => {
-      updateSong(songId, { playbackEnabled: newPlaybackEnabled });
+      updateSong(createSongId(songId), { playbackEnabled: newPlaybackEnabled });
     },
     [updateSong]
   );
