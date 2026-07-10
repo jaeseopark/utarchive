@@ -18,7 +18,7 @@ const artistCreateSchema = z.object({
   name: z.string().min(1).max(255),
   aliases: z.array(z.string()).optional(),
   description: z.string().optional(),
-  urls: z.record(z.string(), z.string()).optional(),
+  urls: z.array(z.string()).optional(),
 });
 
 const artistUpdateSchema = artistCreateSchema.partial();

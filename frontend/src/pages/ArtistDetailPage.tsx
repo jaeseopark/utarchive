@@ -1,15 +1,42 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api/client";
 import { SongListItemSchema, type SongListItem } from "../api/schemas";
 import { z } from "zod";
-import UrlMap from "../components/UrlMap";
-import { combineAliases, formatDate } from "../lib/format";
+import { formatDate } from "../lib/format";
 import { useArtistDetail } from "../hooks/useArtistDetail";
 import { PlaybackEnabledToggle } from "../components/PlaybackEnabledToggle";
+import { useArtistAttributesEditor } from "../components/ArtistAttributesEditor";
+import { Button } from "../components/ui/Button";
 import { toBrandId, type ArtistId } from "../types/brands";
+import type { Artist } from "../api/schemas";
 
 const ArtistSongsSchema = z.array(SongListItemSchema);
+
+interface ArtistHeaderProps {
+  artist: Artist;
+}
+
+function ArtistHeader({ artist }: ArtistHeaderProps) {
+  // Hook call is now unconditional within this component
+  const artistEditorState = useArtistAttributesEditor(artist);
+
+  return (
+    <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
+      <div className="mb-4 flex justify-between items-center">
+        <h3 className="text-xl font-semibold text-slate-900">{artist.name}</h3>
+        <Button
+          variant="secondary"
+          onClick={artistEditorState.enterEditMode}
+          disabled={artistEditorState.mode === "edit"}
+        >
+          Edit
+        </Button>
+      </div>
+      <artistEditorState.Component />
+    </div>
+  );
+}
 
 function ArtistDetailPage() {
   const { id } = useParams<"id">();
@@ -56,13 +83,11 @@ function ArtistDetailPage() {
 
   const isLoading = artistLoading || songsLoading;
   const error = artistError || songsError;
-  const aliasText = useMemo(() => combineAliases(artist?.aliases), [artist?.aliases]);
 
   return (
     <section className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold">Artist detail</h2>
-        <p className="mt-2 text-slate-600">View metadata and songs for this artist.</p>
       </div>
 
       {isLoading ? (
@@ -75,16 +100,7 @@ function ArtistDetailPage() {
         </div>
       ) : artist ? (
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
-            <h1 className="text-3xl font-semibold text-slate-900">{artist.name}</h1>
-            {aliasText ? <p className="mt-2 text-slate-700">Aliases: {aliasText}</p> : null}
-            {artist.description ? (
-              <p className="mt-4 whitespace-pre-wrap text-slate-600">{artist.description}</p>
-            ) : null}
-            <div className="mt-6">
-              <UrlMap urls={artist.urls} />
-            </div>
-          </div>
+          <ArtistHeader artist={artist} />
 
           <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
             <div className="flex items-center justify-between">

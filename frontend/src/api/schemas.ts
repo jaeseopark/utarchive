@@ -17,8 +17,9 @@ export const ArtistSchema = z.object({
   name: z.string(),
   aliases: z.array(z.string()).optional().default([]),
   description: z.string().nullable().optional(),
-  urls: UrlMapSchema.optional().default({}),
+  urls: z.array(z.string()).optional().default([]),
   songCount: z.number().int().optional(),
+  createdAt: z.string(),
 });
 
 export const ArtistCreateSchema = z.object({
@@ -28,7 +29,7 @@ export const ArtistCreateSchema = z.object({
     .max(255, "Artist name must be 255 characters or less"),
   aliases: z.array(z.string()).optional(),
   description: z.string().optional(),
-  urls: UrlMapSchema.optional(),
+  urls: z.array(z.string()).optional(),
 });
 
 export const SongListItemSchema = z.object({

@@ -6,7 +6,7 @@ export type ArtistCreateInput = {
   name: string;
   aliases?: string[];
   description?: string | null;
-  urls?: Record<string, string>;
+  urls?: string[];
 };
 
 export type ArtistUpdateInput = Partial<ArtistCreateInput>;

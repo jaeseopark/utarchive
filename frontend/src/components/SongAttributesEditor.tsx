@@ -58,10 +58,11 @@ type TagOption = {
 
 interface SongAttributesEditorProps {
   song: Song;
+  mode: "view" | "edit";
+  onExitEditMode: () => void;
 }
 
-export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
-  const [isEditMode, setIsEditMode] = useState(false);
+function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttributesEditorProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
   const [isCreatingArtist, setIsCreatingArtist] = useState(false);
@@ -142,7 +143,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
 
         // Step 4: If nothing changed, just close edit mode
         if (Object.keys(changedProperties).length === 0) {
-          setIsEditMode(false);
+          onExitEditMode();
           return;
         }
 
@@ -150,7 +151,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
         // eslint-disable-next-line no-restricted-syntax
         const result = await updateSongData(song.id, changedProperties as Partial<Song>);
         if (result.success) {
-          setIsEditMode(false);
+          onExitEditMode();
         }
       } finally {
         setIsSubmitting(false);
@@ -160,7 +161,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
   );
 
   const handleCancel = () => {
-    setIsEditMode(false);
+    onExitEditMode();
     reset();
   };
 
@@ -224,7 +225,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
     },
   ];
 
-  if (isEditMode) {
+  if (mode === "edit") {
     const artistOptions: ArtistOption[] = artists.map((artist) => ({
       value: artist.id,
       label: artist.name,
@@ -440,41 +441,81 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
 
   // View mode
   return (
-    <div>
-      <div className="mb-4 flex justify-end">
-        <Button type="button" variant="secondary" onClick={() => setIsEditMode(true)}>
-          Edit
-        </Button>
-      </div>
-
-      <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4">
-        <table className="min-w-full text-sm">
-          <tbody>
-            {attributesToDisplay.map((attr) => {
-              return (
-                <tr key={attr.key} className="border-b border-slate-300 last:border-b-0">
-                  <td className="px-4 py-3 font-medium text-slate-600 w-40">{attr.label}</td>
-                  <td className="px-4 py-3 text-slate-900">
-                    {attr.key === "url" ? (
-                      <a
-                        // eslint-disable-next-line no-restricted-syntax
-                        href={attr.value as string}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-sky-500 hover:underline"
-                      >
-                        {attr.value}
-                      </a>
-                    ) : (
-                      <div className="break-words">{attr.value}</div>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+    <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4">
+      <table className="min-w-full text-sm">
+        <tbody>
+          {attributesToDisplay.map((attr) => {
+            return (
+              <tr key={attr.key} className="border-b border-slate-300 last:border-b-0">
+                <td className="px-4 py-3 font-medium text-slate-600 w-40">{attr.label}</td>
+                <td className="px-4 py-3 text-slate-900">
+                  {attr.key === "url" ? (
+                    <a
+                      // eslint-disable-next-line no-restricted-syntax
+                      href={attr.value as string}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="text-sky-500 hover:underline"
+                    >
+                      {attr.value}
+                    </a>
+                  ) : (
+                    <div className="break-words">{attr.value}</div>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
+}
+
+interface UseSongAttributesEditorReturn {
+  Component: React.FC;
+  enterEditMode: () => void;
+  mode: "view" | "edit";
+}
+
+/**
+ * Hook that manages the edit mode state for SongAttributesEditor
+ * Returns the component, a function to enter edit mode, and the current mode
+ *
+ * Usage:
+ * ```
+ * const { Component, enterEditMode, mode } = useSongAttributesEditor(song);
+ * return (
+ *   <>
+ *     <button onClick={enterEditMode} disabled={mode === "edit"}>Edit</button>
+ *     <Component />
+ *   </>
+ * );
+ * ```
+ */
+export function useSongAttributesEditor(song: Song): UseSongAttributesEditorReturn {
+  const [mode, setMode] = useState<"view" | "edit">("view");
+
+  const enterEditMode = useCallback(() => {
+    setMode("edit");
+  }, []);
+
+  const exitEditMode = useCallback(() => {
+    setMode("view");
+  }, []);
+
+  const Component = React.memo(() => (
+    <SongAttributesEditorContent song={song} mode={mode} onExitEditMode={exitEditMode} />
+  ));
+
+  return {
+    Component,
+    enterEditMode,
+    mode,
+  };
+}
+
+export function SongAttributesEditor({ song }: { song: Song }) {
+  const { Component } = useSongAttributesEditor(song);
+  return <Component />;
 }
