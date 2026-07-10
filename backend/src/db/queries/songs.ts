@@ -236,6 +236,11 @@ export const createSong = async (
       trimRange: songData.trimRange ?? null,
       fileHash: songData.fileHash ?? null,
       tags: songData.tags ?? [],
+      searchVector: sql`
+        setweight(to_tsvector('english', ${songData.title}), 'A') ||
+        setweight(to_tsvector('english', array_to_string(${songData.tags ?? []}, ' ')), 'B') ||
+        setweight(to_tsvector('english', ${songData.description ?? ''}), 'C')
+      `,
     };
 
     await tx.insert(songs).values(insertData);
@@ -290,11 +295,6 @@ export const updateSongById = async (
   // This allows the image to be reused by other songs/albums.
   const { artistIds, releasedAt, ...restSongFields } = updateData;
 
-  const songFields = {
-    ...restSongFields,
-    ...(releasedAt !== undefined && { releasedAt: new Date(releasedAt) }),
-  };
-
   return db.transaction(async (tx) => {
     const existing = await tx
       .select()
@@ -305,6 +305,32 @@ export const updateSongById = async (
     if (!existing[0]) {
       return null;
     }
+
+    // Rebuild searchVector if any of these fields change
+    const hasSearchableFieldChange =
+      Boolean(updateData.title  ||
+      updateData.description  ||
+      updateData.tags);
+
+    const searchVectorValue = hasSearchableFieldChange
+      ? (() => {
+          const titleValue = updateData.title ?? existing[0].title;
+          const tagsValue = updateData.tags ?? existing[0].tags;
+          const descriptionValue = updateData.description !== undefined ? updateData.description : existing[0].description;
+
+          return sql`
+            setweight(to_tsvector('english', ${titleValue}), 'A') ||
+            setweight(to_tsvector('english', array_to_string(${tagsValue ?? []}, ' ')), 'B') ||
+            setweight(to_tsvector('english', ${descriptionValue ?? ''}), 'C')
+          `;
+        })()
+      : undefined;
+
+    const songFields = {
+      ...restSongFields,
+      ...(releasedAt !== undefined && { releasedAt: new Date(releasedAt) }),
+      ...(searchVectorValue !== undefined && { searchVector: searchVectorValue }),
+    };
 
     if (Object.keys(songFields).length > 0) {
       await tx.update(songs).set(songFields).where(eq(songs.id, songId));

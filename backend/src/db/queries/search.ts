@@ -14,10 +14,11 @@ export type SearchArtistResult = {
   aliases: string[];
 };
 
+// must match the column configuration in the UI
 export type SearchAlbumResult = {
   id: string;
   title: string;
-  artistId: string;
+  artistIds: string[];
   yearReleased: number | null;
 };
 
@@ -46,8 +47,7 @@ export const searchEntities = async (query: string) => {
     };
   }
 
-  // eslint-disable-next-line no-restricted-syntax
-  const songRows = (await db.execute(sql`
+  const songResult = await db.execute(sql`
     WITH search_query AS (
       SELECT to_tsquery('english', ${tsQuery}) AS query
     )
@@ -67,11 +67,11 @@ export const searchEntities = async (query: string) => {
     WHERE s.search_vector @@ search_query.query
     ORDER BY ts_rank(s.search_vector, search_query.query) DESC
     LIMIT 20
+  `);
   // eslint-disable-next-line no-restricted-syntax
-  `)) as unknown as SearchSongResult[];
+  const songRows = (songResult.rows ?? []) as SearchSongResult[];
 
-  // eslint-disable-next-line no-restricted-syntax
-  const artistRows = (await db.execute(sql`
+  const artistResult = await db.execute(sql`
     WITH search_query AS (
       SELECT to_tsquery('english', ${tsQuery}) AS query
     )
@@ -84,26 +84,28 @@ export const searchEntities = async (query: string) => {
     WHERE to_tsvector('english', a.name) @@ search_query.query
     ORDER BY ts_rank(to_tsvector('english', a.name), search_query.query) DESC
     LIMIT 20
+  `);
   // eslint-disable-next-line no-restricted-syntax
-  `)) as unknown as SearchArtistResult[];
+  const artistRows = (artistResult.rows ?? []) as SearchArtistResult[];
 
-  // eslint-disable-next-line no-restricted-syntax
-  const albumRows = (await db.execute(sql`
-    WITH search_query AS (
-      SELECT to_tsquery('english', ${tsQuery}) AS query
-    )
+  const albumResult = await db.execute(sql`
     SELECT
       al.id,
       al.title,
-      al.artist_id AS "artistId",
+      COALESCE(
+        array_agg(aa.artist_id ORDER BY aa.display_order),
+        '{}'::uuid[]
+      ) AS "artistIds",
       al.year_released AS "yearReleased"
-    FROM albums al,
-      search_query
-    WHERE to_tsvector('english', al.title) @@ search_query.query
-    ORDER BY ts_rank(to_tsvector('english', al.title), search_query.query) DESC
+    FROM albums al
+      LEFT JOIN album_artists aa ON aa.album_id = al.id
+    WHERE to_tsvector('english', al.title) @@ to_tsquery('english', ${tsQuery})
+    GROUP BY al.id, al.title, al.year_released
+    ORDER BY ts_rank(to_tsvector('english', al.title), to_tsquery('english', ${tsQuery})) DESC
     LIMIT 20
+  `);
   // eslint-disable-next-line no-restricted-syntax
-  `)) as unknown as SearchAlbumResult[];
+  const albumRows = (albumResult.rows ?? []) as SearchAlbumResult[];
 
   return {
     songs: songRows,
