@@ -11,6 +11,7 @@ export type ArtistDetail = Artist;
 export interface ArtistsState {
   // Data
   artists: Artist[];
+  artistMap: Map<string, Artist>;
   artistDetails: Record<string, ArtistDetail>;
   lastFetchedAt: number;
 
@@ -40,6 +41,7 @@ export interface ArtistsState {
 
 export const useArtistsStore = create<ArtistsState>((set, get) => ({
   artists: [],
+  artistMap: new Map(),
   artistDetails: {},
   lastFetchedAt: 0,
   isLoading: false,
@@ -70,6 +72,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       );
       set({
         artists,
+        artistMap: new Map(artists.map((a) => [a.id, a])),
         lastFetchedAt: now,
         pagination: {
           page,
@@ -115,6 +118,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
 
       set({
         artists: allArtists,
+        artistMap: new Map(allArtists.map((a) => [a.id, a])),
         lastFetchedAt: now,
         pagination: {
           page: 0,
@@ -154,13 +158,17 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
   },
 
   addArtist: (artist: Artist) => {
-    set((state) => ({
-      artists: [artist, ...state.artists],
-      pagination: {
-        ...state.pagination,
-        total: state.pagination.total + 1,
-      },
-    }));
+    set((state) => {
+      const newArtists = [artist, ...state.artists];
+      return {
+        artists: newArtists,
+        artistMap: new Map(newArtists.map((a) => [a.id, a])),
+        pagination: {
+          ...state.pagination,
+          total: state.pagination.total + 1,
+        },
+      };
+    });
   },
 
   updateArtist: (id: string, updates: Partial<Artist>) => {
@@ -181,6 +189,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
 
       return {
         artists: updatedArtists,
+        artistMap: new Map(updatedArtists.map((a) => [a.id, a])),
         artistDetails: updatedDetails,
       };
     });
@@ -191,8 +200,11 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       const updatedDetails = { ...state.artistDetails };
       delete updatedDetails[id];
 
+      const filteredArtists = state.artists.filter((artist) => artist.id !== id);
+
       return {
-        artists: state.artists.filter((artist) => artist.id !== id),
+        artists: filteredArtists,
+        artistMap: new Map(filteredArtists.map((a) => [a.id, a])),
         artistDetails: updatedDetails,
         pagination: {
           ...state.pagination,
@@ -203,18 +215,22 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
   },
 
   incrementArtistSongCount: (artistId: string) => {
-    set((state) => ({
-      artists: state.artists.map((artist) =>
+    set((state) => {
+      const updatedArtists = state.artists.map((artist) =>
         artist.id === artistId
           ? { ...artist, songCount: (artist.songCount ?? 0) + 1 }
           : artist
-      ),
-      artistDetails: {
-        ...state.artistDetails,
-        [artistId]: state.artistDetails[artistId]
-          ? { ...state.artistDetails[artistId], songCount: (state.artistDetails[artistId].songCount ?? 0) + 1 }
-          : state.artistDetails[artistId],
-      },
-    }));
+      );
+      return {
+        artists: updatedArtists,
+        artistMap: new Map(updatedArtists.map((a) => [a.id, a])),
+        artistDetails: {
+          ...state.artistDetails,
+          [artistId]: state.artistDetails[artistId]
+            ? { ...state.artistDetails[artistId], songCount: (state.artistDetails[artistId].songCount ?? 0) + 1 }
+            : state.artistDetails[artistId],
+        },
+      };
+    });
   },
 }));

@@ -5,7 +5,7 @@ import CreatableSelect from 'react-select/creatable';
 import { Button } from './ui/Button';
 import { type Song } from '../api/schemas';
 import { useSongUpdate } from '../hooks/useSongUpdate';
-import { useArtistsForSelect } from '../hooks/useArtistsForSelect';
+import { useArtistsStore } from '../stores/useArtistsStore';
 import { useCreateArtist } from '../hooks/useCreateArtist';
 import { formatDate } from '../lib/format';
 import { getChangedProperties } from '../lib/compareObjects';
@@ -67,7 +67,8 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
   const [isCreatingArtist, setIsCreatingArtist] = useState(false);
   const [selectedTags, setSelectedTags] = useState<TagOption[]>([]);
   const { updateSongData } = useSongUpdate();
-  const { artists, isLoading: artistsLoading } = useArtistsForSelect();
+  const artists = useArtistsStore((state) => state.artists);
+  const isLoading = useArtistsStore((state) => state.isLoading);
   const { createArtist } = useCreateArtist();
 
   const {
@@ -267,7 +268,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
                   Artists
                 </td>
                 <td className="px-4 py-3">
-                  {artistsLoading ? (
+                  {isLoading ? (
                     <p className="text-sm text-slate-500">Loading artists...</p>
                   ) : (
                     <CreatableSelect
