@@ -123,25 +123,30 @@ function SearchPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {results.songs.map((song) => (
-                        <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
-                          <td className="px-4 py-4">
-                            <Link to={`/songs/${song.id}`} className="text-slate-900 transition hover:text-sky-500">
-                              {song.title}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-4 text-slate-700">
-                            {song.artistId ? (
-                              <Link to={`/artists/${song.artistId}`} className="text-sky-500 hover:underline">
-                                Artist
+                      {results.songs.map((song) => {
+                        const artistName = song.artistId
+                          ? getArtistNames([song.artistId], artists)[0]
+                          : undefined;
+                        return (
+                          <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
+                            <td className="px-4 py-4">
+                              <Link to={`/songs/${song.id}`} className="text-slate-900 transition hover:text-sky-500">
+                                {song.title}
                               </Link>
-                            ) : (
-                              'Unknown'
-                            )}
-                          </td>
-                          <td className="px-4 py-4 text-slate-700">{song.playbackEnabled ? 'Yes' : 'No'}</td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="px-4 py-4 text-slate-700">
+                              {song.artistId ? (
+                                <Link to={`/artists/${song.artistId}`} className="text-sky-500 hover:underline">
+                                  {artistName}
+                                </Link>
+                              ) : (
+                                'Unknown'
+                              )}
+                            </td>
+                            <td className="px-4 py-4 text-slate-700">{song.playbackEnabled ? 'Yes' : 'No'}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

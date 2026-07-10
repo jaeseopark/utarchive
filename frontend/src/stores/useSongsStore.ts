@@ -14,7 +14,6 @@ export interface SongsState {
   // Data
   songs: SongListItem[];
   songDetails: Record<string, Song>;
-  songTrees: Record<string, SongTree>;
   lastFetchedAt: number;
 
   // Loading/Error
@@ -32,10 +31,8 @@ export interface SongsState {
   fetchSongs: (page?: number) => Promise<void>;
   fetchAllSongs: () => Promise<void>;
   fetchSongDetail: (id: string) => Promise<void>;
-  fetchSongTree: (id: string) => Promise<void>;
-  refreshSongTree: (id: string) => Promise<void>;
+  fetchSongTree: (id: string) => Promise<SongTree | null>;
   getSongDetail: (id: string) => Song | undefined;
-  getSongTree: (masterId: string) => SongTree | undefined;
   addSongDetail: (song: Song) => void;
   addSong: (song: Song) => void;
   updateSong: (id: string, updates: Partial<Song>) => void;
@@ -47,7 +44,6 @@ export interface SongsState {
 export const useSongsStore = create<SongsState>((set, get) => ({
   songs: [],
   songDetails: {},
-  songTrees: {},
   lastFetchedAt: 0,
   isLoading: false,
   error: null,
@@ -157,28 +153,14 @@ export const useSongsStore = create<SongsState>((set, get) => ({
   },
 
   fetchSongTree: async (id: string) => {
-    // Fetch any song's tree - the API returns the entire family tree
-    // Check cache first using a temporary lookup
-    // We'll cache by masterId, but we don't know it until we fetch
+    // Fetch tree without caching - always returns fresh data
     const store = { setLoading: (val: boolean) => set({ isLoading: val }), setError: (err: string | null) => set({ error: err }) };
     const tree = await withStoreLoadingSilent(store, `/api/songs/${id}/tree`, SongTreeSchema);
-
-    if (tree) {
-      set((state) => ({
-        songTrees: {
-          ...state.songTrees,
-          [tree.masterId]: tree,
-        },
-      }));
-    }
+    return tree;
   },
 
   getSongDetail: (id: string) => {
     return get().songDetails[id];
-  },
-
-  getSongTree: (masterId: string) => {
-    return get().songTrees[masterId];
   },
 
   addSongDetail: (song: Song) => {
@@ -235,6 +217,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
             releasedAt: updates.releasedAt ?? song.releasedAt,
             playbackEnabled: updates.playbackEnabled ?? song.playbackEnabled,
             coverArtId: updates.coverArtId ?? song.coverArtId,
+            artistIds: updates.artistIds ?? song.artistIds,
           };
         }
         return song;
@@ -261,20 +244,5 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         },
       };
     });
-  },
-
-  // Refresh song trees (e.g., after adding a child)
-  refreshSongTree: async (id: string) => {
-    const store = { setLoading: (val: boolean) => set({ isLoading: val }), setError: (err: string | null) => set({ error: err }) };
-    const tree = await withStoreLoadingSilent(store, `/api/songs/${id}/tree`, SongTreeSchema);
-
-    if (tree) {
-      set((state) => ({
-        songTrees: {
-          ...state.songTrees,
-          [tree.masterId]: tree,
-        },
-      }));
-    }
   },
 }));

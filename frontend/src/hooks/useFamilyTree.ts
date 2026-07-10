@@ -15,25 +15,19 @@ export function useFamilyTree(masterId: string, songIdForTree?: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    fetchSongTree,
-    getSongTree,
-    songDetails,
-    songTrees,
-  } = useSongsStore();
+  const { fetchSongTree, songDetails } = useSongsStore();
 
   /**
    * Fetch the tree for a given songId
-   * Only depends on explicit songId and store APIs - no transitive dependencies
+   * Always fetches fresh data from the API
    */
   const fetchTreeForSongId = useCallback(async (songId: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      await fetchSongTree(songId);
-      const fetchedTree = getSongTree(masterId);
-      setTree(fetchedTree || null);
+      const fetchedTree = await fetchSongTree(songId);
+      setTree(fetchedTree ?? null);
       
       if (!fetchedTree) {
         setError('Failed to fetch family tree');
@@ -45,18 +39,13 @@ export function useFamilyTree(masterId: string, songIdForTree?: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchSongTree, getSongTree, masterId]);
+  }, [fetchSongTree]);
 
   /**
    * Main fetch effect: Determines which song ID to use and fetches the tree
    * 
-   * Architectural improvement: The effect directly determines the song ID inline
-   * instead of calling a memoized function. This breaks the circular dependency:
-   * - Old: refetch → findSongIdForMasterId → songDetails → recreates → effect fires
-   * - New: effect determines songId once, calls fetchTreeForSongId with explicit input
-   * 
-   * Dependencies are only the external inputs (masterId, songIdForTree)
-   * The lookup of an alternate song ID happens inside the effect with songDetails at that moment
+   * Dependencies: only the external inputs (masterId, songIdForTree) and the fetch function
+   * Looks up an alternate song ID from songDetails only if songIdForTree is not provided
    */
   useEffect(() => {
     // Determine which song ID to fetch for this family tree
@@ -77,7 +66,7 @@ export function useFamilyTree(masterId: string, songIdForTree?: string) {
     }
 
     fetchTreeForSongId(songId);
-  }, [masterId, songIdForTree, fetchTreeForSongId]);
+  }, [masterId, songIdForTree, fetchTreeForSongId, songDetails]);
 
   /**
    * Helper to find a song ID for manual refetches
@@ -104,17 +93,6 @@ export function useFamilyTree(masterId: string, songIdForTree?: string) {
       setTree(null);
     }
   }, [findSongIdForMasterId, fetchTreeForSongId]);
-
-  /**
-   * Watch for store updates to songTrees[masterId] and update the local tree state
-   * This ensures the tree updates immediately when refreshSongTree is called
-   */
-  useEffect(() => {
-    const cachedTree = songTrees[masterId];
-    if (cachedTree) {
-      setTree(cachedTree);
-    }
-  }, [masterId, songTrees]);
 
   return {
     tree,

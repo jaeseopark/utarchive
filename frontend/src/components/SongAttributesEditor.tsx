@@ -51,6 +51,11 @@ type ArtistOption = {
   isNew?: boolean;
 };
 
+type TagOption = {
+  value: string;
+  label: string;
+};
+
 interface SongAttributesEditorProps {
   song: Song;
 }
@@ -60,6 +65,7 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
   const [isCreatingArtist, setIsCreatingArtist] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<TagOption[]>([]);
   const { updateSongData } = useSongUpdate();
   const { artists, isLoading: artistsLoading } = useArtistsForSelect();
   const { createArtist } = useCreateArtist();
@@ -69,21 +75,18 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
     handleSubmit,
     reset,
     formState: { errors },
-    setValue,
   } = useForm<SongUpdateInput>({
     resolver: zodResolver(SongUpdateSchema),
     mode: 'onBlur',
     defaultValues: getFormValuesFromSong(song),
   });
 
-  // Sync form with updated song data whenever it changes
+  // Sync form and component state with song data
   useEffect(() => {
     reset(getFormValuesFromSong(song));
-  }, [song, reset]);
-
-  // Initialize selectedArtists when edit mode opens
-  useEffect(() => {
-    if (isEditMode && artists.length > 0) {
+    
+    // Sync selectedArtists with song.artistIds
+    if (artists.length > 0) {
       const artistIds = song.artistIds ?? [];
       // eslint-disable-next-line no-restricted-syntax
       const selected = artistIds
@@ -93,24 +96,31 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
         })
         .filter((a) => a !== null) as ArtistOption[];
       setSelectedArtists(selected);
+    } else if ((song.artistIds ?? []).length === 0) {
+      // If song has no artists, clear the selection
+      setSelectedArtists([]);
     }
-  }, [isEditMode, song.artistIds, artists]);
-
-  // Update form artistIds whenever selectedArtists changes
-  useEffect(() => {
-    const artistIds = selectedArtists.map((a) => a.value);
-    setValue('artistIds', artistIds);
-  }, [selectedArtists, setValue]);
+    
+    // Sync selectedTags with song.tags
+    const tags = song.tags ?? [];
+    const selectedTagsList = tags.map((tag) => ({ value: tag, label: tag }));
+    setSelectedTags(selectedTagsList);
+  }, [song, artists, reset]);
 
   const onSubmit = useCallback(
     async (data: SongUpdateInput) => {
       setIsSubmitting(true);
       try {
         // Step 1: Normalize the form data (convert empty strings to null)
+        // Override artistIds and tags with the current selections from CreatableSelect
         const cleanedFormData: Record<string, unknown> = {};
         Object.entries(data).forEach(([key, value]) => {
           cleanedFormData[key] = value === '' ? null : value;
         });
+        
+        // Override with current selections from component state
+        cleanedFormData.artistIds = selectedArtists.map((a) => a.value);
+        cleanedFormData.tags = selectedTags.map((t) => t.value);
 
         // Step 2: Create a normalized version of the original song for comparison
         // Use the same shape as the form data so we can compare them directly
@@ -135,8 +145,6 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
         // Step 4: If nothing changed, just close edit mode
         if (Object.keys(changedProperties).length === 0) {
           setIsEditMode(false);
-          reset();
-          setSelectedArtists([]);
           return;
         }
 
@@ -145,20 +153,17 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
         const result = await updateSongData(song.id, changedProperties as Partial<Song>);
         if (result.success) {
           setIsEditMode(false);
-          reset();
-          setSelectedArtists([]);
         }
       } finally {
         setIsSubmitting(false);
       }
     },
-    [song.id, updateSongData, reset]
+    [song, selectedArtists, selectedTags, updateSongData]
   );
 
   const handleCancel = () => {
     setIsEditMode(false);
     reset();
-    setSelectedArtists([]);
   };
 
   const handleCreateArtist = useCallback(
@@ -400,11 +405,47 @@ export function SongAttributesEditor({ song }: SongAttributesEditorProps) {
                   Tags
                 </td>
                 <td className="px-4 py-3">
-                  <input
-                    type="text"
-                    {...register('tags')}
-                    placeholder="Comma-separated tags"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                  <CreatableSelect
+                    isMulti
+                    isClearable
+                    options={[]}
+                    value={selectedTags}
+                    onChange={(newValue) => {
+                      setSelectedTags(newValue ? Array.from(newValue) : []);
+                    }}
+                    onCreateOption={(inputValue) => {
+                      const newTag: TagOption = {
+                        value: inputValue,
+                        label: inputValue,
+                      };
+                      setSelectedTags([...selectedTags, newTag]);
+                    }}
+                    formatCreateLabel={(inputValue) =>
+                      `Create tag "${inputValue}"`
+                    }
+                    placeholder="Select or create tags..."
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        borderColor: base.borderColor,
+                        boxShadow: state.isFocused
+                          ? '0 0 0 1px #0ea5e9'
+                          : 'none',
+                        borderRadius: '0.5rem',
+                        minHeight: '2.5rem',
+                      }),
+                      multiValue: (base) => ({
+                        ...base,
+                        backgroundColor: '#dbeafe',
+                        borderRadius: '0.375rem',
+                      }),
+                      multiValueLabel: (base) => ({
+                        ...base,
+                        color: '#1e40af',
+                      }),
+                    }}
                   />
                 </td>
               </tr>

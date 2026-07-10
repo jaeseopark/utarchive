@@ -8,6 +8,8 @@ const ArtistsResponseSchema = z.array(ArtistSchema);
 /**
  * Hook to fetch artists for dropdown selection in the Add Song Modal
  * Fetches a large number of artists for the dropdown
+ * 
+ * why can't this be derived from local state? a refactor opportunity?
  */
 export function useArtistsForSelect() {
   const [artists, setArtists] = useState<Artist[]>([]);
