@@ -19,15 +19,15 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
   const [addChildModalOpen, setAddChildModalOpen] = useState(false);
   const [selectedParentForChild, setSelectedParentForChild] = useState<string | null>(null);
 
-  const nodesWithoutArtistNames = tree?.nodes ?? [];
+  const nodesBeforeArtistNameSubstituted = tree?.nodes ?? [];
 
   const nodes = useMemo(() => {
     const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
-    return nodesWithoutArtistNames.map((node) => ({
+    return nodesBeforeArtistNameSubstituted.map((node) => ({
       ...node,
       artistNames: getArtistNames(node.artistIds, artistMap),
     }));
-  }, [nodesWithoutArtistNames, artists]);
+  }, [nodesBeforeArtistNameSubstituted, artists]);
 
   const handlePlaybackEnabledChange = useCallback(
     (songId: string, newPlaybackEnabled: boolean) => {

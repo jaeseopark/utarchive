@@ -8,7 +8,6 @@ import { useSongCreation } from '../hooks/useSongCreation';
 import { useArtistsForSelect } from '../hooks/useArtistsForSelect';
 import { useCreateArtist } from '../hooks/useCreateArtist';
 import { useLinkChildToParent } from '../hooks/useLinkChildToParent';
-import { useSongsStore } from '../stores/useSongsStore';
 import { SearchExistingSongModal } from './SearchExistingSongModal';
 import clsx from 'clsx';
 
@@ -44,7 +43,6 @@ export function AddChildModal({
   const [isLinking, setIsLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
   const { linkChild } = useLinkChildToParent();
-  const { refreshSongTree, fetchSongTree } = useSongsStore();
 
   const handleCreateNew = useCallback(() => {
     setMode('create-new');
@@ -55,11 +53,10 @@ export function AddChildModal({
   }, []);
 
   const handleSongCreated = useCallback(async () => {
-    // Refresh the parent's song tree to show the new child
-    await refreshSongTree(parentSongId);
+    // Notify parent to refetch the tree
     onChildAdded?.();
     handleClose();
-  }, [parentSongId, refreshSongTree, onChildAdded]);
+  }, [onChildAdded]);
 
   const handleExistingSongSelected = useCallback(
     async (childSongId: string) => {
@@ -68,11 +65,7 @@ export function AddChildModal({
 
       try {
         await linkChild(parentSongId, childSongId);
-        // Refresh both parent and child trees to reflect the new relationship
-        await Promise.all([
-          refreshSongTree(parentSongId),
-          fetchSongTree(childSongId),
-        ]);
+        // Notify parent to refetch the tree
         onChildAdded?.();
         handleClose();
       } catch (err) {
@@ -81,7 +74,7 @@ export function AddChildModal({
         setIsLinking(false);
       }
     },
-    [parentSongId, linkChild, refreshSongTree, fetchSongTree, onChildAdded],
+    [parentSongId, linkChild, onChildAdded],
   );
 
   const handleClose = useCallback(() => {
