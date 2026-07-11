@@ -6,7 +6,7 @@ COPY package.json package-lock.json tsconfig.base.json ./
 COPY backend/package.json backend/tsconfig.json ./backend/
 COPY frontend/package.json frontend/tsconfig.json ./frontend/
 
-RUN npm install
+RUN npm ci
 
 # Stage 2: build the frontend and backend
 FROM deps AS build
@@ -23,7 +23,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/backend/dist ./backend/dist
 COPY --from=build /app/frontend/dist ./frontend/dist
 
-# Install PostgreSQL client for running migrations
+# Install PostgreSQL client for database migrations
 RUN apk add --no-cache postgresql-client
 
 # Copy migration files (drizzle-kit migrate will apply these)

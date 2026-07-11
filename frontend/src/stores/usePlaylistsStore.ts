@@ -5,7 +5,7 @@ import { withStoreLoadingSilent } from "../api/middleware";
 import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
 
 // Schemas
-const PlaylistSchema = z.object({
+export const PlaylistSchema = z.object({
   id: z
     .string()
     .uuid()
@@ -14,7 +14,7 @@ const PlaylistSchema = z.object({
   createdAt: z.string(),
 });
 
-const PlaylistSongSchema = z.object({
+export const PlaylistSongSchema = z.object({
   position: z.number().int(),
   song: z.object({
     id: z
@@ -27,11 +27,13 @@ const PlaylistSongSchema = z.object({
   }),
 });
 
-const PlaylistDetailSchema = PlaylistSchema.extend({
+export const PlaylistDetailSchema = PlaylistSchema.extend({
   songs: z.array(PlaylistSongSchema),
 });
 
-const PlaylistsResponseSchema = z.array(PlaylistSchema);
+const PlaylistsResponseSchema = z.object({
+  playlists: z.array(PlaylistSchema),
+});
 
 export type Playlist = z.infer<typeof PlaylistSchema>;
 export type PlaylistSong = z.infer<typeof PlaylistSongSchema>;
@@ -91,7 +93,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
 
       // Fetch all pages
       while (true) {
-        const batch = await api.get(
+        const { playlists: batch } = await api.get(
           `/api/playlists?limit=${limit}&offset=${offset}`,
           PlaylistsResponseSchema,
         );
@@ -266,13 +268,10 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }
 
     try {
-      await api.post(
-        `/api/playlists/${playlistId}/songs`,
-        { songId },
-        z.object({ ok: z.literal(true) }),
-      );
+      await api.post(`/api/playlists/${playlistId}/songs`, { songId }, z.any());
 
       // Optimistic: refetch detail to get new position
+      // TODO below line is not necessary.
       await get().fetchPlaylistDetail(playlistId);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to add song to playlist";

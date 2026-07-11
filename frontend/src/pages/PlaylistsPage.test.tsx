@@ -23,9 +23,9 @@ const mockedApi = api as unknown as {
 
 describe("PlaylistsPage", () => {
   it("shows loading and then renders playlist table", async () => {
-    mockedApi.get.mockResolvedValueOnce([
-      { id: "1", name: "Favorites", createdAt: new Date().toISOString() },
-    ]);
+    mockedApi.get.mockResolvedValueOnce({
+      playlists: [{ id: "1", name: "Favorites", createdAt: new Date().toISOString() }],
+    });
     mockedApi.get.mockResolvedValueOnce({
       id: "1",
       name: "Favorites",
@@ -46,7 +46,9 @@ describe("PlaylistsPage", () => {
   });
 
   it("opens modal and creates a new playlist", async () => {
-    mockedApi.get.mockResolvedValueOnce([]);
+    mockedApi.get.mockResolvedValueOnce({
+      playlists: [],
+    });
     mockedApi.post.mockResolvedValueOnce({
       id: "2",
       name: "New Playlist",

@@ -7,6 +7,8 @@ import UrlMap from "../components/UrlMap";
 import { formatDate } from "../lib/format";
 import { Button } from "../components/ui/Button";
 import { useAlbumDetail } from "../hooks/useAlbumDetail";
+import { usePlayerStore } from "../stores/usePlayerStore";
+import { buildAlbumQueue } from "../lib/queueBuilder";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
 import { toBrandId, type AlbumId } from "../types/brands";
@@ -20,6 +22,9 @@ const AlbumDetailPage = () => {
   const [tree, setTree] = useState<SongTree | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
+  const [isPlayLoading, setIsPlayLoading] = useState(false);
+
+  const { setQueue } = usePlayerStore();
   const artists = useArtistsStore((state) => state.artists);
 
   const toggleTree = (songId: string) => {
@@ -39,6 +44,27 @@ const AlbumDetailPage = () => {
       .then(setTree)
       .catch((err) => setTreeError(err instanceof Error ? err.message : String(err)))
       .finally(() => setTreeLoading(false));
+  };
+
+  const handlePlayAlbum = async () => {
+    if (!album || !album.tracks.length) {
+      return;
+    }
+
+    setIsPlayLoading(true);
+    try {
+      const songs = await buildAlbumQueue(album.id);
+      if (songs.length === 0) {
+        console.warn("No playable songs in this album");
+        return;
+      }
+
+      setQueue(songs, 0);
+    } catch (err) {
+      console.error("Failed to play album:", err);
+    } finally {
+      setIsPlayLoading(false);
+    }
   };
 
   const trackRows = useMemo(() => album?.tracks ?? [], [album]);
@@ -94,6 +120,16 @@ const AlbumDetailPage = () => {
             <div className="mt-6">
               <UrlMap urls={album.urls} />
             </div>
+
+            <div className="mt-6 flex gap-3">
+              <Button
+                variant="primary"
+                onClick={handlePlayAlbum}
+                disabled={isPlayLoading || !album.tracks.length}
+              >
+                {isPlayLoading ? "Loading…" : "▶ Play Album"}
+              </Button>
+            </div>
           </div>
 
           <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
@@ -137,13 +173,23 @@ const AlbumDetailPage = () => {
                             </td>
                             <td className="px-4 py-4">
                               {isRegistered && song ? (
-                                <Button
-                                  variant="secondary"
-                                  onClick={() => toggleTree(song.id)}
-                                  className="text-xs px-3 py-2"
-                                >
-                                  {isExpanded ? "▼ hide tree" : "▶ show tree"}
-                                </Button>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="secondary"
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+                                    onClick={() => usePlayerStore().play(song as any)}
+                                    className="text-xs px-3 py-2"
+                                  >
+                                    ▶ Play
+                                  </Button>
+                                  <Button
+                                    variant="secondary"
+                                    onClick={() => toggleTree(song.id)}
+                                    className="text-xs px-3 py-2"
+                                  >
+                                    {isExpanded ? "▼ hide tree" : "▶ show tree"}
+                                  </Button>
+                                </div>
                               ) : (
                                 "—"
                               )}

@@ -11,6 +11,7 @@ import {
 } from "../db/queries/artists";
 import { broadcastMessage } from "../ws";
 import { DataChangedMessage } from "../types/websocket";
+import { serializeForApiResponse } from "../lib/serialization";
 
 const router = Router();
 
@@ -40,17 +41,17 @@ const paginationSchema = z.object({
 
 router.use(requireAuth);
 
-router.get("/artists", validateRequest(paginationSchema, "query"), async (req, res) => {
+router.get("/", validateRequest(paginationSchema, "query"), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const { limit, offset } = req.query as unknown as {
     limit: number;
     offset: number;
   };
   const artists = await selectArtists(limit, offset);
-  return res.status(200).json(artists);
+  return res.status(200).json({ artists: serializeForApiResponse(artists) });
 });
 
-router.post("/artists", validateRequest(artistCreateSchema), async (req, res) => {
+router.post("/", validateRequest(artistCreateSchema), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const artist = req.body as z.infer<typeof artistCreateSchema>;
   const requestId = req.requestId;
@@ -65,27 +66,28 @@ router.post("/artists", validateRequest(artistCreateSchema), async (req, res) =>
       entity: "artist",
       timestamp: Date.now(),
       data: {
-        created: [createdArtist],
+        // eslint-disable-next-line no-restricted-syntax
+        created: [serializeForApiResponse(createdArtist) as Record<string, unknown>],
       },
       requestId,
     };
     broadcastMessage(wss, message);
   }
 
-  return res.status(201).json(createdArtist);
+  return res.status(201).json(serializeForApiResponse(createdArtist));
 });
 
-router.get("/artists/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   const artist = await selectArtistById(req.params.id);
 
   if (!artist) {
     return res.status(404).json({ error: "Artist not found" });
   }
 
-  return res.status(200).json(artist);
+  return res.status(200).json(serializeForApiResponse(artist));
 });
 
-router.patch("/artists/:id", validateRequest(artistUpdateSchema), async (req, res) => {
+router.patch("/:id", validateRequest(artistUpdateSchema), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const updateData = req.body as z.infer<typeof artistUpdateSchema>;
   const artistId = String(req.params.id);
@@ -109,25 +111,27 @@ router.patch("/artists/:id", validateRequest(artistUpdateSchema), async (req, re
       entity: "artist",
       timestamp: Date.now(),
       data: {
-        updated: [updatedRows[0]],
+        // eslint-disable-next-line no-restricted-syntax
+        updated: [serializeForApiResponse(updatedRows[0]) as Record<string, unknown>],
       },
       requestId,
     };
     broadcastMessage(wss, message);
   }
 
-  return res.status(200).json(updatedRows[0]);
+  return res.status(200).json(serializeForApiResponse(updatedRows[0]));
 });
 
-router.get("/artists/:id/songs", async (req, res) => {
+router.get("/:id/songs", async (req, res) => {
   const artist = await selectArtistById(req.params.id);
 
   if (!artist) {
     return res.status(404).json({ error: "Artist not found" });
   }
 
-  const songs = await selectSongsByArtistId(req.params.id);
-  return res.status(200).json(songs);
+  const songsData = await selectSongsByArtistId(req.params.id);
+  const songs = serializeForApiResponse(songsData);
+  return res.status(200).json({ songs });
 });
 
 export default router;

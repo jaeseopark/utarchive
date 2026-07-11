@@ -18,7 +18,7 @@ const analyticsListenSchema = z.object({
 
 router.use(requireAuth);
 
-router.post("/analytics/listen", async (req: AuthenticatedRequest, res) => {
+router.post("/listen", async (req: AuthenticatedRequest, res) => {
   // Handle both JSON and text/plain (from sendBeacon) content types
   let body: unknown;
   if (typeof req.body === "string") {

@@ -34,6 +34,39 @@ function handleUnauthorized() {
   window.location.assign("/login");
 }
 
+/**
+ * Format Zod validation errors into a human-readable message showing which fields failed
+ */
+function formatValidationErrors(errors: Record<string, unknown>): string {
+  const failedFields: string[] = [];
+
+  const formatField = (key: string, value: unknown, path: string[] = []): void => {
+    const fieldPath = [...path, key].join(".");
+
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      "_errors" in value &&
+      // eslint-disable-next-line no-restricted-syntax
+      Array.isArray((value as Record<string, unknown>)._errors)
+    ) {
+      // eslint-disable-next-line no-restricted-syntax
+      const errorMessages = ((value as Record<string, unknown>)._errors as string[]).join("; ");
+      failedFields.push(`${fieldPath}: ${errorMessages}`);
+    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      for (const [nestedKey, nestedValue] of Object.entries(value)) {
+        formatField(nestedKey, nestedValue, [...path, key]);
+      }
+    }
+  };
+
+  for (const [key, value] of Object.entries(errors)) {
+    formatField(key, value);
+  }
+
+  return `Response validation failed: ${failedFields.join(", ")}`;
+}
+
 async function request<T>(
   input: RequestInfo,
   init: RequestInit,
@@ -73,7 +106,11 @@ async function request<T>(
 
   const parseResult = schema.safeParse(payload);
   if (!parseResult.success) {
-    throw new ApiError(response.status, "Response validation failed", parseResult.error.format());
+     
+    const validationErrorMessage = formatValidationErrors(
+      parseResult.error.format()
+    );
+    throw new ApiError(response.status, validationErrorMessage, parseResult.error.format());
   }
 
   return parseResult.data;

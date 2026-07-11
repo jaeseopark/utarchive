@@ -7,17 +7,10 @@ COPY package.json package-lock.json tsconfig.base.json ./
 COPY backend/package.json backend/tsconfig.json ./backend/
 COPY frontend/package.json frontend/tsconfig.json ./frontend/
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 
-WORKDIR /app
-
-# Install frontend dependencies with watch mode support
-WORKDIR /app/frontend
-RUN npm install
-
-# Go back to app root
 WORKDIR /app
 
 # Force rebuild - $(date)
@@ -26,7 +19,7 @@ RUN echo "Building at $(date)"
 EXPOSE 3000
 EXPOSE 5173
 
-# Install pg_isready tool
+# Install pg_isready tool for database readiness checks
 RUN apk add --no-cache postgresql-client
 
 # Copy entrypoint script with cache bust

@@ -159,7 +159,16 @@ export const broadcastMessage = (
   message: WebSocketMessage,
   excludeSocketId?: string,
 ) => {
-  const payload = JSON.stringify(message);
+  // Use a replacer function to handle BigInt serialization
+  // JSON.stringify doesn't support BigInt by default, so we convert to number
+  const payload = JSON.stringify(message, (key, value) => {
+    // Convert BigInt to Number for JSON serialization
+    if (typeof value === "bigint") {
+      return Number(value);
+    }
+    return value;
+  });
+
   let clientCount = 0;
 
   wss.clients.forEach((client) => {

@@ -5,7 +5,9 @@ import { withStoreLoadingSilent } from "../api/middleware";
 import { ArtistSchema, type Artist } from "../api/schemas";
 import { type ArtistId } from "../types/brands";
 
-const ArtistsResponseSchema = z.array(ArtistSchema);
+const ArtistsResponseSchema = z.object({
+  artists: z.array(ArtistSchema),
+});
 
 export type ArtistDetail = Artist;
 
@@ -67,7 +69,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const artists = await api.get(
+      const { artists } = await api.get(
         `/api/artists?limit=50&offset=${page * 50}`,
         ArtistsResponseSchema,
       );
@@ -105,7 +107,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
 
       // Fetch all pages
       while (true) {
-        const batch = await api.get(
+        const { artists: batch } = await api.get(
           `/api/artists?limit=${limit}&offset=${offset}`,
           ArtistsResponseSchema,
         );

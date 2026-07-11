@@ -8,6 +8,22 @@
 
 - Similar endpoints should share their own prefixes to group domain-specific operations.
 
+## Response Format
+
+### Arrays Must Be Wrapped
+
+- List endpoints **must** wrap arrays in an object with an appropriate semantic key (not bare arrays).
+  - ✅ GOOD: `{ songs: [{...}, {...}] }`
+  - ❌ BAD: `[{...}, {...}]`
+  - Rationale: Allows for future extensibility (e.g., adding metadata, pagination info) without breaking API contracts.
+
+### Single Objects Are Not Wrapped
+
+- Single object responses (e.g., `GET /api/artists/:id`, `POST /api/songs`) should return the object directly, not wrapped.
+  - ✅ GOOD: `{ id: "...", name: "...", ... }`
+  - ❌ BAD: `{ artist: { id: "...", name: "...", ... } }`
+  - Rationale: Single objects don't have the extensibility need of arrays. Wrapping adds unnecessary nesting.
+
 ## Examples
 
 | Endpoint          | Status | Reason                                    |

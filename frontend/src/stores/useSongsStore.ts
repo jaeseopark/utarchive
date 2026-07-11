@@ -70,7 +70,10 @@ export const useSongsStore = create<SongsState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const songs = await api.get(`/api/songs?limit=50&offset=${page * 50}`, SongsResponseSchema);
+      const { songs } = await api.get(
+        `/api/songs?limit=50&offset=${page * 50}`,
+        SongsResponseSchema,
+      );
       set({
         songs,
         lastFetchedAt: now,
@@ -104,7 +107,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
 
       // Fetch all pages
       while (true) {
-        const batch = await api.get(
+        const { songs: batch } = await api.get(
           `/api/songs?limit=${limit}&offset=${offset}`,
           SongsResponseSchema,
         );

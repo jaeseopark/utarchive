@@ -15,12 +15,12 @@ const pruneAnalyticsSchema = z.object({
 
 router.use(requireAuth);
 
-router.post("/admin/analytics/flush", async (_req, res) => {
+router.post("/flush", async (_req, res) => {
   await deleteAllListeningAnalytics();
   return res.status(200).json({ ok: true });
 });
 
-router.post("/admin/analytics/prune", validateRequest(pruneAnalyticsSchema), async (req, res) => {
+router.post("/prune", validateRequest(pruneAnalyticsSchema), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const { retentionDays } = req.body as z.infer<typeof pruneAnalyticsSchema>;
 

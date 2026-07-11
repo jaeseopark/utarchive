@@ -12,11 +12,11 @@ const searchSchema = z.object({
 
 router.use(requireAuth);
 
-router.get("/search", validateRequest(searchSchema, "query"), async (req, res) => {
+router.get("/", validateRequest(searchSchema, "query"), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const { q } = req.query as unknown as z.infer<typeof searchSchema>;
   const results = await searchEntities(q);
-  return res.status(200).json(results);
+  return res.status(200).json({ results });
 });
 
 export default router;

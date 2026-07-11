@@ -19,17 +19,46 @@ export const selectArtists = (limit: number, offset: number) =>
       aliases: artists.aliases,
       description: artists.description,
       urls: artists.urls,
-      songCount: sql<number>`CAST(count(${songArtists.songId}) AS INTEGER)`,
+      songCount: sql<number>`COALESCE(CAST(count(${songArtists.songId}) AS INTEGER), 0)`,
+      createdAt: artists.createdAt,
     })
     .from(artists)
     .leftJoin(songArtists, eq(songArtists.artistId, artists.id))
-    .groupBy(artists.id, artists.name, artists.aliases, artists.description, artists.urls)
+    .groupBy(
+      artists.id,
+      artists.name,
+      artists.aliases,
+      artists.description,
+      artists.urls,
+      artists.createdAt,
+    )
     .orderBy(artists.name)
     .limit(limit)
     .offset(offset);
 
 export const selectArtistById = async (id: string) => {
-  const results = await db.select().from(artists).where(eq(artists.id, id)).limit(1);
+  const results = await db
+    .select({
+      id: artists.id,
+      name: artists.name,
+      aliases: artists.aliases,
+      description: artists.description,
+      urls: artists.urls,
+      songCount: sql<number>`COALESCE(CAST(count(${songArtists.songId}) AS INTEGER), 0)`,
+      createdAt: artists.createdAt,
+    })
+    .from(artists)
+    .leftJoin(songArtists, eq(songArtists.artistId, artists.id))
+    .where(eq(artists.id, id))
+    .groupBy(
+      artists.id,
+      artists.name,
+      artists.aliases,
+      artists.description,
+      artists.urls,
+      artists.createdAt,
+    )
+    .limit(1);
 
   return results[0];
 };

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSongs } from "../hooks/useSongs";
+import { usePlayerStore } from "../stores/usePlayerStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
 
@@ -10,6 +11,7 @@ function SongsPage() {
   const [page, setPage] = useState(0);
   const { songs, isLoading, error } = useSongs(page);
   const artists = useArtistsStore((state) => state.artists);
+  const { play } = usePlayerStore();
 
   const canPrevious = page > 0;
 
@@ -50,6 +52,7 @@ function SongsPage() {
           <table className="min-w-full text-left text-sm text-slate-700">
             <thead className="border-b border-slate-300 text-slate-600">
               <tr>
+                <th className="px-4 py-3 w-12"></th>
                 <th className="px-4 py-3">Title</th>
                 <th className="px-4 py-3">Artist(s)</th>
                 <th className="px-4 py-3">Released</th>
@@ -57,38 +60,59 @@ function SongsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((song) => (
-                <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
-                  <td className="px-4 py-4">
-                    <Link
-                      to={`/songs/${song.id}`}
-                      className="font-medium text-slate-900 transition hover:text-sky-500"
-                    >
-                      {song.title}
-                      {song.playbackEnabled && (
-                        <span className="ml-2 text-xs font-semibold text-emerald-600">★</span>
-                      )}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-4 text-slate-700">
-                    {song.artistNames && song.artistNames.length > 0
-                      ? song.artistNames.map((name, index) => (
-                          <span key={index}>
-                            {index > 0 && ", "}
-                            <Link
-                              to={`/artists/${song.artistIds?.[index]}`}
-                              className="text-sky-500 hover:underline"
-                            >
-                              {name}
-                            </Link>
-                          </span>
-                        ))
-                      : "Unknown"}
-                  </td>
-                  <td className="px-4 py-4 text-slate-700">{song.releasedYear ?? "—"}</td>
-                  <td className="px-4 py-4 text-slate-700">{song.platformId ?? "—"}</td>
-                </tr>
-              ))}
+              {rows.map((song) => {
+                const handlePlay = () => {
+                  if (song.playbackEnabled) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+                    play(song as any);
+                  }
+                };
+
+                return (
+                  <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
+                    <td className="px-4 py-4">
+                      {song.playbackEnabled ? (
+                        <button
+                          type="button"
+                          onClick={handlePlay}
+                          className="flex items-center justify-center w-6 h-6 rounded transition text-emerald-600 hover:bg-emerald-100"
+                          title="Play song"
+                        >
+                          ▶
+                        </button>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-4">
+                      <Link
+                        to={`/songs/${song.id}`}
+                        className="font-medium text-slate-900 transition hover:text-sky-500"
+                      >
+                        {song.title}
+                        {song.playbackEnabled && (
+                          <span className="ml-2 text-xs font-semibold text-emerald-600">★</span>
+                        )}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-4 text-slate-700">
+                      {song.artistNames && song.artistNames.length > 0
+                        ? song.artistNames.map((name, index) => (
+                            <span key={index}>
+                              {index > 0 && ", "}
+                              <Link
+                                to={`/artists/${song.artistIds?.[index]}`}
+                                className="text-sky-500 hover:underline"
+                              >
+                                {name}
+                              </Link>
+                            </span>
+                          ))
+                        : "Unknown"}
+                    </td>
+                    <td className="px-4 py-4 text-slate-700">{song.releasedYear ?? "—"}</td>
+                    <td className="px-4 py-4 text-slate-700">{song.platformId ?? "—"}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

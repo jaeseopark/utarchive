@@ -54,14 +54,14 @@ const albumSongSchema = z.object({
 
 router.use(requireAuth);
 
-router.get("/albums", validateRequest(listAlbumsQuerySchema, "query"), async (req, res) => {
+router.get("/", validateRequest(listAlbumsQuerySchema, "query"), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const { limit, offset } = req.query as unknown as z.infer<typeof listAlbumsQuerySchema>;
   const albums = await selectAlbums(limit, offset);
-  return res.status(200).json(albums);
+  return res.status(200).json({ albums });
 });
 
-router.post("/albums", validateRequest(albumCreateSchema), async (req, res) => {
+router.post("/", validateRequest(albumCreateSchema), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const albumData = req.body as AlbumCreateInput;
   const requestId = req.requestId;
@@ -86,7 +86,7 @@ router.post("/albums", validateRequest(albumCreateSchema), async (req, res) => {
   return res.status(201).json(createdAlbum);
 });
 
-router.get("/albums/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   const album = await selectAlbumById(req.params.id);
 
   if (!album) {
@@ -96,7 +96,7 @@ router.get("/albums/:id", async (req, res) => {
   return res.status(200).json(album);
 });
 
-router.patch("/albums/:id", validateRequest(albumUpdateSchema), async (req, res) => {
+router.patch("/:id", validateRequest(albumUpdateSchema), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const updateData = req.body as AlbumUpdateInput;
   const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -130,7 +130,7 @@ router.patch("/albums/:id", validateRequest(albumUpdateSchema), async (req, res)
   return res.status(200).json(updatedAlbum);
 });
 
-router.put("/albums/:id/songs/:songId", validateRequest(albumSongSchema), async (req, res) => {
+router.put("/:id/songs/:songId", validateRequest(albumSongSchema), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const trackNumber = req.body.trackNumber as number;
   const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -154,9 +154,9 @@ router.put("/albums/:id/songs/:songId", validateRequest(albumSongSchema), async 
   }
 });
 
-router.delete("/albums/:id/songs/:songId", async (req, res) => {
-  const albumId = req.params.id;
-  const songId = req.params.songId;
+router.delete("/:id/songs/:songId", async (req, res) => {
+  const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const songId = Array.isArray(req.params.songId) ? req.params.songId[0] : req.params.songId;
   const deleted = await deleteAlbumSong(albumId, songId);
 
   if (!deleted) {
