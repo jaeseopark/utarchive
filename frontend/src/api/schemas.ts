@@ -41,6 +41,8 @@ export const SongListItemSchema = z.object({
   platformId: z.string().nullable().optional(),
   releasedAt: z.string().nullable().optional(),
   playbackEnabled: z.boolean(),
+  duration: z.number().nullable().optional(),
+  filePath: z.string().nullable().optional(),
   coverArtId: z
     .string()
     .uuid()
@@ -58,8 +60,10 @@ export const SongListItemSchema = z.object({
     .default([]),
 });
 
-// Response schema for songs list endpoint
-export const SongsResponseSchema = z.array(SongListItemSchema);
+// Response schema for songs list endpoint (wrapped in object)
+export const SongsResponseSchema = z.object({
+  songs: z.array(SongListItemSchema),
+});
 
 export const CoverArtSchema = z.object({
   id: z

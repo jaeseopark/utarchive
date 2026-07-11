@@ -3,6 +3,7 @@ import { useMemo, useState, useCallback } from "react";
 import { getArtistNames } from "../lib/artistNames";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useSongsStore } from "../stores/useSongsStore";
+import { usePlayerStore } from "../stores/usePlayerStore";
 import { useFamilyTree } from "../hooks/useFamilyTree";
 import { PlaybackEnabledToggle } from "./PlaybackEnabledToggle";
 import { AddChildModal } from "./AddChildModal";
@@ -15,7 +16,8 @@ interface FamilyTreeProps {
 
 function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
   const artists = useArtistsStore((state) => state.artists);
-  const { updateSong } = useSongsStore();
+  const { updateSong, getSongDetail } = useSongsStore();
+  const { play } = usePlayerStore();
   const { tree, isLoading, error, refetch } = useFamilyTree(
     toBrandId<SongId>(masterId),
     currentSongId ? toBrandId<SongId>(currentSongId) : undefined,
@@ -38,6 +40,17 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
       updateSong(toBrandId<SongId>(songId), { playbackEnabled: newPlaybackEnabled });
     },
     [updateSong],
+  );
+
+  const handlePlaySingle = useCallback(
+    (nodeId: string) => {
+      const fullSong = getSongDetail(toBrandId<SongId>(nodeId));
+      if (fullSong && fullSong.filePath) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+        play(fullSong as any);
+      }
+    },
+    [play, getSongDetail],
   );
 
   const handleAddChildClick = useCallback((parentSongId: string) => {
@@ -98,22 +111,35 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
                   }
                 >
                   <td className="px-3 py-3 align-top">
-                    {isCurrent ? (
-                      <span
-                        className="block truncate text-slate-900"
-                        style={{ paddingLeft: `${Math.min(node.depth * 18, 72)}px` }}
-                      >
-                        {node.title}
-                      </span>
-                    ) : (
-                      <Link
-                        to={`/songs/${node.id}`}
-                        className="block truncate text-slate-900 transition hover:text-sky-500"
-                        style={{ paddingLeft: `${Math.min(node.depth * 18, 72)}px` }}
-                      >
-                        {node.title}
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const fullSong = getSongDetail(node.id);
+                        const hasAudio = fullSong?.filePath;
+                        return (
+                          <button
+                            onClick={() => handlePlaySingle(node.id)}
+                            disabled={!hasAudio}
+                            className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded transition text-emerald-600 hover:bg-emerald-100 disabled:text-slate-400 disabled:hover:bg-transparent"
+                            title={hasAudio ? "Play song" : "No audio file"}
+                            type="button"
+                          >
+                            ▶
+                          </button>
+                        );
+                      })()}
+                      <div className="min-w-0 flex-1 truncate">
+                        {isCurrent ? (
+                          <span className="block text-slate-900">{node.title}</span>
+                        ) : (
+                          <Link
+                            to={`/songs/${node.id}`}
+                            className="block text-slate-900 transition hover:text-sky-500"
+                          >
+                            {node.title}
+                          </Link>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-3 py-3 align-top text-slate-700">
                     {node.artistNames.join(", ") || "Unknown"}

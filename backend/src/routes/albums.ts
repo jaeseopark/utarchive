@@ -58,7 +58,7 @@ router.get("/albums", validateRequest(listAlbumsQuerySchema, "query"), async (re
   // eslint-disable-next-line no-restricted-syntax
   const { limit, offset } = req.query as unknown as z.infer<typeof listAlbumsQuerySchema>;
   const albums = await selectAlbums(limit, offset);
-  return res.status(200).json(albums);
+  return res.status(200).json({ albums });
 });
 
 router.post("/albums", validateRequest(albumCreateSchema), async (req, res) => {

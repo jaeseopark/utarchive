@@ -53,7 +53,7 @@ router.get("/playlists", validateRequest(listQuerySchema, "query"), async (req, 
   // eslint-disable-next-line no-restricted-syntax
   const { limit, offset } = req.query as unknown as z.infer<typeof listQuerySchema>;
   const playlists = await selectPlaylists(limit, offset);
-  return res.status(200).json(playlists);
+  return res.status(200).json({ playlists });
 });
 
 router.post("/playlists", validateRequest(playlistCreateSchema), async (req, res) => {

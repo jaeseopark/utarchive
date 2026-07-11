@@ -14,17 +14,19 @@ import adminWebSocketRouter from "./admin/websocket";
 
 const router = Router();
 
-// Configure multer for cover art uploads
-const upload = multer({
+// Configure multer for cover art uploads (20 MB limit)
+const coverArtUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20 MB limit
+    fileSize: 20 * 1024 * 1024, // 20 MB limit for cover art
   },
 });
 
 router.use("/api", healthRouter);
 router.use("/api/auth", authRouter);
-router.use("/api", upload.single("file"), coverArtRouter);
+// ✅ CRITICAL FIX: Apply cover art multer ONLY to cover art routes, not to entire /api
+// This prevents the 20 MB limit from blocking audio uploads (which have their own 100 MB limit)
+router.use("/api/cover-art", coverArtUpload.single("file"), coverArtRouter);
 router.use("/api", artistsRouter);
 router.use("/api", songsRouter);
 router.use("/api", albumsRouter);

@@ -5,7 +5,9 @@ import { withStoreLoadingSilent } from "../api/middleware";
 import { AlbumSchema, AlbumDetailSchema, type Album, type AlbumDetail } from "../api/schemas";
 import { type AlbumId } from "../types/brands";
 
-const AlbumsResponseSchema = z.array(AlbumSchema);
+const AlbumsResponseSchema = z.object({
+  albums: z.array(AlbumSchema),
+});
 
 export interface AlbumsState {
   // Data
@@ -64,7 +66,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const albums = await api.get(
+      const { albums } = await api.get(
         `/api/albums?limit=50&offset=${page * 50}`,
         AlbumsResponseSchema,
       );
@@ -101,7 +103,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
 
       // Fetch all pages
       while (true) {
-        const batch = await api.get(
+        const { albums: batch } = await api.get(
           `/api/albums?limit=${limit}&offset=${offset}`,
           AlbumsResponseSchema,
         );

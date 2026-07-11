@@ -11,9 +11,10 @@ export const createApp = () => {
   // Disable ETag generation to prevent 304 responses
   app.disable("etag");
 
-  // Handle both JSON and text/plain (for sendBeacon) content types
-  app.use(express.json());
-  app.use(express.text({ type: ["text/plain", "application/json"] }));
+  // ✅ CRITICAL FIX: Add explicit limits to body parsers to prevent interference with multipart uploads
+  // Default limits (100 KB) can cause issues with larger form data
+  app.use(express.json({ limit: "100mb" }));
+  app.use(express.text({ type: ["text/plain", "application/json"], limit: "100mb" }));
 
   // Add request ID middleware
   app.use(requestIdMiddleware);

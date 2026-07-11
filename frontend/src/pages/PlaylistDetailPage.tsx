@@ -4,6 +4,8 @@ import { api } from "../api/client";
 import { Button } from "../components/ui/Button";
 import { z } from "zod";
 import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
+import { usePlayerStore } from "../stores/usePlayerStore";
+import { buildPlaylistQueue } from "../lib/queueBuilder";
 import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
 
 const SearchSongSchema = z.object({
@@ -49,6 +51,9 @@ function PlaylistDetailPage() {
   const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [isPlayLoading, setIsPlayLoading] = useState(false);
+
+  const { setQueue } = usePlayerStore();
 
   useEffect(() => {
     if (playlist) {
@@ -128,6 +133,28 @@ function PlaylistDetailPage() {
     }
   };
 
+  const handlePlayPlaylist = async () => {
+    if (!playlist || !playlist.songs.length) {
+      return;
+    }
+
+    setIsPlayLoading(true);
+    try {
+      const songs = await buildPlaylistQueue(playlist.id);
+      if (songs.length === 0) {
+        // No playable songs found - show toast notification
+        console.warn("No playable songs in this playlist");
+        return;
+      }
+
+      setQueue(songs, 0);
+    } catch (err) {
+      console.error("Failed to play playlist:", err);
+    } finally {
+      setIsPlayLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isModalOpen) {
       setSearchQuery("");
@@ -187,10 +214,10 @@ function PlaylistDetailPage() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => alert("Play all is not yet connected to playback.")}
-            disabled={!playlistSongs.length}
+            onClick={handlePlayPlaylist}
+            disabled={!playlistSongs.length || isPlayLoading}
           >
-            Play All
+            {isPlayLoading ? "Loading…" : "Play All"}
           </Button>
           <Button
             type="button"
@@ -299,6 +326,16 @@ function PlaylistDetailPage() {
                           {item.song.playbackEnabled ? "Yes" : "No"}
                         </td>
                         <td className="px-4 py-4 space-x-2">
+                          {item.song.playbackEnabled && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+                              onClick={() => usePlayerStore().play(item.song as any)}
+                            >
+                              ▶ Play
+                            </Button>
+                          )}
                           <Button
                             type="button"
                             variant="secondary"

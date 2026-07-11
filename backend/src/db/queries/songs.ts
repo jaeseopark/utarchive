@@ -24,6 +24,9 @@ export type SongUpdateInput = {
   releasedAt?: string;
   url?: string | null;
   filePath?: string | null;
+  duration?: number | null;
+  fileExtension?: string | null;
+  fileSizeBytes?: bigint | null;
   coverArtId?: string | null;
   description?: string | null;
   playbackEnabled?: boolean;
@@ -146,6 +149,8 @@ export const selectSongs = async (filters: SongListFilters) => {
     platformId: songs.platformId,
     releasedAt: songs.releasedAt,
     playbackEnabled: songs.playbackEnabled,
+    duration: songs.duration,
+    filePath: songs.filePath,
     coverArtId: songs.coverArtId,
     artistIds: sql<string[]>`
       coalesce(array_agg("song_artists"."artist_id" ORDER BY "song_artists"."display_order"), ARRAY[]::uuid[])

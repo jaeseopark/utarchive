@@ -21,6 +21,7 @@ services:
       - /app/node_modules
       - /app/backend/node_modules
       - /app/frontend/node_modules
+      - audio-uploads:/data/audio
   db:
     image: postgres:15-alpine
     environment:
@@ -34,3 +35,4 @@ services:
 
 volumes:
   postgres-data:
+  audio-uploads:
