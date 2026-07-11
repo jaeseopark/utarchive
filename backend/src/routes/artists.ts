@@ -130,8 +130,9 @@ router.get("/:id/songs", async (req, res) => {
   }
 
   const songsData = await selectSongsByArtistId(req.params.id);
-  const songs = serializeForApiResponse(songsData);
-  return res.status(200).json({ songs });
+  // Return only song IDs; frontend will combine with zustand's song store
+  const songIds = songsData.map((song) => song.id);
+  return res.status(200).json({ songIds });
 });
 
 export default router;
