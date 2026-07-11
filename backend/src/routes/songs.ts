@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { existsSync } from "fs";
+import { existsSync, statSync, createReadStream } from "fs";
 import { join } from "path";
 import { validateRequest } from "../middleware/validateRequest";
 import { requireAuth } from "../middleware/requireAuth";
@@ -102,45 +102,71 @@ router.use(requireAuth);
 
 /**
  * GET /:id/audio
- * Serve audio file by ID
- * Streams audio file from disk with proper content-type headers
+ * Serve audio file by ID with proper streaming headers
+ * Supports range requests for seeking/scrubbing
+ * File path retrieved from database song record
  */
-router.get("/:id/audio", (req, res, next) => {
+router.get("/:id/audio", async (req, res, next) => {
   try {
-    const fileId = req.params.id;
-    const uploadDir = process.env.AUDIO_UPLOAD_DIR ?? "/data/audio";
+    const songId = z.string().uuid().parse(req.params.id);
 
-    // Security: Prevent path traversal attacks
-    if (fileId.includes("/") || fileId.includes("\\") || fileId.includes("..")) {
-      return res.status(400).json({ error: "Invalid file ID" });
+    // Query song to get file path from database
+    const song = await selectSongById(songId);
+
+    if (!song) {
+      return res.status(404).json({ error: "Song not found" });
     }
 
-    // Search for the file with any audio extension
-    const audioExtensions = ["mp3", "wav", "flac", "ogg", "opus", "aac", "m4a"];
-
-    for (const ext of audioExtensions) {
-      const filePath = join(uploadDir, `${fileId}.${ext}`);
-      if (existsSync(filePath)) {
-        // Set appropriate content-type for audio files
-        const contentTypeMap: Record<string, string> = {
-          mp3: "audio/mpeg",
-          wav: "audio/wav",
-          flac: "audio/flac",
-          ogg: "audio/ogg",
-          opus: "audio/opus",
-          aac: "audio/aac",
-          m4a: "audio/mp4",
-        };
-
-        const contentType = contentTypeMap[ext] || "audio/mpeg";
-        res.setHeader("Content-Type", contentType);
-
-        // Stream the file
-        return res.sendFile(filePath);
-      }
+    if (!song.filePath) {
+      return res.status(404).json({ error: "Audio file not found" });
     }
 
-    return res.status(404).json({ error: "Audio file not found" });
+    // Verify file exists on disk
+    if (!existsSync(song.filePath)) {
+      return res.status(404).json({ error: "Audio file not found on disk" });
+    }
+
+    // Determine content type from file extension
+    const extension = song.filePath.split(".").pop()?.toLowerCase() || "mp3";
+    const contentTypeMap: Record<string, string> = {
+      mp3: "audio/mpeg",
+      wav: "audio/wav",
+      flac: "audio/flac",
+      ogg: "audio/ogg",
+      opus: "audio/opus",
+      aac: "audio/aac",
+      m4a: "audio/mp4",
+    };
+
+    const contentType = contentTypeMap[extension] || "audio/mpeg";
+    const stat = statSync(song.filePath);
+    const fileSize = stat.size;
+
+    // Set required headers for audio streaming
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+
+    // Handle range requests (for seeking)
+    const rangeHeader = req.headers.range;
+    if (rangeHeader) {
+      const parts = rangeHeader.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+      res.writeHead(206, {
+        "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+        "Content-Length": end - start + 1,
+        "Content-Type": contentType,
+        "Accept-Ranges": "bytes",
+      });
+      createReadStream(song.filePath, { start, end }).pipe(res);
+      return;
+    }
+
+    // Standard full-file response
+    res.setHeader("Content-Length", fileSize);
+    createReadStream(song.filePath).pipe(res);
   } catch (err) {
     next(err);
   }

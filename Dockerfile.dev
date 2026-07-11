@@ -13,13 +13,6 @@ COPY . .
 
 WORKDIR /app
 
-# Install frontend dependencies with watch mode support
-WORKDIR /app/frontend
-RUN npm ci
-
-# Go back to app root
-WORKDIR /app
-
 # Force rebuild - $(date)
 RUN echo "Building at $(date)"
 

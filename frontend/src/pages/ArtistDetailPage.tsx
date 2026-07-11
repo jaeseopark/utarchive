@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { api } from "../api/client";
-import { SongListItemSchema, type SongListItem } from "../api/schemas";
-import { z } from "zod";
 import { formatDate } from "../lib/format";
 import { useArtistDetail } from "../hooks/useArtistDetail";
 import { PlaybackEnabledToggle } from "../components/PlaybackEnabledToggle";
@@ -10,8 +7,7 @@ import { useArtistAttributesEditor } from "../components/ArtistAttributesEditor"
 import { Button } from "../components/ui/Button";
 import { toBrandId, type ArtistId } from "../types/brands";
 import type { Artist } from "../api/schemas";
-
-const ArtistSongsSchema = z.array(SongListItemSchema);
+import { useArtistSongsStore } from "../stores/useArtistSongsStore";
 
 interface ArtistHeaderProps {
   artist: Artist;
@@ -45,40 +41,22 @@ function ArtistDetailPage() {
     isLoading: artistLoading,
     error: artistError,
   } = useArtistDetail(toBrandId<ArtistId>(id || ""));
-  const [songs, setSongs] = useState<SongListItem[]>([]);
-  const [songsLoading, setSongsLoading] = useState(false);
-  const [songsError, setSongsError] = useState<string | null>(null);
+
+  const artistId = toBrandId<ArtistId>(id || "");
+  const { fetchArtistSongs, getArtistSongs, updateArtistSong } = useArtistSongsStore();
+  const songs = getArtistSongs(artistId) ?? [];
+  const songsLoading = useArtistSongsStore((state) => state.isLoading[artistId] ?? false);
+  const songsError = useArtistSongsStore((state) => state.error[artistId] ?? null);
 
   useEffect(() => {
     if (!id) return;
-
-    setSongsLoading(true);
-    setSongsError(null);
-
-    api
-      .get(`/api/artists/${id}/songs`, ArtistSongsSchema)
-      .then((artistSongs) => {
-        setSongs(
-          [...artistSongs].sort((a, b) => {
-            if (a.releasedAt === b.releasedAt) {
-              return a.title.localeCompare(b.title);
-            }
-            if (!a.releasedAt) return 1;
-            if (!b.releasedAt) return -1;
-            return b.releasedAt.localeCompare(a.releasedAt);
-          }),
-        );
-      })
-      .catch((err) => setSongsError(err instanceof Error ? err.message : String(err)))
-      .finally(() => setSongsLoading(false));
-  }, [id]);
+    fetchArtistSongs(artistId).catch(() => {
+      // Error is handled by the store
+    });
+  }, [id, artistId, fetchArtistSongs]);
 
   const handlePlaybackEnabledChange = (songId: string, newPlaybackEnabled: boolean) => {
-    setSongs((prev) =>
-      prev.map((song) =>
-        song.id === songId ? { ...song, playbackEnabled: newPlaybackEnabled } : song,
-      ),
-    );
+    updateArtistSong(artistId, songId, { playbackEnabled: newPlaybackEnabled });
   };
 
   const isLoading = artistLoading || songsLoading;
