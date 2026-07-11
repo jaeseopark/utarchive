@@ -106,9 +106,9 @@ async function request<T>(
 
   const parseResult = schema.safeParse(payload);
   if (!parseResult.success) {
-    // eslint-disable-next-line no-restricted-syntax
+     
     const validationErrorMessage = formatValidationErrors(
-      parseResult.error.format() as Record<string, unknown>,
+      parseResult.error.format()
     );
     throw new ApiError(response.status, validationErrorMessage, parseResult.error.format());
   }

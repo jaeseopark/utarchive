@@ -3,7 +3,6 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 import multer from "multer";
 import { existsSync, statSync, createReadStream } from "fs";
-import { join } from "path";
 import { validateRequest } from "../middleware/validateRequest";
 import { requireAuth } from "../middleware/requireAuth";
 import {
