@@ -137,14 +137,14 @@ export function useAudioElement() {
     const handleError = (e: ErrorEvent) => {
       const errorCode = audio.error?.code;
       const errorMessage = audio.error?.message || "Unknown error";
-      
+
       const errorDescriptions: Record<number, string> = {
         1: "MEDIA_ERR_ABORTED - Media loading was aborted",
         2: "MEDIA_ERR_NETWORK - Network error loading media",
         3: "MEDIA_ERR_DECODE - Media decode error (unsupported format or corrupted file)",
         4: "MEDIA_ERR_SRC_NOT_SUPPORTED - Media source not supported (unsupported codec)",
       };
-      
+
       const errorDesc = errorCode ? errorDescriptions[errorCode] : "Unknown error";
       console.error(`Audio playback error: ${errorDesc}`, {
         errorCode,
@@ -152,7 +152,7 @@ export function useAudioElement() {
         src: audio.src,
         event: e,
       });
-      
+
       // Auto-skip to next song on error
       storeNext();
     };

@@ -1,6 +1,7 @@
 import React, { FC, useRef, useState, useCallback } from "react";
 import { Button } from "./ui/Button";
 import { useUploadAudio } from "../hooks/useUploadAudio";
+import { useNotifications } from "../hooks/useNotifications";
 import { type SongId } from "../types/brands";
 
 interface AudioUploadButtonProps {
@@ -20,34 +21,27 @@ export const AudioUploadButton: FC<AudioUploadButtonProps> = ({ songId }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-
-  const { uploadAudio, isUploading, error } = useUploadAudio();
+  const { uploadAudio, isUploading } = useUploadAudio();
+  const { notifySuccess, notifyError } = useNotifications();
 
   const handleAudioUpload = useCallback(
     async (file: File) => {
       // Keep a reference to the file to prevent it from being GC'd during upload
       const fileRef = file;
 
-      setUploadStatus("Uploading audio...");
-
       const result = await uploadAudio(songId, fileRef);
 
       if (result.success) {
-        setUploadStatus("Audio uploaded successfully");
-        // Clear status after 3 seconds
-        setTimeout(() => setUploadStatus(null), 3000);
+        notifySuccess("Audio uploaded successfully");
         // Clear file input only after successful upload
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
       } else {
-        setUploadStatus(`Failed: ${result.error}`);
-        // Keep upload status visible for 5 seconds on error
-        setTimeout(() => setUploadStatus(null), 5000);
+        notifyError(`Audio upload failed: ${result.error}`);
       }
     },
-    [uploadAudio, songId],
+    [uploadAudio, songId, notifySuccess, notifyError],
   );
 
   const handleFileInputChange = useCallback(
@@ -94,12 +88,11 @@ export const AudioUploadButton: FC<AudioUploadButtonProps> = ({ songId }) => {
         if (isAudioFile) {
           void handleAudioUpload(audioFile);
         } else {
-          setUploadStatus("Please drop an audio file");
-          setTimeout(() => setUploadStatus(null), 3000);
+          notifyError("Please drop an audio file");
         }
       }
     },
-    [handleAudioUpload],
+    [handleAudioUpload, notifyError],
   );
 
   return (
@@ -134,19 +127,6 @@ export const AudioUploadButton: FC<AudioUploadButtonProps> = ({ songId }) => {
           </div>
         )}
       </div>
-
-      {/* Status message */}
-      {(uploadStatus || error) && (
-        <div
-          className={`mt-2 text-sm p-2 rounded ${
-            error
-              ? "text-red-700 bg-red-50 border border-red-200"
-              : "text-green-700 bg-green-50 border border-green-200"
-          }`}
-        >
-          {error || uploadStatus}
-        </div>
-      )}
     </div>
   );
 };

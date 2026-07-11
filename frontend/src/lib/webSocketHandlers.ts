@@ -4,6 +4,7 @@ import { useSongsStore } from "../stores/useSongsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
+import { useNotificationStore } from "../stores/useNotificationStore";
 import {
   toBrandId,
   type SongId,
@@ -107,4 +108,18 @@ export const handleDataChanged = (message: DataChangedMessage): void => {
   if (data.created && data.created.length > 0) {
     updateStoreByAction(entity, "created", data.created);
   }
+};
+
+/**
+ * Enqueue a notification from WebSocket handler
+ * Pattern established for future server-pushed notifications
+ */
+export const handleWebSocketNotification = (
+  type: "error" | "success" | "info" | "warning",
+  message: string,
+): void => {
+  useNotificationStore.getState().addNotification({
+    type,
+    message,
+  });
 };

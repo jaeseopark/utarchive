@@ -18,10 +18,7 @@ import {
 } from "../db/queries/songs";
 import { broadcastMessage } from "../ws";
 import { DataChangedMessage } from "../types/websocket";
-import {
-  extractAudioMetadata,
-  saveAudioFile,
-} from "../lib/audioProcessor";
+import { extractAudioMetadata, saveAudioFile } from "../lib/audioProcessor";
 import { serializeForApiResponse } from "../lib/serialization";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
@@ -439,7 +436,12 @@ router.post("/:id/audio", audioUpload.single("file"), async (req, res, next) => 
       return res.status(404).json({ error: "Song not found" });
     }
 
-    const { fileExtension, fileSizeBytes, fileHash: initialHash, duration } = await extractAudioMetadata(file.buffer, file.originalname);
+    const {
+      fileExtension,
+      fileSizeBytes,
+      fileHash: initialHash,
+      duration,
+    } = await extractAudioMetadata(file.buffer, file.originalname);
 
     // Check for duplicate audio file (same hash) - quick read operation
     const duplicateSong = await db

@@ -106,10 +106,7 @@ async function request<T>(
 
   const parseResult = schema.safeParse(payload);
   if (!parseResult.success) {
-     
-    const validationErrorMessage = formatValidationErrors(
-      parseResult.error.format()
-    );
+    const validationErrorMessage = formatValidationErrors(parseResult.error.format());
     throw new ApiError(response.status, validationErrorMessage, parseResult.error.format());
   }
 
