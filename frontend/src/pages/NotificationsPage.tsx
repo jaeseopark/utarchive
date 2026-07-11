@@ -1,65 +1,65 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useNotificationStore } from '../stores/useNotificationStore';
-import { Notification, NotificationType } from '../types/notification';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useNotificationStore } from "../stores/useNotificationStore";
+import { Notification, NotificationType } from "../types/notification";
 
 const getNotificationBgColor = (type: NotificationType) => {
   switch (type) {
-    case 'error':
-      return 'bg-red-50';
-    case 'success':
-      return 'bg-green-50';
-    case 'warning':
-      return 'bg-yellow-50';
-    case 'info':
-      return 'bg-blue-50';
+    case "error":
+      return "bg-red-50";
+    case "success":
+      return "bg-green-50";
+    case "warning":
+      return "bg-yellow-50";
+    case "info":
+      return "bg-blue-50";
     default:
-      return 'bg-slate-50';
+      return "bg-slate-50";
   }
 };
 
 const getNotificationTextColor = (type: NotificationType) => {
   switch (type) {
-    case 'error':
-      return 'text-red-700';
-    case 'success':
-      return 'text-green-700';
-    case 'warning':
-      return 'text-yellow-700';
-    case 'info':
-      return 'text-blue-700';
+    case "error":
+      return "text-red-700";
+    case "success":
+      return "text-green-700";
+    case "warning":
+      return "text-yellow-700";
+    case "info":
+      return "text-blue-700";
     default:
-      return 'text-slate-700';
+      return "text-slate-700";
   }
 };
 
 const getNotificationBorderColor = (type: NotificationType) => {
   switch (type) {
-    case 'error':
-      return 'border-l-red-500';
-    case 'success':
-      return 'border-l-green-500';
-    case 'warning':
-      return 'border-l-yellow-500';
-    case 'info':
-      return 'border-l-blue-500';
+    case "error":
+      return "border-l-red-500";
+    case "success":
+      return "border-l-green-500";
+    case "warning":
+      return "border-l-yellow-500";
+    case "info":
+      return "border-l-blue-500";
     default:
-      return 'border-l-slate-500';
+      return "border-l-slate-500";
   }
 };
 
 const getTypeIcon = (type: NotificationType) => {
   switch (type) {
-    case 'error':
-      return '✕';
-    case 'success':
-      return '✓';
-    case 'warning':
-      return '⚠';
-    case 'info':
-      return 'ℹ';
+    case "error":
+      return "✕";
+    case "success":
+      return "✓";
+    case "warning":
+      return "⚠";
+    case "info":
+      return "ℹ";
     default:
-      return '●';
+      return "●";
   }
 };
 
@@ -85,8 +85,8 @@ export function NotificationsPage() {
           <h2 className="text-2xl font-semibold">Notifications</h2>
           <p className="mt-2 text-slate-600">
             {notifications.length === 0
-              ? 'No notifications'
-              : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''} (${unreadCount} unread)`}
+              ? "No notifications"
+              : `${notifications.length} notification${notifications.length !== 1 ? "s" : ""} (${unreadCount} unread)`}
           </p>
         </div>
         {notifications.length > 0 && (
@@ -140,14 +140,20 @@ export function NotificationsPage() {
                         )} ${getNotificationBgColor(notification.type)} p-4 cursor-pointer transition hover:shadow-md`}
                       >
                         <div className="flex items-start gap-3">
-                          <span className={`text-lg flex-shrink-0 ${getNotificationTextColor(notification.type)}`}>
+                          <span
+                            className={`text-lg flex-shrink-0 ${getNotificationTextColor(notification.type)}`}
+                          >
                             {getTypeIcon(notification.type)}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className={`font-semibold break-words ${getNotificationTextColor(notification.type)}`}>
+                            <p
+                              className={`font-semibold break-words ${getNotificationTextColor(notification.type)}`}
+                            >
                               {notification.message}
                             </p>
-                            <p className={`text-xs mt-1 ${getNotificationTextColor(notification.type)} opacity-70`}>
+                            <p
+                              className={`text-xs mt-1 ${getNotificationTextColor(notification.type)} opacity-70`}
+                            >
                               {new Date(notification.timestamp).toLocaleString()}
                             </p>
                           </div>
@@ -162,7 +168,9 @@ export function NotificationsPage() {
             {notifications.filter((n) => n.read).length > 0 && (
               <div>
                 {notifications.filter((n) => !n.read).length > 0 && (
-                  <h3 className="my-6 text-sm font-semibold text-slate-700 uppercase tracking-wider">Read</h3>
+                  <h3 className="my-6 text-sm font-semibold text-slate-700 uppercase tracking-wider">
+                    Read
+                  </h3>
                 )}
                 <div className="space-y-2">
                   {notifications
@@ -175,14 +183,20 @@ export function NotificationsPage() {
                         )} bg-white p-4 transition hover:shadow-md`}
                       >
                         <div className="flex items-start gap-3">
-                          <span className={`text-lg flex-shrink-0 ${getNotificationTextColor(notification.type)}`}>
+                          <span
+                            className={`text-lg flex-shrink-0 ${getNotificationTextColor(notification.type)}`}
+                          >
                             {getTypeIcon(notification.type)}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className={`break-words ${getNotificationTextColor(notification.type)}`}>
+                            <p
+                              className={`break-words ${getNotificationTextColor(notification.type)}`}
+                            >
                               {notification.message}
                             </p>
-                            <p className={`text-xs mt-1 ${getNotificationTextColor(notification.type)} opacity-60`}>
+                            <p
+                              className={`text-xs mt-1 ${getNotificationTextColor(notification.type)} opacity-60`}
+                            >
                               {new Date(notification.timestamp).toLocaleString()}
                             </p>
                           </div>

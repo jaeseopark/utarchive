@@ -1,4 +1,4 @@
-export type NotificationType = 'error' | 'success' | 'info' | 'warning';
+export type NotificationType = "error" | "success" | "info" | "warning";
 
 export interface Notification {
   id: string;
@@ -10,8 +10,8 @@ export interface Notification {
 
 export interface NotificationStoreState {
   notifications: Notification[];
-  
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
+
+  addNotification: (notification: Omit<Notification, "id" | "timestamp" | "read">) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;

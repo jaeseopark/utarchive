@@ -114,7 +114,10 @@ export const handleDataChanged = (message: DataChangedMessage): void => {
  * Enqueue a notification from WebSocket handler
  * Pattern established for future server-pushed notifications
  */
-export const handleWebSocketNotification = (type: 'error' | 'success' | 'info' | 'warning', message: string): void => {
+export const handleWebSocketNotification = (
+  type: "error" | "success" | "info" | "warning",
+  message: string,
+): void => {
   useNotificationStore.getState().addNotification({
     type,
     message,

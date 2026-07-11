@@ -1,37 +1,37 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useNotificationStore } from '../stores/useNotificationStore';
-import { Notification, NotificationType } from '../types/notification';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useNotificationStore } from "../stores/useNotificationStore";
+import { Notification, NotificationType } from "../types/notification";
 
 interface NotificationDropdownProps {
   onClose: () => void;
 }
 
 const getNotificationStyles = (type: NotificationType, isRead: boolean) => {
-  const baseStyles = 'px-4 py-3 rounded-lg cursor-pointer transition-colors';
-  
+  const baseStyles = "px-4 py-3 rounded-lg cursor-pointer transition-colors";
+
   if (!isRead) {
     switch (type) {
-      case 'error':
+      case "error":
         return `${baseStyles} bg-red-100 border-l-2 border-l-red-500 font-semibold text-red-900`;
-      case 'success':
+      case "success":
         return `${baseStyles} bg-green-100 border-l-2 border-l-green-500 font-semibold text-green-900`;
-      case 'warning':
+      case "warning":
         return `${baseStyles} bg-yellow-100 border-l-2 border-l-yellow-500 font-semibold text-yellow-900`;
-      case 'info':
+      case "info":
         return `${baseStyles} bg-blue-100 border-l-2 border-l-blue-500 font-semibold text-blue-900`;
       default:
         return `${baseStyles} bg-blue-100 border-l-2 border-l-blue-500 font-semibold text-blue-900`;
     }
   } else {
     switch (type) {
-      case 'error':
+      case "error":
         return `${baseStyles} bg-white text-red-700 hover:bg-red-50`;
-      case 'success':
+      case "success":
         return `${baseStyles} bg-white text-green-700 hover:bg-green-50`;
-      case 'warning':
+      case "warning":
         return `${baseStyles} bg-white text-yellow-700 hover:bg-yellow-50`;
-      case 'info':
+      case "info":
         return `${baseStyles} bg-white text-blue-700 hover:bg-blue-50`;
       default:
         return `${baseStyles} bg-white text-blue-700 hover:bg-blue-50`;
@@ -41,16 +41,16 @@ const getNotificationStyles = (type: NotificationType, isRead: boolean) => {
 
 const getTypeIcon = (type: NotificationType) => {
   switch (type) {
-    case 'error':
-      return '✕';
-    case 'success':
-      return '✓';
-    case 'warning':
-      return '⚠';
-    case 'info':
-      return 'ℹ';
+    case "error":
+      return "✕";
+    case "success":
+      return "✓";
+    case "warning":
+      return "⚠";
+    case "info":
+      return "ℹ";
     default:
-      return '●';
+      return "●";
   }
 };
 
@@ -67,7 +67,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
   };
 
   const handleSeeAll = () => {
-    navigate('/notifications');
+    navigate("/notifications");
     onClose();
   };
 
@@ -100,7 +100,9 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
               className={getNotificationStyles(notification.type, notification.read)}
             >
               <div className="flex items-start gap-3">
-                <span className="text-base mt-0.5 flex-shrink-0">{getTypeIcon(notification.type)}</span>
+                <span className="text-base mt-0.5 flex-shrink-0">
+                  {getTypeIcon(notification.type)}
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="break-words text-sm">{notification.message}</p>
                   <p className="text-xs mt-1 opacity-60">

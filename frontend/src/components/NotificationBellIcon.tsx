@@ -1,6 +1,6 @@
-import React from 'react';
-import { useWebSocketContext } from '../context/WebSocketContext';
-import { useNotificationStore } from '../stores/useNotificationStore';
+import React from "react";
+import { useWebSocketContext } from "../context/WebSocketContext";
+import { useNotificationStore } from "../stores/useNotificationStore";
 
 interface NotificationBellIconProps {
   isOpen: boolean;
@@ -12,33 +12,28 @@ export const NotificationBellIcon: React.FC<NotificationBellIconProps> = ({ isOp
   const unreadCount = useNotificationStore((state) => state.getUnreadCount());
 
   const getStatusColor = () => {
-    if (isConnected) return 'bg-green-500';
-    if (isConnecting) return 'bg-yellow-500 animate-pulse';
-    return 'bg-red-500';
+    if (isConnected) return "bg-green-500";
+    if (isConnecting) return "bg-yellow-500 animate-pulse";
+    return "bg-red-500";
   };
 
   const getStatusTitle = () => {
-    if (isConnected) return 'Connected to server';
-    if (isConnecting) return 'Connecting to server...';
-    return 'Disconnected from server';
+    if (isConnected) return "Connected to server";
+    if (isConnecting) return "Connecting to server...";
+    return "Disconnected from server";
   };
 
   return (
     <button
       onClick={onToggle}
       className={`relative p-2 rounded-lg transition-colors ${
-        isOpen ? 'bg-slate-100' : 'hover:bg-slate-100'
+        isOpen ? "bg-slate-100" : "hover:bg-slate-100"
       }`}
       title="Notifications"
       aria-label="Notifications"
     >
       {/* Bell Icon */}
-      <svg
-        className="w-6 h-6 text-slate-700"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
+      <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -56,7 +51,7 @@ export const NotificationBellIcon: React.FC<NotificationBellIconProps> = ({ isOp
       {/* Unread Badge */}
       {unreadCount > 0 && (
         <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-          {unreadCount > 99 ? '99+' : unreadCount}
+          {unreadCount > 99 ? "99+" : unreadCount}
         </div>
       )}
     </button>
