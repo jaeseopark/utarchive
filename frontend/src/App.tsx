@@ -13,6 +13,7 @@ import AlbumDetailPage from "./pages/AlbumDetailPage";
 import PlaylistsPage from "./pages/PlaylistsPage";
 import PlaylistDetailPage from "./pages/PlaylistDetailPage";
 import SearchPage from "./pages/SearchPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 
 function App() {
   // Boot-time initialization: hydrate stores in dependency order
@@ -42,6 +43,7 @@ function App() {
         <Route path="playlists" element={<PlaylistsPage />} />
         <Route path="playlists/:id" element={<PlaylistDetailPage />} />
         <Route path="search" element={<SearchPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/artists" replace />} />
     </Routes>

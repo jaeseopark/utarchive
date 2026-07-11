@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import { ConnectionStatusIndicator } from "../components/ConnectionStatusIndicator";
+import { NotificationCenter } from "../components/NotificationCenter";
 import { GlobalPlayer } from "../components/GlobalPlayer";
 import { useSession } from "../context/SessionContext";
 import { AddSongModal } from "../components/AddSongModal";
@@ -31,7 +31,7 @@ function RootLayout() {
 
           {/* Action buttons - right side */}
           <div className="flex flex-shrink-0 items-center gap-3">
-            <ConnectionStatusIndicator />
+            <NotificationCenter />
             <div className="flex gap-2">
               <Button variant="primary" onClick={openModal}>
                 Add Song
