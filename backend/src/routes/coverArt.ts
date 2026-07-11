@@ -31,7 +31,7 @@ router.use(requireAuth);
  * - Calculates content hash and rejects duplicates
  * - Generates 128x128 and 1024x1024 thumbnails
  */
-router.post("/cover-art", validateRequest(coverArtUploadSchema), async (req, res) => {
+router.post("/", validateRequest(coverArtUploadSchema), async (req, res) => {
   const file = req.file;
 
   if (!file?.buffer) {
@@ -108,10 +108,10 @@ router.post("/cover-art", validateRequest(coverArtUploadSchema), async (req, res
 });
 
 /**
- * GET /cover-art/:id/thumbnail/:size
+ * GET /:id/thumbnail/:size
  * Serve a thumbnail image for a cover art
  */
-router.get("/cover-art/:id/thumbnail/:size", async (req, res) => {
+router.get("/:id/thumbnail/:size", async (req, res) => {
   const { id, size } = req.params;
   const sizeNum = parseInt(size, 10);
 

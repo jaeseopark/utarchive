@@ -1,14 +1,22 @@
 import { create } from "zustand";
 import { z } from "zod";
 import { api } from "../api/client";
-import { SongListItemSchema, type SongListItem } from "../api/schemas";
-import { type ArtistId } from "../types/brands";
+import { type SongListItem } from "../api/schemas";
+import { type ArtistId, type SongId, toBrandId } from "../types/brands";
+import { useSongsStore } from "./useSongsStore";
 
-const ArtistSongsSchema = z.array(SongListItemSchema);
+const ArtistSongIdsSchema = z.object({
+  songIds: z.array(z.string()),
+});
+
+// Type guard to ensure song is defined and properly typed
+function isSongDefined(song?: SongListItem | null): song is SongListItem {
+  return song !== undefined && song !== null;
+}
 
 export interface ArtistSongsState {
   // Data
-  songsByArtist: Record<string, SongListItem[]>;
+  songIdsByArtist: Record<string, string[]>;
   lastFetchedAt: Record<string, number>;
 
   // Loading/Error
@@ -24,7 +32,7 @@ export interface ArtistSongsState {
 }
 
 export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
-  songsByArtist: {},
+  songIdsByArtist: {},
   lastFetchedAt: {},
   isLoading: {},
   error: {},
@@ -53,8 +61,11 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
     const lastFetch = state.lastFetchedAt[artistId] ?? 0;
     const CACHE_TTL = 15 * 1000; // 15 seconds
 
-    if (state.songsByArtist[artistId] && now - lastFetch < CACHE_TTL) {
-      return state.songsByArtist[artistId];
+    if (state.songIdsByArtist[artistId] && now - lastFetch < CACHE_TTL) {
+      // Return songs from global store using cached IDs
+      const songIds = state.songIdsByArtist[artistId];
+      const songsStore = useSongsStore.getState();
+      return songIds.map((id) => songsStore.songDetails[id]).filter(isSongDefined);
     }
 
     set((s) => ({
@@ -63,7 +74,14 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
     }));
 
     try {
-      const songs = await api.get(`/api/artists/${artistId}/songs`, ArtistSongsSchema);
+      const { songIds } = await api.get(`/api/artists/${artistId}/songs`, ArtistSongIdsSchema);
+
+      // Store song IDs and fetch all songs from global store to ensure we have them
+      const songsStore = useSongsStore.getState();
+
+      // Get the full song details from the global store
+      // The full song list is populated during the app startup, so the lookups should work.
+      const songs = songIds.map((id) => songsStore.songDetails[id]).filter(isSongDefined);
 
       // Sort songs by released date (descending) then by title
       const sortedSongs = [...songs].sort((a, b) => {
@@ -76,9 +94,9 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
       });
 
       set((s) => ({
-        songsByArtist: {
-          ...s.songsByArtist,
-          [artistId]: sortedSongs,
+        songIdsByArtist: {
+          ...s.songIdsByArtist,
+          [artistId]: songIds,
         },
         lastFetchedAt: {
           ...s.lastFetchedAt,
@@ -101,18 +119,28 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
   },
 
   getArtistSongs: (artistId: ArtistId) => {
-    return get().songsByArtist[artistId];
+    const state = get();
+    const songIds = state.songIdsByArtist[artistId];
+    if (!songIds) {
+      return undefined;
+    }
+
+    const songsStore = useSongsStore.getState();
+    const songs = songIds.map((id) => songsStore.songDetails[id]).filter(isSongDefined);
+
+    // Sort songs by released date (descending) then by title
+    return songs.sort((a, b) => {
+      if (a.releasedAt === b.releasedAt) {
+        return a.title.localeCompare(b.title);
+      }
+      if (!a.releasedAt) return 1;
+      if (!b.releasedAt) return -1;
+      return b.releasedAt.localeCompare(a.releasedAt);
+    });
   },
 
   updateArtistSong: (artistId: ArtistId, songId: string, updates: Partial<SongListItem>) => {
-    set((state) => ({
-      songsByArtist: {
-        ...state.songsByArtist,
-        [artistId]:
-          state.songsByArtist[artistId]?.map((song) =>
-            song.id === songId ? { ...song, ...updates } : song,
-          ) ?? [],
-      },
-    }));
+    const songsStore = useSongsStore.getState();
+    songsStore.updateSong(toBrandId<SongId>(songId), updates);
   },
 }));
