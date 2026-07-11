@@ -10,7 +10,7 @@ router.use(requireAuth);
 /**
  * Get WebSocket connection statistics
  */
-router.get("/admin/websocket/stats", (_req: Request, res: Response) => {
+router.get("/stats", (_req: Request, res: Response) => {
   try {
     const stats = getEventStats();
     const wss = _req.app.locals.wss;
@@ -30,7 +30,7 @@ router.get("/admin/websocket/stats", (_req: Request, res: Response) => {
 /**
  * Get recent WebSocket events (last N)
  */
-router.get("/admin/websocket/events", (req: Request, res: Response) => {
+router.get("/events", (req: Request, res: Response) => {
   try {
     // eslint-disable-next-line no-restricted-syntax
     const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
@@ -50,7 +50,7 @@ router.get("/admin/websocket/events", (req: Request, res: Response) => {
 /**
  * Get active connection count
  */
-router.get("/admin/websocket/connections", (_req: Request, res: Response) => {
+router.get("/connections", (_req: Request, res: Response) => {
   try {
     const wss = _req.app.locals.wss;
     const connections = wss?.clients?.size || 0;

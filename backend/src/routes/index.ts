@@ -24,16 +24,14 @@ const coverArtUpload = multer({
 
 router.use("/api", healthRouter);
 router.use("/api/auth", authRouter);
-// ✅ CRITICAL FIX: Apply cover art multer ONLY to cover art routes, not to entire /api
-// This prevents the 20 MB limit from blocking audio uploads (which have their own 100 MB limit)
 router.use("/api/cover-art", coverArtUpload.single("file"), coverArtRouter);
-router.use("/api", artistsRouter);
-router.use("/api", songsRouter);
-router.use("/api", albumsRouter);
-router.use("/api", playlistsRouter);
-router.use("/api", searchRouter);
-router.use("/api", analyticsRouter);
-router.use("/api", adminAnalyticsRouter);
-router.use("/api", adminWebSocketRouter);
+router.use("/api/artists", artistsRouter);
+router.use("/api/songs", songsRouter);
+router.use("/api/albums", albumsRouter);
+router.use("/api/playlists", playlistsRouter);
+router.use("/api/search", searchRouter);
+router.use("/api/analytics", analyticsRouter);
+router.use("/api/admin/analytics", adminAnalyticsRouter);
+router.use("/api/admin/websocket", adminWebSocketRouter);
 
 export default router;

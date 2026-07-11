@@ -41,7 +41,7 @@ const paginationSchema = z.object({
 
 router.use(requireAuth);
 
-router.get("/artists", validateRequest(paginationSchema, "query"), async (req, res) => {
+router.get("/", validateRequest(paginationSchema, "query"), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const { limit, offset } = req.query as unknown as {
     limit: number;
@@ -51,7 +51,7 @@ router.get("/artists", validateRequest(paginationSchema, "query"), async (req, r
   return res.status(200).json({ artists: serializeForApiResponse(artists) });
 });
 
-router.post("/artists", validateRequest(artistCreateSchema), async (req, res) => {
+router.post("/", validateRequest(artistCreateSchema), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const artist = req.body as z.infer<typeof artistCreateSchema>;
   const requestId = req.requestId;
@@ -77,7 +77,7 @@ router.post("/artists", validateRequest(artistCreateSchema), async (req, res) =>
   return res.status(201).json(serializeForApiResponse(createdArtist));
 });
 
-router.get("/artists/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   const artist = await selectArtistById(req.params.id);
 
   if (!artist) {
@@ -87,7 +87,7 @@ router.get("/artists/:id", async (req, res) => {
   return res.status(200).json(serializeForApiResponse(artist));
 });
 
-router.patch("/artists/:id", validateRequest(artistUpdateSchema), async (req, res) => {
+router.patch("/:id", validateRequest(artistUpdateSchema), async (req, res) => {
   // eslint-disable-next-line no-restricted-syntax
   const updateData = req.body as z.infer<typeof artistUpdateSchema>;
   const artistId = String(req.params.id);
@@ -122,7 +122,7 @@ router.patch("/artists/:id", validateRequest(artistUpdateSchema), async (req, re
   return res.status(200).json(serializeForApiResponse(updatedRows[0]));
 });
 
-router.get("/artists/:id/songs", async (req, res) => {
+router.get("/:id/songs", async (req, res) => {
   const artist = await selectArtistById(req.params.id);
 
   if (!artist) {

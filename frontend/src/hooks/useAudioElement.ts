@@ -46,29 +46,14 @@ export function useAudioElement() {
   useEffect(() => {
     if (!audioRef.current) return;
 
-    if (currentSong?.filePath) {
-      // Convert filesystem path to API URL
-      // Extract the filename from the path (e.g., "/data/audio/uuid.mp3" -> "uuid")
-      const match = currentSong.filePath.match(/([^/\\]+)\.\w+$/);
-      const fileId = match?.[1];
-
-      if (fileId) {
-        // Use API endpoint to serve the audio file
-        const audioUrl = `/api/audio/${fileId}`;
-        console.log("[Audio] Setting src:", { filePath: currentSong.filePath, fileId, audioUrl });
-        audioRef.current.src = audioUrl;
-      } else {
-        // Fallback to direct path if pattern doesn't match
-        console.log("[Audio] Pattern match failed, using fallback:", currentSong.filePath);
-        audioRef.current.src = currentSong.filePath;
-      }
+    if (currentSong?.id) {
+      // Use song ID to construct the audio endpoint
+      const audioUrl = `/api/songs/${currentSong.id}/audio`;
+      console.log("[Audio] Setting src:", { songId: currentSong.id, audioUrl });
+      audioRef.current.src = audioUrl;
       audioRef.current.currentTime = 0;
     } else {
-      console.log("[Audio] No filePath provided, clearing src. CurrentSong:", {
-        hasCurrentSong: !!currentSong,
-        title: currentSong?.title,
-        filePath: currentSong?.filePath,
-      });
+      console.log("[Audio] No song ID provided, clearing src");
       audioRef.current.src = "";
     }
   }, [currentSong]);
@@ -77,7 +62,7 @@ export function useAudioElement() {
   useEffect(() => {
     if (!audioRef.current) return;
 
-    if (isPlaying && currentSong?.filePath) {
+    if (isPlaying && currentSong?.id) {
       audioRef.current.play().catch((err) => {
         console.error("Failed to play audio:", err);
         storePause();

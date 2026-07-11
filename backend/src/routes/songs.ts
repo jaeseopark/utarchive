@@ -101,13 +101,13 @@ const songListSchema = z.object({
 router.use(requireAuth);
 
 /**
- * GET /audio/:fileId
+ * GET /:id/audio
  * Serve audio file by ID
  * Streams audio file from disk with proper content-type headers
  */
-router.get("/audio/:fileId", (req, res, next) => {
+router.get("/:id/audio", (req, res, next) => {
   try {
-    const fileId = req.params.fileId;
+    const fileId = req.params.id;
     const uploadDir = process.env.AUDIO_UPLOAD_DIR ?? "/data/audio";
 
     // Security: Prevent path traversal attacks
@@ -146,7 +146,7 @@ router.get("/audio/:fileId", (req, res, next) => {
   }
 });
 
-router.get("/songs", validateRequest(songListSchema, "query"), async (req, res, next) => {
+router.get("/", validateRequest(songListSchema, "query"), async (req, res, next) => {
   try {
     // eslint-disable-next-line no-restricted-syntax
     const { limit, offset, artistId, masterId, playbackEnabled } = req.query as unknown as z.infer<
@@ -167,7 +167,7 @@ router.get("/songs", validateRequest(songListSchema, "query"), async (req, res, 
   }
 });
 
-router.post("/songs", validateRequest(songCreateSchema), async (req, res, next) => {
+router.post("/", validateRequest(songCreateSchema), async (req, res, next) => {
   try {
     // eslint-disable-next-line no-restricted-syntax
     const songData = req.body as z.infer<typeof songCreateSchema>;
@@ -203,7 +203,7 @@ router.post("/songs", validateRequest(songCreateSchema), async (req, res, next) 
   }
 });
 
-router.get("/songs/:id", async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
     // ✅ PARAMETER VALIDATION FIX: Use Zod validation instead of Array.isArray
     const songId = z.string().uuid().parse(req.params.id);
@@ -228,7 +228,7 @@ router.get("/songs/:id", async (req, res, next) => {
   }
 });
 
-router.patch("/songs/:id", validateRequest(songUpdateSchema), async (req, res, next) => {
+router.patch("/:id", validateRequest(songUpdateSchema), async (req, res, next) => {
   try {
     // eslint-disable-next-line no-restricted-syntax
     const updateData = req.body as z.infer<typeof songUpdateSchema>;
@@ -268,7 +268,7 @@ router.patch("/songs/:id", validateRequest(songUpdateSchema), async (req, res, n
   }
 });
 
-router.get("/songs/:id/tree", async (req, res, next) => {
+router.get("/:id/tree", async (req, res, next) => {
   try {
     // ✅ PARAMETER VALIDATION FIX: Use Zod validation instead of Array.isArray
     const songId = z.string().uuid().parse(req.params.id);
@@ -289,7 +289,7 @@ const linkChildSchema = z.object({
   childId: z.string().uuid(),
 });
 
-router.post("/songs/:id/children", validateRequest(linkChildSchema), async (req, res, next) => {
+router.post("/:id/children", validateRequest(linkChildSchema), async (req, res, next) => {
   try {
     // ✅ PARAMETER VALIDATION FIX: Use Zod validation instead of Array.isArray
     const parentId = z.string().uuid().parse(req.params.id);
@@ -335,7 +335,7 @@ const tagsUpdateSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-router.patch("/songs/:id/tags", validateRequest(tagsUpdateSchema), async (req, res, next) => {
+router.patch("/:id/tags", validateRequest(tagsUpdateSchema), async (req, res, next) => {
   try {
     // eslint-disable-next-line no-restricted-syntax
     const { tags } = req.body as z.infer<typeof tagsUpdateSchema>;
@@ -397,7 +397,7 @@ router.get("/tags", async (_req, res, next) => {
  * BEFORE database writes. This prevents locking rows in PostgreSQL during slow
  * I/O operations, which would block all other updates to that song.
  */
-router.post("/songs/:id/audio", audioUpload.single("file"), async (req, res, next) => {
+router.post("/:id/audio", audioUpload.single("file"), async (req, res, next) => {
   try {
     const file = req.file;
     // ✅ PARAMETER VALIDATION FIX: Use Zod validation instead of Array.isArray
