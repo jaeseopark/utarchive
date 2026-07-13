@@ -225,19 +225,22 @@ export const createSong = async (
 
   return db.transaction(async (tx) => {
     if (songData.parentId) {
-      const parentSong = await tx
-        .select({ masterId: songHierarchy.masterId })
-        .from(songHierarchy)
-        .where(eq(songHierarchy.songId, songData.parentId))
+      // Verify parent exists and get its hierarchy info using the same logic as selectSongById
+      const [parentResult] = await tx
+        .select({
+          parentId: songHierarchy.parentId,
+          masterId: sql<string>`coalesce(${songHierarchy.masterId}, ${songs.id})`,
+        })
+        .from(songs)
+        .leftJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
+        .where(eq(songs.id, songData.parentId))
         .limit(1);
 
-      const parent = parentSong[0];
-
-      if (!parent) {
+      if (!parentResult) {
         throw new Error("PARENT_NOT_FOUND");
       }
 
-      masterId = parent.masterId ?? songData.parentId ?? songId;
+      masterId = parentResult.masterId;
     }
 
     const insertData = {
@@ -543,6 +546,7 @@ export const updateSongTags = async (songId: string, tags: string[]) => {
 /**
  * Link an existing child song to a parent song
  * Creates or updates the song_hierarchy relationship
+ * Also cascades the masterId update to all descendants
  */
 export const linkChildToParent = async (
   childId: string,
@@ -560,14 +564,17 @@ export const linkChildToParent = async (
       throw new Error("PARENT_NOT_FOUND");
     }
 
-    // Get parent's hierarchy info to determine master ID
-    const parentHierarchy = await tx
-      .select({ masterId: songHierarchy.masterId, parentId: songHierarchy.parentId })
-      .from(songHierarchy)
-      .where(eq(songHierarchy.songId, parentId))
+    // Get parent's hierarchy info to determine master ID using the same logic as selectSongById
+    const [parentHierarchy] = await tx
+      .select({
+        masterId: sql<string>`coalesce(${songHierarchy.masterId}, ${songs.id})`,
+      })
+      .from(songs)
+      .leftJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
+      .where(eq(songs.id, parentId))
       .limit(1);
 
-    const masterId = parentHierarchy[0]?.masterId ?? parentId;
+    const newMasterId = parentHierarchy?.masterId ?? parentId;
 
     // Check if child already has a hierarchy entry
     const existingChildHierarchy = await tx
@@ -580,15 +587,44 @@ export const linkChildToParent = async (
       // Update existing hierarchy
       await tx
         .update(songHierarchy)
-        .set({ parentId, masterId })
+        .set({ parentId, masterId: newMasterId })
         .where(eq(songHierarchy.songId, childId));
     } else {
       // Insert new hierarchy entry
       await tx.insert(songHierarchy).values({
         songId: childId,
         parentId,
-        masterId,
+        masterId: newMasterId,
       });
+    }
+
+    // Cascade masterId update to all descendants
+    // Find all descendants of the child (via recursive parent-child chains)
+    const descendantResult = await tx.execute(sql`
+      WITH RECURSIVE descendants AS (
+        SELECT song_id FROM song_hierarchy WHERE song_id = ${childId}
+        UNION ALL
+        SELECT sh.song_id
+        FROM song_hierarchy sh
+        JOIN descendants d ON sh.parent_id = d.song_id
+      )
+      SELECT song_id FROM descendants WHERE song_id != ${childId}
+    `);
+
+    interface DescendantRow {
+      song_id: string;
+    }
+
+    // eslint-disable-next-line no-restricted-syntax
+    const rows = (descendantResult.rows ?? descendantResult) as unknown as DescendantRow[];
+    const descendantIds = rows.map((row) => row.song_id);
+
+    // Update all descendants' masterId
+    if (descendantIds.length > 0) {
+      await tx
+        .update(songHierarchy)
+        .set({ masterId: newMasterId })
+        .where(sql`song_id = ANY(${descendantIds}::uuid[])`);
     }
 
     // Return updated child song
