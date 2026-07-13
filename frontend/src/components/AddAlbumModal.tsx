@@ -15,7 +15,7 @@ import { useAddAlbumModalStore } from "../stores/useAddAlbumModalStore";
 import { toBrandId, type ArtistId, type SongId, type CoverArtId } from "../types/brands";
 import { TrackListEditor } from "./TrackListEditor";
 import { SearchExistingSongModal } from "./SearchExistingSongModal";
-import { type NumberedTrack } from "../types/album";
+import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";
 import clsx from "clsx";
 
 type ArtistOption = {
@@ -75,9 +75,36 @@ export function AddAlbumModal() {
     label: artist.name,
   }));
 
+  const validateTracks = useCallback((): boolean => {
+    // Check that each track has either a title or a songId
+    for (const track of tracks) {
+      if (hasSongId(track)) {
+        // Song references are valid if they have a songId
+        continue;
+      }
+
+      if (isLiteralTrack(track)) {
+        // Literal tracks must have a non-empty title
+        if (!track.title?.trim()) {
+          return false;
+        }
+        continue;
+      }
+
+      // Track is neither a song reference nor a literal track - invalid
+      return false;
+    }
+    return true;
+  }, [tracks]);
+
   const onSubmit = useCallback(
     async (formData: AlbumCreateFormInput) => {
       try {
+        // Validate tracks before submission
+        if (!validateTracks()) {
+          throw new Error("All tracks must have either a title or be linked to a song");
+        }
+
         // Convert form data to API input
         const yearReleasedNum = formData.yearReleased ? parseInt(formData.yearReleased, 10) : null;
         const apiData: AlbumCreateInput = {
@@ -113,7 +140,7 @@ export function AddAlbumModal() {
         // Error is handled by the hook and displayed
       }
     },
-    [createAlbum, closeModal, reset, tracks],
+    [createAlbum, closeModal, reset, tracks, validateTracks],
   );
 
   const handleClear = useCallback(() => {

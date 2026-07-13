@@ -46,7 +46,7 @@ const normalizeTrackList = (value: unknown): AlbumTrackListItem[] => {
 
   return value
     .filter(
-      (item): item is { number: unknown; title: unknown } =>
+      (item): item is { number: unknown; title: unknown; duration?: unknown } =>
         item !== null &&
         typeof item === "object" &&
         // eslint-disable-next-line no-restricted-syntax
@@ -54,12 +54,21 @@ const normalizeTrackList = (value: unknown): AlbumTrackListItem[] => {
         // eslint-disable-next-line no-restricted-syntax
         typeof (item as { title: unknown }).title === "string",
     )
-    .map((item) => ({
+    .map((item) => {
+      const track: AlbumTrackListItem = {
+        // eslint-disable-next-line no-restricted-syntax
+        number: (item as { number: number }).number,
+        // eslint-disable-next-line no-restricted-syntax
+        title: (item as { title: string }).title,
+      };
+      // Preserve duration if it exists and is a valid number
       // eslint-disable-next-line no-restricted-syntax
-      number: (item as { number: number }).number,
-      // eslint-disable-next-line no-restricted-syntax
-      title: (item as { title: string }).title,
-    }));
+      const duration = (item as { duration?: unknown }).duration;
+      if (typeof duration === "number" && duration >= 0) {
+        track.duration = duration;
+      }
+      return track;
+    });
 };
 
 const buildTracks = (
@@ -325,11 +334,35 @@ export const upsertAlbumSong = async (albumId: string, songId: string, trackNumb
 };
 
 export const deleteAlbumSong = async (albumId: string, songId: string) => {
+  // First, find the track number for this song
+  const [association] = await db
+    .select({ trackNumber: albumSongs.trackNumber })
+    .from(albumSongs)
+    .where(and(eq(albumSongs.albumId, albumId), eq(albumSongs.songId, songId)))
+    .limit(1);
+
+  if (!association) {
+    return false;
+  }
+
+  // Delete the association
   const result = await db
     .delete(albumSongs)
     .where(and(eq(albumSongs.albumId, albumId), eq(albumSongs.songId, songId)));
 
-  return (result.rowCount ?? 0) > 0;
+  if ((result.rowCount ?? 0) === 0) {
+    return false;
+  }
+
+  // Update trackList to remove the deleted track
+  const [album] = await db.select().from(albums).where(eq(albums.id, albumId)).limit(1);
+  if (album) {
+    const currentTrackList = normalizeTrackList(album.trackList);
+    const updatedTrackList = currentTrackList.filter((t) => t.number !== association.trackNumber);
+    await db.update(albums).set({ trackList: updatedTrackList }).where(eq(albums.id, albumId));
+  }
+
+  return true;
 };
 
 export const selectAlbumsByArtistId = async (artistId: string) => {

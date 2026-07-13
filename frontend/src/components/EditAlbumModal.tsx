@@ -4,7 +4,7 @@ import { useUpdateAlbum } from "../hooks/useUpdateAlbum";
 import { useUpsertAlbumSong } from "../hooks/useUpsertAlbumSong";
 import { TrackListEditor } from "./TrackListEditor";
 import { SearchExistingSongModal } from "./SearchExistingSongModal";
-import { type NumberedTrack } from "../types/album";
+import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";
 import { toBrandId, type AlbumId, type SongId } from "../types/brands";
 
 interface EditAlbumModalProps {
@@ -79,9 +79,36 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
     [trackNumberForSongSelect, album.id, linkSongToTrack],
   );
 
+  const validateTracks = useCallback((): boolean => {
+    // Check that each literal track has a non-empty title
+    for (const track of tracks) {
+      if (hasSongId(track)) {
+        // Song references are valid
+        continue;
+      }
+
+      if (isLiteralTrack(track)) {
+        // Literal tracks must have a non-empty title
+        if (!track.title?.trim()) {
+          return false;
+        }
+        continue;
+      }
+
+      // Track is in an invalid state
+      return false;
+    }
+    return true;
+  }, [tracks]);
+
   const handleSaveTrackList = useCallback(async () => {
     setError(null);
     try {
+      // Validate tracks before saving
+      if (!validateTracks()) {
+        throw new Error("All literal tracks must have a title. Either reference an existing song or provide a title for each track.");
+      }
+
       const trackListData: Array<{ number: number; title: string; duration?: number }> = [];
       
       for (const track of tracks) {
@@ -102,7 +129,7 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save track list");
     }
-  }, [tracks, album.id, updateAlbumData, onClose]);
+  }, [tracks, album.id, updateAlbumData, onClose, validateTracks]);
 
   if (!isOpen) {
     return null;
