@@ -53,7 +53,7 @@ export function usePlayerAnalytics() {
         return;
       }
 
-      const effectiveDuration = getEffectiveDuration(currentSong);
+      const effectiveDuration = currentSong?.duration ?? 1;
       const playbackPercent = Math.min(100, (durationSeconds / effectiveDuration) * 100);
 
       try {
@@ -83,7 +83,7 @@ export function usePlayerAnalytics() {
       const durationSeconds = currentTime - sessionRef.current.initialTime;
       if (durationSeconds < 5) return; // Don't track very short sessions
 
-      const effectiveDuration = getEffectiveDuration(currentSong);
+      const effectiveDuration = currentSong?.duration ?? 1;
       const playbackPercent = Math.min(100, (durationSeconds / effectiveDuration) * 100);
 
       const payload = JSON.stringify({
@@ -103,12 +103,4 @@ export function usePlayerAnalytics() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [currentSong, currentTime]);
-}
-
-/**
- * Get effective duration - returns the song's duration
- */
-function getEffectiveDuration(song: z.infer<typeof SongSchema> | null): number {
-  if (!song) return 1;
-  return song.duration ?? 1;
 }
