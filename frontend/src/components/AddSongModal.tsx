@@ -21,6 +21,16 @@ type ArtistOption = {
   isNew?: boolean;
 };
 
+type UrlOption = {
+  value: string;
+  label: string;
+};
+
+type TagOption = {
+  value: string;
+  label: string;
+};
+
 export function AddSongModal() {
   const { isOpen, closeModal } = useAddSongModalStore();
   const { createSong, isLoading, error: creationError } = useSongCreation();
@@ -30,6 +40,8 @@ export function AddSongModal() {
 
   const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
   const [isCreatingArtist, setIsCreatingArtist] = useState(false);
+  const [selectedUrls, setSelectedUrls] = useState<UrlOption[]>([]);
+  const [selectedTags, setSelectedTags] = useState<TagOption[]>([]);
 
   const {
     register,
@@ -45,6 +57,7 @@ export function AddSongModal() {
       playbackEnabled: false,
       artistIds: [],
       tags: [],
+      urls: [],
     },
   });
 
@@ -53,6 +66,8 @@ export function AddSongModal() {
     if (!isOpen) {
       reset();
       setSelectedArtists([]);
+      setSelectedUrls([]);
+      setSelectedTags([]);
     }
   }, [isOpen, reset]);
 
@@ -62,7 +77,19 @@ export function AddSongModal() {
     setValue("artistIds", artistIds);
   }, [selectedArtists, setValue]);
 
-  const tagInput = watch("tags") || [];
+  // Update form urls whenever selectedUrls changes
+  useEffect(() => {
+    const urls = selectedUrls.map((u) => u.value);
+    setValue("urls", urls);
+  }, [selectedUrls, setValue]);
+
+  // Update form tags whenever selectedTags changes
+  useEffect(() => {
+    const tags = selectedTags.map((t) => t.value);
+    setValue("tags", tags);
+  }, [selectedTags, setValue]);
+
+
 
   // Convert artists to options for CreatableSelect
   const artistOptions: ArtistOption[] = artists.map((artist) => ({
@@ -103,11 +130,15 @@ export function AddSongModal() {
   const handleClear = useCallback(() => {
     reset();
     setSelectedArtists([]);
+    setSelectedUrls([]);
+    setSelectedTags([]);
   }, [reset]);
 
   const handleCancel = useCallback(() => {
     reset();
     setSelectedArtists([]);
+    setSelectedUrls([]);
+    setSelectedTags([]);
     closeModal();
   }, [closeModal, reset]);
 
@@ -131,18 +162,7 @@ export function AddSongModal() {
     [selectedArtists, createArtist],
   );
 
-  // Handle tag input
-  const handleTagInput = useCallback(
-    (value: string) => {
-      // Split by comma and trim
-      const tags = value
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-      setValue("tags", tags);
-    },
-    [setValue],
-  );
+
 
   if (!isOpen) {
     return null;
@@ -255,27 +275,6 @@ export function AddSongModal() {
             )}
           </div>
 
-          {/* Platform ID */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Platform ID (optional)
-            </label>
-            <input
-              type="text"
-              {...register("platformId")}
-              className={clsx(
-                "mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition",
-                errors.platformId
-                  ? "border-red-500 ring-1 ring-red-500"
-                  : "border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400",
-              )}
-              placeholder="e.g., spotify:track:xyz"
-            />
-            {errors.platformId && (
-              <p className="mt-1 text-sm text-red-500">{errors.platformId.message}</p>
-            )}
-          </div>
-
           {/* Released At */}
           <div>
             <label className="block text-sm font-medium text-slate-700">
@@ -296,21 +295,47 @@ export function AddSongModal() {
             )}
           </div>
 
-          {/* URL */}
+          {/* External URLs */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">URL (optional)</label>
-            <input
-              type="text"
-              {...register("url")}
-              className={clsx(
-                "mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition",
-                errors.url
-                  ? "border-red-500 ring-1 ring-red-500"
-                  : "border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400",
-              )}
-              placeholder="https://example.com/song"
+            <label className="block text-sm font-medium text-slate-700">External URLs (optional)</label>
+            <CreatableSelect
+              isMulti
+              isClearable
+              options={[]}
+              value={selectedUrls}
+              onChange={(newValue) => {
+                setSelectedUrls(newValue ? Array.from(newValue) : []);
+              }}
+              onCreateOption={(inputValue) => {
+                const newUrl: UrlOption = {
+                  value: inputValue,
+                  label: inputValue,
+                };
+                setSelectedUrls([...selectedUrls, newUrl]);
+              }}
+              formatCreateLabel={(inputValue) => `Add URL "${inputValue}"`}
+              placeholder="Add URLs (e.g., https://spotify.com/...)"
+              className="react-select-container"
+              classNamePrefix="react-select"
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  borderColor: base.borderColor,
+                  boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
+                  borderRadius: "0.5rem",
+                  minHeight: "2.5rem",
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: "#dbeafe",
+                  borderRadius: "0.375rem",
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  color: "#1e40af",
+                }),
+              }}
             />
-            {errors.url && <p className="mt-1 text-sm text-red-500">{errors.url.message}</p>}
           </div>
 
           {/* File Path - hidden, set programmatically */}
@@ -347,14 +372,44 @@ export function AddSongModal() {
           {/* Tags */}
           <div>
             <label className="block text-sm font-medium text-slate-700">Tags (optional)</label>
-            <input
-              type="text"
-              value={tagInput.join(", ")}
-              onChange={(e) => handleTagInput(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
-              placeholder="e.g., tag1, tag2, tag3"
+            <CreatableSelect
+              isMulti
+              isClearable
+              options={[]}
+              value={selectedTags}
+              onChange={(newValue) => {
+                setSelectedTags(newValue ? Array.from(newValue) : []);
+              }}
+              onCreateOption={(inputValue) => {
+                const newTag: TagOption = {
+                  value: inputValue,
+                  label: inputValue,
+                };
+                setSelectedTags([...selectedTags, newTag]);
+              }}
+              formatCreateLabel={(inputValue) => `Create tag "${inputValue}"`}
+              placeholder="Select or create tags..."
+              className="react-select-container"
+              classNamePrefix="react-select"
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  borderColor: base.borderColor,
+                  boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
+                  borderRadius: "0.5rem",
+                  minHeight: "2.5rem",
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: "#dbeafe",
+                  borderRadius: "0.375rem",
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  color: "#1e40af",
+                }),
+              }}
             />
-            <p className="mt-1 text-xs text-slate-500">Separate tags with commas</p>
           </div>
 
           {/* Error Messages */}
