@@ -3,11 +3,11 @@ import { UrlArraySchema } from "../api/schemas";
 
 type UrlArrayType = z.infer<typeof UrlArraySchema>;
 
-interface UrlMapProps {
+interface UrlListProps {
   urls?: UrlArrayType;
 }
 
-function UrlMapComponent({ urls }: UrlMapProps) {
+function UrlListComponent({ urls }: UrlListProps) {
   if (!urls || urls.length === 0) {
     return null;
   }
@@ -33,4 +33,4 @@ function UrlMapComponent({ urls }: UrlMapProps) {
   );
 }
 
-export default UrlMapComponent;
+export default UrlListComponent;
