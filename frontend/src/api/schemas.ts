@@ -7,7 +7,7 @@ import {
   type CoverArtId,
 } from "../types/brands";
 
-export const UrlMapSchema = z.record(z.string(), z.string());
+export const UrlArraySchema = z.array(z.string());
 
 export const ArtistSchema = z.object({
   id: z
@@ -143,6 +143,15 @@ export const SongSchema = z.object({
     )
     .optional()
     .default([]),
+  albumIds: z
+    .array(
+      z
+        .string()
+        .uuid()
+        .transform((val) => toBrandId<AlbumId>(val)),
+    )
+    .optional()
+    .default([]),
 });
 
 // Helper to create optional UUID field that accepts empty strings
@@ -168,6 +177,40 @@ const optionalSongId = optionalUUID.transform((val) => (val ? toBrandId<SongId>(
 const optionalCoverArtId = optionalUUID.transform((val) =>
   val ? toBrandId<CoverArtId>(val) : null,
 );
+
+// Album-related schemas
+export const AlbumTrackListItemSchema = z.object({
+  number: z.number().int().min(1),
+  title: z.string().min(1),
+  duration: z.number().min(0).optional(),
+});
+
+// Create schema - for API requests
+export const AlbumCreateSchema = z.object({
+  title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less"),
+  artistIds: z
+    .array(
+      z
+        .string()
+        .uuid()
+        .transform((val) => toBrandId<ArtistId>(val)),
+    )
+    .min(1, "At least one artist is required"),
+  yearReleased: z.number().int().nullable().optional(),
+  coverArtId: optionalCoverArtId,
+  trackList: z.array(AlbumTrackListItemSchema).optional(),
+  urls: UrlArraySchema.optional(),
+});
+
+// Form schema - for form data that stays as strings
+export const AlbumCreateFormSchema = z.object({
+  title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less"),
+  artistIds: z.array(z.string().uuid()).min(1, "At least one artist is required"),
+  yearReleased: z.string().optional().nullable(),
+  coverArtId: optionalUUID,
+  trackList: z.array(AlbumTrackListItemSchema).optional(),
+  urls: UrlArraySchema.optional(),
+});
 
 export const SongCreateSchema = z.object({
   title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less"),
@@ -284,8 +327,8 @@ export const AlbumDetailSchema = z.object({
     .nullable()
     .optional()
     .transform((val) => (val ? toBrandId<CoverArtId>(val) : null)),
-  trackList: z.array(z.object({ number: z.number().int(), title: z.string() })),
-  urls: UrlMapSchema.optional().default({}),
+  trackList: z.array(z.object({ number: z.number().int(), title: z.string(), duration: z.number().int().min(0).optional() })),
+  urls: UrlArraySchema.default([]),
   createdAt: z.string(),
   tracks: z.array(AlbumTrackSchema),
 });
@@ -317,3 +360,5 @@ export type SongTreeNode = z.infer<typeof SongTreeNodeSchema>;
 export type SongTree = z.infer<typeof SongTreeSchema>;
 export type Album = z.infer<typeof AlbumSchema>;
 export type AlbumDetail = z.infer<typeof AlbumDetailSchema>;
+export type AlbumCreateInput = z.infer<typeof AlbumCreateSchema>;
+export type AlbumCreateFormInput = z.infer<typeof AlbumCreateFormSchema>;

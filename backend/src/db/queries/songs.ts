@@ -67,6 +67,7 @@ export type SongWithHierarchy = Song & {
   parentId: string | null;
   masterId: string;
   artistIds: string[];
+  albumIds: string[];
 };
 
 export const selectSongById = async (id: string) => {
@@ -94,6 +95,11 @@ export const selectSongById = async (id: string) => {
         (SELECT coalesce(array_agg(sa.artist_id ORDER BY sa.display_order), ARRAY[]::uuid[])
          FROM song_artists sa
          WHERE sa.song_id = ${songs.id})
+      `,
+      albumIds: sql<string[]>`
+        (SELECT coalesce(array_agg(DISTINCT als.album_id ORDER BY als.album_id), ARRAY[]::uuid[])
+         FROM album_songs als
+         WHERE als.song_id = ${songs.id})
       `,
     })
     .from(songs)
@@ -298,6 +304,7 @@ export const createSong = async (
       parentId: songData.parentId ?? null,
       masterId: masterId ?? songId,
       artistIds,
+      albumIds: [],
     };
   });
 };
@@ -376,9 +383,16 @@ export const updateSongById = async (
       .where(eq(songArtists.songId, songId))
       .orderBy(songArtists.displayOrder);
 
+    const updatedAlbumIds = await tx
+      .select({ albumId: albumSongs.albumId })
+      .from(albumSongs)
+      .where(eq(albumSongs.songId, songId))
+      .orderBy(albumSongs.albumId);
+
     return {
       ...updatedSong,
       artistIds: updatedArtistIds.map((row) => row.artistId),
+      albumIds: updatedAlbumIds.map((row) => row.albumId),
       parentId: hierarchy[0]?.parentId ?? null,
       masterId: hierarchy[0]?.masterId ?? songId,
     };

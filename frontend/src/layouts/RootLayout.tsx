@@ -3,8 +3,6 @@ import { Button } from "../components/ui/Button";
 import { NotificationCenter } from "../components/NotificationCenter";
 import { GlobalPlayer } from "../components/GlobalPlayer";
 import { useSession } from "../context/SessionContext";
-import { AddSongModal } from "../components/AddSongModal";
-import { useAddSongModalStore } from "../stores/useAddSongModalStore";
 
 const navItems = [
   { to: "/artists", label: "Artists" },
@@ -16,7 +14,6 @@ const navItems = [
 
 function RootLayout() {
   const { logout } = useSession();
-  const { openModal } = useAddSongModalStore();
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -33,9 +30,6 @@ function RootLayout() {
           <div className="flex flex-shrink-0 items-center gap-3">
             <NotificationCenter />
             <div className="flex gap-2">
-              <Button variant="primary" onClick={openModal}>
-                Add Song
-              </Button>
               <Button variant="secondary" onClick={logout}>
                 Logout
               </Button>
@@ -69,8 +63,6 @@ function RootLayout() {
           </main>
         </div>
       </div>
-
-      <AddSongModal />
     </div>
   );
 }

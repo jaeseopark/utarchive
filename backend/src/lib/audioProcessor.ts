@@ -165,7 +165,7 @@ export const getAudioMetadata = async (
         }
 
         return {
-          duration: metadata.format.duration ? metadata.format.duration * 1000 : undefined,
+          duration: metadata.format.duration,
           format,
         };
       }

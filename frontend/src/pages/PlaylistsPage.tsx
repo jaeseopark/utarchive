@@ -37,7 +37,7 @@ function PlaylistsPage() {
         </div>
 
         <Button type="button" onClick={() => setIsModalOpen(true)}>
-          New Playlist
+          Add Playlist
         </Button>
       </div>
 
@@ -89,7 +89,7 @@ function PlaylistsPage() {
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-white/70 p-4">
           <div className="w-full max-w-lg rounded-3xl border border-slate-300 bg-slate-50 p-6 shadow-xl shadow-slate-200/40">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-slate-900">New Playlist</h3>
+              <h3 className="text-xl font-semibold text-slate-900">Add Playlist</h3>
               <button
                 type="button"
                 className="rounded-full border border-slate-400 bg-slate-200 px-3 py-2 text-sm text-slate-700 transition hover:border-slate-500 hover:bg-slate-300"

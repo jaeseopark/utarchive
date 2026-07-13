@@ -18,6 +18,7 @@ const router = Router();
 const albumTrackSchema = z.object({
   number: z.number().int().min(1),
   title: z.string().min(1).max(500),
+  duration: z.number().min(0).optional(),
 });
 
 const albumCreateSchema = z.object({
@@ -26,7 +27,7 @@ const albumCreateSchema = z.object({
   yearReleased: z.number().int().optional(),
   coverArtId: z.string().uuid().nullable().optional(),
   trackList: z.array(albumTrackSchema).optional(),
-  urls: z.record(z.string(), z.string()).optional(),
+  urls: z.array(z.string()).optional(),
 });
 
 const albumUpdateSchema = albumCreateSchema.partial();
@@ -101,7 +102,10 @@ router.patch("/:id", validateRequest(albumUpdateSchema), async (req, res) => {
     return res.status(400).json({ error: "No update fields provided" });
   }
 
-  const updatedAlbum = await updateAlbumById(albumId, updateData);
+  await updateAlbumById(albumId, updateData);
+
+  // Fetch the updated album with all associations and computed tracks
+  const updatedAlbum = await selectAlbumById(albumId);
 
   if (!updatedAlbum) {
     return res.status(404).json({ error: "Album not found" });
@@ -129,10 +133,34 @@ router.put("/:id/songs/:songId", validateRequest(albumSongSchema), async (req, r
   const { trackNumber } = albumSongSchema.parse(req.body);
   const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const songId = Array.isArray(req.params.songId) ? req.params.songId[0] : req.params.songId;
+  const requestId = req.requestId;
 
   try {
-    const association = await upsertAlbumSong(albumId, songId, trackNumber);
-    return res.status(200).json(association);
+    await upsertAlbumSong(albumId, songId, trackNumber);
+
+    // Fetch updated album with all associations and computed tracks
+    const updatedAlbum = await selectAlbumById(albumId);
+
+    if (!updatedAlbum) {
+      return res.status(404).json({ error: "Album not found" });
+    }
+
+    // Broadcast to all connected clients
+    const wss = req.app.locals.wss;
+    if (wss) {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
+        entity: "album",
+        timestamp: Date.now(),
+        data: {
+          updated: [updatedAlbum],
+        },
+        requestId,
+      };
+      broadcastMessage(wss, message);
+    }
+
+    return res.status(200).json(updatedAlbum);
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "ALBUM_NOT_FOUND") {
@@ -151,13 +179,37 @@ router.put("/:id/songs/:songId", validateRequest(albumSongSchema), async (req, r
 router.delete("/:id/songs/:songId", async (req, res) => {
   const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const songId = Array.isArray(req.params.songId) ? req.params.songId[0] : req.params.songId;
+  const requestId = req.requestId;
   const deleted = await deleteAlbumSong(albumId, songId);
 
   if (!deleted) {
     return res.status(404).json({ error: "Album association not found" });
   }
 
-  return res.status(200).json({ ok: true });
+  // Fetch updated album with all associations and computed tracks
+  // Ideally we want to emit the minimal delta event, but too much work for now. we'll revisit later.
+  const updatedAlbum = await selectAlbumById(albumId);
+
+  if (!updatedAlbum) {
+    return res.status(404).json({ error: "Album not found" });
+  }
+
+  // Broadcast to all connected clients
+  const wss = req.app.locals.wss;
+  if (wss) {
+    const message: DataChangedMessage = {
+      type: "DATA_CHANGED",
+      entity: "album",
+      timestamp: Date.now(),
+      data: {
+        updated: [updatedAlbum],
+      },
+      requestId,
+    };
+    broadcastMessage(wss, message);
+  }
+
+  return res.status(200).json(updatedAlbum);
 });
 
 export default router;
