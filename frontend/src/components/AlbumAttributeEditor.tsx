@@ -7,6 +7,7 @@ import { type AlbumDetail } from "../api/schemas";
 import { useUpdateAlbum } from "../hooks/useUpdateAlbum";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getChangedProperties } from "../lib/compareObjects";
+import UrlListComponent from "./UrlList";
 import { z } from "zod";
 import clsx from "clsx";
 
@@ -159,26 +160,11 @@ function AlbumAttributesEditorContent({
                 .join(", ")
             : "—"}
         </div>
-        <div>
-          <span className="font-medium">URLs:</span>{" "}
-          {album.urls && album.urls.length > 0 ? (
-            <div className="mt-1 flex flex-wrap gap-2">
-              {album.urls.map((url) => (
-                <a
-                  key={url}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sky-500 hover:underline break-all"
-                >
-                  {url}
-                </a>
-              ))}
-            </div>
-          ) : (
-            "—"
-          )}
-        </div>
+        {album.urls && album.urls.length > 0 && (
+          <div>
+            <UrlListComponent urls={album.urls} />
+          </div>
+        )}
       </div>
     );
   }

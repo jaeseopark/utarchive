@@ -7,6 +7,7 @@ import { type Artist } from "../api/schemas";
 import { useArtistUpdate } from "../hooks/useArtistUpdate";
 import { formatDate } from "../lib/format";
 import { getChangedProperties } from "../lib/compareObjects";
+import UrlListComponent from "./UrlList";
 import { z } from "zod";
 import clsx from "clsx";
 
@@ -316,20 +317,7 @@ function ArtistAttributesEditorContent({
                 <td className="px-4 py-3 font-medium text-slate-600 w-40">{attr.label}</td>
                 <td className="px-4 py-3 text-slate-900">
                   {attr.key === "urls" && isUrlArray(attr.value) ? (
-                    <div className="space-y-2">
-                      {attr.value.map((url) => (
-                        <div key={url}>
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="text-sky-500 hover:underline break-all"
-                          >
-                            {url}
-                          </a>
-                        </div>
-                      ))}
-                    </div>
+                    <UrlListComponent urls={attr.value} />
                   ) : (
                     <div className="break-words">{attr.value}</div>
                   )}

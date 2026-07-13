@@ -9,6 +9,7 @@ import { useArtistsStore } from "../stores/useArtistsStore";
 import { useCreateArtist } from "../hooks/useCreateArtist";
 import { formatDate } from "../lib/format";
 import { getChangedProperties } from "../lib/compareObjects";
+import UrlListComponent from "./UrlList";
 import { z } from "zod";
 import clsx from "clsx";
 
@@ -449,16 +450,8 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
               <tr key={attr.key} className="border-b border-slate-300 last:border-b-0">
                 <td className="px-4 py-3 font-medium text-slate-600 w-40">{attr.label}</td>
                 <td className="px-4 py-3 text-slate-900">
-                  {attr.key === "url" ? (
-                    <a
-                      // eslint-disable-next-line no-restricted-syntax
-                      href={attr.value as string}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="text-sky-500 hover:underline"
-                    >
-                      {attr.value}
-                    </a>
+                  {attr.key === "url" && typeof attr.value === "string" ? (
+                    <UrlListComponent urls={[attr.value]} />
                   ) : (
                     <div className="break-words">{attr.value}</div>
                   )}
