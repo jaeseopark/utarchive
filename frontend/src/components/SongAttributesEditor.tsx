@@ -16,9 +16,8 @@ import clsx from "clsx";
 // Define the update schema - only editable fields (excludes coverArtId which is managed separately)
 const SongUpdateSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
-  platformId: z.string().max(200).nullable().optional(),
   releasedAt: z.string().nullable().optional(),
-  url: z.string().max(2000).nullable().optional(),
+  urls: z.array(z.string()).optional(),
   description: z.string().nullable().optional(),
   playbackEnabled: z.boolean().optional(),
   trimRange: z.string().nullable().optional(),
@@ -35,9 +34,8 @@ type SongUpdateInput = z.infer<typeof SongUpdateSchema>;
 function getFormValuesFromSong(song: Song): SongUpdateInput {
   return {
     title: song.title,
-    platformId: song.platformId ?? "",
     releasedAt: song.releasedAt ?? "",
-    url: song.url ?? "",
+    urls: song.urls ?? [],
     description: song.description ?? "",
     playbackEnabled: song.playbackEnabled ?? false,
     trimRange: song.trimRange ?? "",
@@ -57,6 +55,11 @@ type TagOption = {
   label: string;
 };
 
+type UrlOption = {
+  value: string;
+  label: string;
+};
+
 interface SongAttributesEditorProps {
   song: Song;
   mode: "view" | "edit";
@@ -68,6 +71,7 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
   const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
   const [isCreatingArtist, setIsCreatingArtist] = useState(false);
   const [selectedTags, setSelectedTags] = useState<TagOption[]>([]);
+  const [selectedUrls, setSelectedUrls] = useState<UrlOption[]>([]);
   const { updateSongData } = useSongUpdate();
   const artists = useArtistsStore((state) => state.artists);
   const isLoading = useArtistsStore((state) => state.isLoading);
@@ -108,6 +112,11 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
     const tags = song.tags ?? [];
     const selectedTagsList = tags.map((tag) => ({ value: tag, label: tag }));
     setSelectedTags(selectedTagsList);
+
+    // Sync selectedUrls with song.urls
+    const urls = song.urls ?? [];
+    const selectedUrlsList = urls.map((url) => ({ value: url, label: url }));
+    setSelectedUrls(selectedUrlsList);
   }, [song, artists, reset]);
 
   const onSubmit = useCallback(
@@ -124,14 +133,14 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
         // Override with current selections from component state
         cleanedFormData.artistIds = selectedArtists.map((a) => a.value);
         cleanedFormData.tags = selectedTags.map((t) => t.value);
+        cleanedFormData.urls = selectedUrls.map((u) => u.value);
 
         // Step 2: Create a normalized version of the original song for comparison
         // Use the same shape as the form data so we can compare them directly
         const originalSongNormalized: Record<string, unknown> = {
           title: song.title,
-          platformId: song.platformId ?? null,
           releasedAt: song.releasedAt ?? null,
-          url: song.url ?? null,
+          urls: song.urls ?? [],
           description: song.description ?? null,
           playbackEnabled: song.playbackEnabled ?? false,
           trimRange: song.trimRange ?? null,
@@ -158,7 +167,7 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
         setIsSubmitting(false);
       }
     },
-    [song, selectedArtists, selectedTags, updateSongData],
+    [song, selectedArtists, selectedTags, selectedUrls, updateSongData],
   );
 
   const handleCancel = () => {
@@ -198,8 +207,11 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
       label: "Released",
       value: song.releasedAt ? formatDate(song.releasedAt) : null,
     },
-    { key: "platformId", label: "Platform ID", value: song.platformId },
-    { key: "url", label: "External URL", value: song.url },
+    {
+      key: "urls",
+      label: "External URLs",
+      value: song.urls && song.urls.length > 0 ? song.urls.join(", ") : null,
+    },
     ...(song.filePath
       ? [
           {
@@ -312,30 +324,6 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
                 </td>
               </tr>
 
-              {/* Platform ID */}
-              <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600">Platform ID</td>
-                <td className="px-4 py-3">
-                  <input
-                    type="text"
-                    {...register("platformId")}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
-                  />
-                </td>
-              </tr>
-
-              {/* External URL */}
-              <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600">External URL</td>
-                <td className="px-4 py-3">
-                  <input
-                    type="url"
-                    {...register("url")}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
-                  />
-                </td>
-              </tr>
-
               {/* Playback Enabled - only show if file exists */}
               {song.filePath && (
                 <tr className="border-b border-slate-300">
@@ -371,6 +359,51 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
                     {...register("description")}
                     rows={4}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                  />
+                </td>
+              </tr>
+
+              {/* External URLs */}
+              <tr className="border-b border-slate-300">
+                <td className="px-4 py-3 font-medium text-slate-600 align-top">External URLs</td>
+                <td className="px-4 py-3">
+                  <CreatableSelect
+                    isMulti
+                    isClearable
+                    options={[]}
+                    value={selectedUrls}
+                    onChange={(newValue) => {
+                      setSelectedUrls(newValue ? Array.from(newValue) : []);
+                    }}
+                    onCreateOption={(inputValue) => {
+                      const newUrl: UrlOption = {
+                        value: inputValue,
+                        label: inputValue,
+                      };
+                      setSelectedUrls([...selectedUrls, newUrl]);
+                    }}
+                    formatCreateLabel={(inputValue) => `Create URL "${inputValue}"`}
+                    placeholder="Add URLs (e.g., https://spotify.com/...)"
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        borderColor: base.borderColor,
+                        boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
+                        borderRadius: "0.5rem",
+                        minHeight: "2.5rem",
+                      }),
+                      multiValue: (base) => ({
+                        ...base,
+                        backgroundColor: "#dbeafe",
+                        borderRadius: "0.375rem",
+                      }),
+                      multiValueLabel: (base) => ({
+                        ...base,
+                        color: "#1e40af",
+                      }),
+                    }}
                   />
                 </td>
               </tr>

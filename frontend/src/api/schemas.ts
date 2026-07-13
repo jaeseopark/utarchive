@@ -38,7 +38,6 @@ export const SongListItemSchema = z.object({
     .uuid()
     .transform((val) => toBrandId<SongId>(val)),
   title: z.string(),
-  platformId: z.string().nullable().optional(),
   releasedAt: z.string().nullable().optional(),
   playbackEnabled: z.boolean(),
   duration: z.number().nullable().optional(),
@@ -115,9 +114,8 @@ export const SongSchema = z.object({
     .nullable()
     .optional()
     .transform((val) => (val ? toBrandId<SongId>(val) : null)),
-  platformId: z.string().nullable().optional(),
   releasedAt: z.string().nullable().optional(),
-  url: z.string().nullable().optional(),
+  urls: z.array(z.string()).optional().default([]),
   filePath: z.string().nullable().optional(),
   duration: z.number().nullable().optional(),
   fileExtension: z.string().nullable().optional(),
@@ -223,9 +221,8 @@ export const SongCreateSchema = z.object({
     )
     .min(1, "At least one artist is required"),
   parentId: optionalSongId,
-  platformId: z.string().max(200).nullable().optional(),
   releasedAt: optionalDatetime,
-  url: z.string().max(2000).nullable().optional(),
+  urls: z.array(z.string()).optional(),
   filePath: z.string().max(2000).nullable().optional(),
   coverArtId: optionalCoverArtId,
   description: z.string().optional(),
@@ -240,9 +237,8 @@ export const SongCreateFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less"),
   artistIds: z.array(z.string().uuid()).min(1, "At least one artist is required"),
   parentId: optionalUUID,
-  platformId: z.string().max(200).nullable().optional(),
   releasedAt: optionalDatetime,
-  url: z.string().max(2000).nullable().optional(),
+  urls: z.array(z.string()).optional(),
   filePath: z.string().max(2000).nullable().optional(),
   coverArtId: optionalUUID,
   description: z.string().optional(),

@@ -22,6 +22,16 @@ type ArtistOption = {
   isNew?: boolean;
 };
 
+type UrlOption = {
+  value: string;
+  label: string;
+};
+
+type TagOption = {
+  value: string;
+  label: string;
+};
+
 type ModalMode = "menu" | "create-new" | "link-existing";
 
 interface AddChildModalProps {
@@ -193,13 +203,14 @@ function CreateNewSongForm({
 
   const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
   const [isCreatingArtist, setIsCreatingArtist] = useState(false);
+  const [selectedUrls, setSelectedUrls] = useState<UrlOption[]>([]);
+  const [selectedTags, setSelectedTags] = useState<TagOption[]>([]);
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-    watch,
     setValue,
   } = useForm<SongCreateFormInput>({
     resolver: zodResolver(SongCreateFormSchema),
@@ -209,6 +220,7 @@ function CreateNewSongForm({
       playbackEnabled: false,
       artistIds: [],
       tags: [],
+      urls: [],
     },
   });
 
@@ -225,7 +237,19 @@ function CreateNewSongForm({
     setValue("artistIds", artistIds);
   }, [selectedArtists, setValue]);
 
-  const tagInput = watch("tags") || [];
+  // Update form urls whenever selectedUrls changes
+  useEffect(() => {
+    const urls = selectedUrls.map((u) => u.value);
+    setValue("urls", urls);
+  }, [selectedUrls, setValue]);
+
+  // Update form tags whenever selectedTags changes
+  useEffect(() => {
+    const tags = selectedTags.map((t) => t.value);
+    setValue("tags", tags);
+  }, [selectedTags, setValue]);
+
+
 
   const artistOptions: ArtistOption[] = artists.map((artist) => ({
     value: artist.id,
@@ -280,16 +304,7 @@ function CreateNewSongForm({
     [selectedArtists, createArtist],
   );
 
-  const handleTagInput = useCallback(
-    (value: string) => {
-      const tags = value
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-      setValue("tags", tags);
-    },
-    [setValue],
-  );
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -394,27 +409,6 @@ function CreateNewSongForm({
             <p className="mt-1 text-xs text-slate-500">Pre-populated and locked</p>
           </div>
 
-          {/* Platform ID */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Platform ID (optional)
-            </label>
-            <input
-              type="text"
-              {...register("platformId")}
-              className={clsx(
-                "mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition",
-                errors.platformId
-                  ? "border-red-500 ring-1 ring-red-500"
-                  : "border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400",
-              )}
-              placeholder="e.g., spotify:track:xyz"
-            />
-            {errors.platformId && (
-              <p className="mt-1 text-sm text-red-500">{errors.platformId.message}</p>
-            )}
-          </div>
-
           {/* Released At */}
           <div>
             <label className="block text-sm font-medium text-slate-700">
@@ -435,21 +429,47 @@ function CreateNewSongForm({
             )}
           </div>
 
-          {/* URL */}
+          {/* External URLs */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">URL (optional)</label>
-            <input
-              type="text"
-              {...register("url")}
-              className={clsx(
-                "mt-1 block w-full rounded-lg border px-3 py-2 text-sm transition",
-                errors.url
-                  ? "border-red-500 ring-1 ring-red-500"
-                  : "border-slate-300 focus:border-sky-400 focus:ring-1 focus:ring-sky-400",
-              )}
-              placeholder="https://example.com/song"
+            <label className="block text-sm font-medium text-slate-700">External URLs (optional)</label>
+            <CreatableSelect
+              isMulti
+              isClearable
+              options={[]}
+              value={selectedUrls}
+              onChange={(newValue) => {
+                setSelectedUrls(newValue ? Array.from(newValue) : []);
+              }}
+              onCreateOption={(inputValue) => {
+                const newUrl: UrlOption = {
+                  value: inputValue,
+                  label: inputValue,
+                };
+                setSelectedUrls([...selectedUrls, newUrl]);
+              }}
+              formatCreateLabel={(inputValue) => `Add URL "${inputValue}"`}
+              placeholder="Add URLs (e.g., https://spotify.com/...)"
+              className="react-select-container"
+              classNamePrefix="react-select"
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  borderColor: base.borderColor,
+                  boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
+                  borderRadius: "0.5rem",
+                  minHeight: "2.5rem",
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: "#dbeafe",
+                  borderRadius: "0.375rem",
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  color: "#1e40af",
+                }),
+              }}
             />
-            {errors.url && <p className="mt-1 text-sm text-red-500">{errors.url.message}</p>}
           </div>
 
           {/* Description */}
@@ -476,14 +496,44 @@ function CreateNewSongForm({
           {/* Tags */}
           <div>
             <label className="block text-sm font-medium text-slate-700">Tags (optional)</label>
-            <input
-              type="text"
-              value={tagInput.join(", ")}
-              onChange={(e) => handleTagInput(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
-              placeholder="e.g., tag1, tag2, tag3"
+            <CreatableSelect
+              isMulti
+              isClearable
+              options={[]}
+              value={selectedTags}
+              onChange={(newValue) => {
+                setSelectedTags(newValue ? Array.from(newValue) : []);
+              }}
+              onCreateOption={(inputValue) => {
+                const newTag: TagOption = {
+                  value: inputValue,
+                  label: inputValue,
+                };
+                setSelectedTags([...selectedTags, newTag]);
+              }}
+              formatCreateLabel={(inputValue) => `Create tag "${inputValue}"`}
+              placeholder="Select or create tags..."
+              className="react-select-container"
+              classNamePrefix="react-select"
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  borderColor: base.borderColor,
+                  boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
+                  borderRadius: "0.5rem",
+                  minHeight: "2.5rem",
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: "#dbeafe",
+                  borderRadius: "0.375rem",
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  color: "#1e40af",
+                }),
+              }}
             />
-            <p className="mt-1 text-xs text-slate-500">Separate tags with commas</p>
           </div>
 
           {/* Error Messages */}

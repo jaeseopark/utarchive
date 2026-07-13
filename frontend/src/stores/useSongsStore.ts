@@ -195,7 +195,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
       const songListItem: SongListItem = {
         id: song.id,
         title: song.title,
-        platformId: song.platformId,
         releasedAt: song.releasedAt,
         playbackEnabled: song.playbackEnabled,
         coverArtId: song.coverArtId,
@@ -233,7 +232,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
           return {
             ...song,
             title: updates.title ?? song.title,
-            platformId: updates.platformId ?? song.platformId,
             releasedAt: updates.releasedAt ?? song.releasedAt,
             playbackEnabled: updates.playbackEnabled ?? song.playbackEnabled,
             coverArtId: updates.coverArtId ?? song.coverArtId,
