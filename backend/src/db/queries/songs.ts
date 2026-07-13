@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "../../db";
 import { albumSongs, albums, artists, songArtists, songHierarchy, songs } from "../../db/schema";
@@ -583,6 +583,9 @@ export const linkChildToParent = async (
       .where(eq(songHierarchy.songId, childId))
       .limit(1);
 
+    // Capture the child's old masterId BEFORE updating (important for master songs)
+    const oldMasterId = existingChildHierarchy[0]?.masterId ?? childId;
+
     if (existingChildHierarchy[0]) {
       // Update existing hierarchy
       await tx
@@ -599,9 +602,6 @@ export const linkChildToParent = async (
     }
 
     // Cascade masterId update to all descendants only (not unrelated songs with same old masterId)
-    // Get the child's current masterId before updating it
-    const oldMasterId = existingChildHierarchy[0]?.masterId ?? childId;
-
     // Query all songs with the old masterId to get their parent relationships (single DB lookup)
     const siblingsResult = await tx
       .select({ songId: songHierarchy.songId, parentId: songHierarchy.parentId })
@@ -632,7 +632,7 @@ export const linkChildToParent = async (
       await tx
         .update(songHierarchy)
         .set({ masterId: newMasterId })
-        .where(sql`song_id = ANY(${descendantIds}::uuid[])`);
+        .where(inArray(songHierarchy.songId, descendantIds));
     }
 
     // Return updated child song
