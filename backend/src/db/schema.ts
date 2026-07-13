@@ -66,9 +66,8 @@ export const songs = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     title: varchar("title", { length: 500 }).notNull(),
-    platformId: varchar("platform_id", { length: 200 }),
     releasedAt: timestamp("released_at", { mode: "date" }),
-    url: varchar("url", { length: 2000 }),
+    urls: text("urls").array().$type<string[]>().notNull().default([]),
     filePath: varchar("file_path", { length: 2000 }),
     duration: real("duration"), // seconds
     fileExtension: varchar("file_extension", { length: 16 }),
@@ -82,10 +81,7 @@ export const songs = pgTable(
     searchVector: tsvector("search_vector"),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
-  (table) => [
-    unique("songs_file_hash_unique").on(table.fileHash),
-    unique("songs_platform_id_unique").on(table.platformId),
-  ],
+  (table) => [unique("songs_file_hash_unique").on(table.fileHash)],
 );
 
 export const songHierarchy = pgTable(

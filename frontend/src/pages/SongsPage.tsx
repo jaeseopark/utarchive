@@ -65,7 +65,6 @@ function SongsPage() {
                 <th className="px-4 py-3">Title</th>
                 <th className="px-4 py-3">Artist(s)</th>
                 <th className="px-4 py-3">Released</th>
-                <th className="px-4 py-3">Platform</th>
               </tr>
             </thead>
             <tbody>
@@ -118,7 +117,6 @@ function SongsPage() {
                         : "Unknown"}
                     </td>
                     <td className="px-4 py-4 text-slate-700">{song.releasedYear ?? "—"}</td>
-                    <td className="px-4 py-4 text-slate-700">{song.platformId ?? "—"}</td>
                   </tr>
                 );
               })}

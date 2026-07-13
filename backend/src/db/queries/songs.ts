@@ -6,9 +6,8 @@ import { albumSongs, albums, artists, songArtists, songHierarchy, songs } from "
 export type SongCreateInput = {
   title: string;
   parentId?: string | null;
-  platformId?: string | null;
   releasedAt?: string;
-  url?: string | null;
+  urls?: string[];
   filePath?: string | null;
   coverArtId?: string | null;
   description?: string | null;
@@ -20,9 +19,8 @@ export type SongCreateInput = {
 
 export type SongUpdateInput = {
   title?: string;
-  platformId?: string | null;
   releasedAt?: string;
-  url?: string | null;
+  urls?: string[];
   filePath?: string | null;
   duration?: number | null;
   fileExtension?: string | null;
@@ -47,9 +45,8 @@ export type SongListFilters = {
 export type Song = {
   id: string;
   title: string;
-  platformId: string | null;
   releasedAt: Date | null;
-  url: string | null;
+  urls: string[];
   filePath: string | null;
   duration: number | null;
   fileExtension: string | null;
@@ -77,9 +74,8 @@ export const selectSongById = async (id: string) => {
       title: songs.title,
       parentId: songHierarchy.parentId,
       masterId: sql<string>`coalesce(${songHierarchy.masterId}, ${songs.id})`,
-      platformId: songs.platformId,
       releasedAt: songs.releasedAt,
-      url: songs.url,
+      urls: songs.urls,
       filePath: songs.filePath,
       duration: songs.duration,
       fileExtension: songs.fileExtension,
@@ -152,7 +148,6 @@ export const selectSongs = async (filters: SongListFilters) => {
   const selectObj = {
     id: songs.id,
     title: songs.title,
-    platformId: songs.platformId,
     releasedAt: songs.releasedAt,
     playbackEnabled: songs.playbackEnabled,
     duration: songs.duration,
@@ -248,9 +243,8 @@ export const createSong = async (
     const insertData = {
       id: songId,
       title: songData.title,
-      platformId: songData.platformId ?? null,
       releasedAt: songData.releasedAt ? new Date(songData.releasedAt) : undefined,
-      url: songData.url ?? null,
+      urls: songData.urls ?? [],
       filePath: songData.filePath ?? null,
       coverArtId: songData.coverArtId ?? null,
       description: songData.description ?? null,
@@ -287,9 +281,8 @@ export const createSong = async (
     return {
       id: songId,
       title: songData.title,
-      platformId: songData.platformId ?? null,
       releasedAt: songData.releasedAt ? new Date(songData.releasedAt) : null,
-      url: songData.url ?? null,
+      urls: songData.urls ?? [],
       filePath: songData.filePath ?? null,
       duration: null,
       fileExtension: null,

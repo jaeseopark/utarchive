@@ -16,9 +16,8 @@ import clsx from "clsx";
 // Define the update schema - only editable fields (excludes coverArtId which is managed separately)
 const SongUpdateSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
-  platformId: z.string().max(200).nullable().optional(),
   releasedAt: z.string().nullable().optional(),
-  url: z.string().max(2000).nullable().optional(),
+  urls: z.array(z.string()).optional(),
   description: z.string().nullable().optional(),
   playbackEnabled: z.boolean().optional(),
   trimRange: z.string().nullable().optional(),
@@ -35,9 +34,8 @@ type SongUpdateInput = z.infer<typeof SongUpdateSchema>;
 function getFormValuesFromSong(song: Song): SongUpdateInput {
   return {
     title: song.title,
-    platformId: song.platformId ?? "",
     releasedAt: song.releasedAt ?? "",
-    url: song.url ?? "",
+    urls: song.urls ?? [],
     description: song.description ?? "",
     playbackEnabled: song.playbackEnabled ?? false,
     trimRange: song.trimRange ?? "",
@@ -129,9 +127,8 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
         // Use the same shape as the form data so we can compare them directly
         const originalSongNormalized: Record<string, unknown> = {
           title: song.title,
-          platformId: song.platformId ?? null,
           releasedAt: song.releasedAt ?? null,
-          url: song.url ?? null,
+          urls: song.urls ?? [],
           description: song.description ?? null,
           playbackEnabled: song.playbackEnabled ?? false,
           trimRange: song.trimRange ?? null,
@@ -198,8 +195,11 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
       label: "Released",
       value: song.releasedAt ? formatDate(song.releasedAt) : null,
     },
-    { key: "platformId", label: "Platform ID", value: song.platformId },
-    { key: "url", label: "External URL", value: song.url },
+    {
+      key: "urls",
+      label: "External URLs",
+      value: song.urls && song.urls.length > 0 ? song.urls.join(", ") : null,
+    },
     ...(song.filePath
       ? [
           {
@@ -307,30 +307,6 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
                   <input
                     type="datetime-local"
                     {...register("releasedAt")}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
-                  />
-                </td>
-              </tr>
-
-              {/* Platform ID */}
-              <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600">Platform ID</td>
-                <td className="px-4 py-3">
-                  <input
-                    type="text"
-                    {...register("platformId")}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
-                  />
-                </td>
-              </tr>
-
-              {/* External URL */}
-              <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600">External URL</td>
-                <td className="px-4 py-3">
-                  <input
-                    type="url"
-                    {...register("url")}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
                   />
                 </td>
