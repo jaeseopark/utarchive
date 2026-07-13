@@ -1,8 +1,6 @@
 import { useEffect, useRef } from "react";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useRecordListening } from "./useRecordListening";
-import { SongSchema } from "../api/schemas";
-import { z } from "zod";
 
 /**
  * Hook to centralize listening session tracking and analytics
