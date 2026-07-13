@@ -9,6 +9,7 @@ import {
   selectSongsByArtistId,
   updateArtistById,
 } from "../db/queries/artists";
+import { selectAlbumsByArtistId } from "../db/queries/albums";
 import { broadcastMessage } from "../ws";
 import { DataChangedMessage } from "../types/websocket";
 import { serializeForApiResponse } from "../lib/serialization";
@@ -127,6 +128,17 @@ router.get("/:id/songs", async (req, res) => {
   // Return only song IDs; frontend will combine with zustand's song store
   const songIds = songsData.map((song) => song.id);
   return res.status(200).json({ songIds });
+});
+
+router.get("/:id/albums", async (req, res) => {
+  const artist = await selectArtistById(req.params.id);
+
+  if (!artist) {
+    return res.status(404).json({ error: "Artist not found" });
+  }
+
+  const albumsData = await selectAlbumsByArtistId(req.params.id);
+  return res.status(200).json({ albums: serializeForApiResponse(albumsData) });
 });
 
 export default router;

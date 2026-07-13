@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { useAlbums } from "../hooks/useAlbums";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
+import { Button } from "../components/ui/Button";
+import { AddAlbumModal } from "../components/AddAlbumModal";
+import { useAddAlbumModalStore } from "../stores/useAddAlbumModalStore";
 
 const PAGE_SIZE = 50;
 
@@ -10,6 +13,7 @@ function AlbumsPage() {
   const [page, setPage] = useState(0);
   const { albums, isLoading, error } = useAlbums(page);
   const artists = useArtistsStore((state) => state.artists);
+  const { openModal } = useAddAlbumModalStore();
 
   const albumsWithArtistNames = useMemo(() => {
     const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
@@ -21,9 +25,14 @@ function AlbumsPage() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold">Albums</h2>
-        <p className="mt-2 text-slate-600">Browse albums in the archive.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">Albums</h2>
+          <p className="mt-2 text-slate-600">Browse albums in the archive.</p>
+        </div>
+        <Button variant="primary" onClick={openModal}>
+          Add Album
+        </Button>
       </div>
 
       <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-xl shadow-slate-200/20">
@@ -101,6 +110,8 @@ function AlbumsPage() {
           Next
         </button>
       </div>
+
+      <AddAlbumModal />
     </section>
   );
 }

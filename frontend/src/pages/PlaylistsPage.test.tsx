@@ -63,7 +63,7 @@ describe("PlaylistsPage", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /new playlist/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add playlist/i }));
     fireEvent.change(screen.getByPlaceholderText(/my new playlist/i), {
       target: { value: "New Playlist" },
     });

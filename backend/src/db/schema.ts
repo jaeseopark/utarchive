@@ -57,7 +57,7 @@ export const albums = pgTable("albums", {
   yearReleased: integer("year_released"),
   coverArtId: uuid("cover_art_id").references(() => coverArt.id),
   trackList: jsonb("track_list").$type<unknown[]>().notNull().default([]),
-  urls: jsonb("urls").$type<Record<string, string>>().notNull().default({}),
+  urls: jsonb("urls").$type<string[]>().notNull().default([]),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
@@ -70,7 +70,7 @@ export const songs = pgTable(
     releasedAt: timestamp("released_at", { mode: "date" }),
     url: varchar("url", { length: 2000 }),
     filePath: varchar("file_path", { length: 2000 }),
-    duration: real("duration"),
+    duration: real("duration"), // seconds
     fileExtension: varchar("file_extension", { length: 16 }),
     fileSizeBytes: bigint("file_size_bytes", { mode: "bigint" }),
     coverArtId: uuid("cover_art_id").references(() => coverArt.id),

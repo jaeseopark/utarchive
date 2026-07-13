@@ -5,6 +5,7 @@ import { albumArtists, albumSongs, albums, songs } from "../../db/schema";
 export type AlbumTrackListItem = {
   number: number;
   title: string;
+  duration?: number; // in seconds
 };
 
 export type AlbumCreateInput = {
@@ -13,7 +14,7 @@ export type AlbumCreateInput = {
   yearReleased?: number | null;
   coverArtId?: string | null;
   trackList?: AlbumTrackListItem[];
-  urls?: Record<string, string>;
+  urls?: string[];
 };
 
 export type AlbumUpdateInput = Partial<AlbumCreateInput>;
@@ -33,7 +34,7 @@ export type AlbumWithTracks = {
   yearReleased: number | null;
   coverArtId: string | null;
   trackList: AlbumTrackListItem[];
-  urls: Record<string, string>;
+  urls: string[];
   createdAt: string;
   tracks: AlbumTrack[];
 };
@@ -178,7 +179,7 @@ export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | nul
     yearReleased: album.yearReleased ?? null,
     coverArtId: album.coverArtId ?? null,
     trackList: normalizeTrackList(album.trackList),
-    urls: album.urls ?? {},
+    urls: album.urls ?? [],
     createdAt:
       album.createdAt instanceof Date ? album.createdAt.toISOString() : String(album.createdAt),
     tracks: buildTracks(album.trackList, songRows),
@@ -188,8 +189,8 @@ export const selectAlbumById = async (id: string): Promise<AlbumWithTracks | nul
 export const createAlbum = async (albumData: AlbumCreateInput) => {
   const albumId = crypto.randomUUID();
 
-  return db.transaction(async (tx) => {
-    const rows = await tx
+  await db.transaction(async (tx) => {
+    await tx
       .insert(albums)
       .values({
         id: albumId,
@@ -197,7 +198,7 @@ export const createAlbum = async (albumData: AlbumCreateInput) => {
         yearReleased: albumData.yearReleased ?? null,
         coverArtId: albumData.coverArtId ?? null,
         trackList: albumData.trackList ?? [],
-        urls: albumData.urls ?? {},
+        urls: albumData.urls ?? [],
       })
       .returning();
 
@@ -210,9 +211,13 @@ export const createAlbum = async (albumData: AlbumCreateInput) => {
         })),
       );
     }
-
-    return rows[0];
   });
+
+  const createdAlbum = await selectAlbumById(albumId);
+  if (!createdAlbum) {
+    throw new Error(`Failed to retrieve created album with ID: ${albumId}`);
+  }
+  return createdAlbum;
 };
 
 export const updateAlbumById = async (albumId: string, updateData: AlbumUpdateInput) => {
@@ -273,6 +278,34 @@ export const upsertAlbumSong = async (albumId: string, songId: string, trackNumb
     throw new Error("SONG_NOT_FOUND");
   }
 
+  // Normalize and update trackList with song info
+  const currentTrackList = normalizeTrackList(existingAlbum.trackList);
+  const updatedTrackList = [...currentTrackList];
+
+  // Find existing track entry or create new one
+  const existingTrackIndex = updatedTrackList.findIndex((t) => t.number === trackNumber);
+
+  if (existingTrackIndex >= 0) {
+    // Update existing track entry with missing fields from song
+    const track = updatedTrackList[existingTrackIndex];
+    updatedTrackList[existingTrackIndex] = {
+      number: track.number,
+      title: track.title || existingSong.title,
+      duration: track.duration ?? existingSong.duration ?? undefined,
+    };
+  } else {
+    // Create new track entry with song info
+    updatedTrackList.push({
+      number: trackNumber,
+      title: existingSong.title,
+      duration: existingSong.duration ?? undefined,
+    });
+  }
+
+  // Update album's trackList
+  await db.update(albums).set({ trackList: updatedTrackList }).where(eq(albums.id, albumId));
+
+  // Then upsert the album-song association
   const [existingAssociation] = await db
     .select()
     .from(albumSongs)
@@ -297,4 +330,21 @@ export const deleteAlbumSong = async (albumId: string, songId: string) => {
     .where(and(eq(albumSongs.albumId, albumId), eq(albumSongs.songId, songId)));
 
   return (result.rowCount ?? 0) > 0;
+};
+
+export const selectAlbumsByArtistId = async (artistId: string) => {
+  const results = await db
+    .select({
+      id: albums.id,
+      title: albums.title,
+      yearReleased: albums.yearReleased,
+      coverArtId: albums.coverArtId,
+      createdAt: albums.createdAt,
+    })
+    .from(albums)
+    .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
+    .where(eq(albumArtists.artistId, artistId))
+    .orderBy(albums.title);
+
+  return results;
 };

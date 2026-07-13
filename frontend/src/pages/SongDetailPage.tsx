@@ -6,6 +6,7 @@ import FamilyTree from "../components/FamilyTree";
 import AudioUploadButton from "../components/AudioUploadButton";
 import { useSongAttributesEditor } from "../components/SongAttributesEditor";
 import { useArtistsStore } from "../stores/useArtistsStore";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { getArtistNames } from "../lib/artistNames";
 import { useSongDetail } from "../hooks/useSongDetail";
@@ -96,9 +97,20 @@ function SongHeader({ song }: SongHeaderProps) {
 function SongDetailPage() {
   const { id } = useParams<"id">();
   const { song: songData, isLoading, error } = useSongDetail(toBrandId<SongId>(id || ""));
+  const albums = useAlbumsStore((state) => state.albums);
 
   // Use song data from hook
   const song = songData;
+
+  // Get album titles for the song's albums
+  const songAlbums = useMemo(() => {
+    if (!song?.albumIds) return [];
+    return song.albumIds
+      .map((albumId) => {
+        const album = albums.find((a) => a.id === albumId);
+        return album ? { id: albumId, title: album.title } : { id: albumId, title: "Unknown" };
+      });
+  }, [song?.albumIds, albums]);
 
   return (
     <section className="space-y-6">
@@ -118,6 +130,26 @@ function SongDetailPage() {
       ) : song ? (
         <div className="space-y-6">
           <SongHeader song={song} />
+
+          {songAlbums.length > 0 && (
+            <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
+              <h3 className="text-xl font-semibold text-slate-900">Album{songAlbums.length > 1 ? "s" : ""}</h3>
+              <div className="mt-4">
+                <ul className="space-y-2">
+                  {songAlbums.map((album) => (
+                    <li key={album.id}>
+                      <Link
+                        to={`/albums/${album.id}`}
+                        className="text-sky-500 transition hover:underline"
+                      >
+                        {album.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
 
           <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
             <h3 className="text-xl font-semibold text-slate-900">Family tree</h3>

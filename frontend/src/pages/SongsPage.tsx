@@ -4,6 +4,9 @@ import { useSongs } from "../hooks/useSongs";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
+import { Button } from "../components/ui/Button";
+import { AddSongModal } from "../components/AddSongModal";
+import { useAddSongModalStore } from "../stores/useAddSongModalStore";
 
 const PAGE_SIZE = 50;
 
@@ -12,6 +15,7 @@ function SongsPage() {
   const { songs, isLoading, error } = useSongs(page);
   const artists = useArtistsStore((state) => state.artists);
   const { play } = usePlayerStore();
+  const { openModal } = useAddSongModalStore();
 
   const canPrevious = page > 0;
 
@@ -30,9 +34,14 @@ function SongsPage() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold">Songs</h2>
-        <p className="mt-2 text-slate-600">Browse all songs in the archive.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">Songs</h2>
+          <p className="mt-2 text-slate-600">Browse all songs in the archive.</p>
+        </div>
+        <Button variant="primary" onClick={openModal}>
+          Add Song
+        </Button>
       </div>
 
       <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-xl shadow-slate-200/20">
@@ -137,6 +146,8 @@ function SongsPage() {
           Next
         </button>
       </div>
+
+      <AddSongModal />
     </section>
   );
 }
