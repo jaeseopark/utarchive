@@ -1,9 +1,6 @@
 import { useEffect, useRef } from "react";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useRecordListening } from "./useRecordListening";
-import { SongSchema } from "../api/schemas";
-import { z } from "zod";
-import { parseTrimRange } from "../lib/format";
 
 /**
  * Hook to centralize listening session tracking and analytics
@@ -54,7 +51,7 @@ export function usePlayerAnalytics() {
         return;
       }
 
-      const effectiveDuration = getEffectiveDuration(currentSong);
+      const effectiveDuration = currentSong?.duration ?? 1;
       const playbackPercent = Math.min(100, (durationSeconds / effectiveDuration) * 100);
 
       try {
@@ -84,7 +81,7 @@ export function usePlayerAnalytics() {
       const durationSeconds = currentTime - sessionRef.current.initialTime;
       if (durationSeconds < 5) return; // Don't track very short sessions
 
-      const effectiveDuration = getEffectiveDuration(currentSong);
+      const effectiveDuration = currentSong?.duration ?? 1;
       const playbackPercent = Math.min(100, (durationSeconds / effectiveDuration) * 100);
 
       const payload = JSON.stringify({
@@ -104,21 +101,4 @@ export function usePlayerAnalytics() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [currentSong, currentTime]);
-}
-
-/**
- * Get effective duration accounting for trimmed ranges
- * Matches logic from SongDetailPage
- */
-function getEffectiveDuration(song: z.infer<typeof SongSchema> | null): number {
-  if (!song) return 1;
-  const baseDuration = song.duration ?? 1;
-
-  // Account for trimmed song durations
-  const { start, end } = parseTrimRange(song.trimRange);
-  if (start != null && end != null) {
-    return Math.max(1, end - start);
-  }
-
-  return baseDuration;
 }
