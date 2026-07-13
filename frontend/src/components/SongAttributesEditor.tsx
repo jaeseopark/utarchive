@@ -20,7 +20,6 @@ const SongUpdateSchema = z.object({
   urls: z.array(z.string()).optional(),
   description: z.string().nullable().optional(),
   playbackEnabled: z.boolean().optional(),
-  trimRange: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
   artistIds: z.array(z.string().uuid()).optional(),
 });
@@ -38,7 +37,6 @@ function getFormValuesFromSong(song: Song): SongUpdateInput {
     urls: song.urls ?? [],
     description: song.description ?? "",
     playbackEnabled: song.playbackEnabled ?? false,
-    trimRange: song.trimRange ?? "",
     tags: song.tags ?? [],
     artistIds: song.artistIds ?? [],
   };
@@ -143,7 +141,7 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
           urls: song.urls ?? [],
           description: song.description ?? null,
           playbackEnabled: song.playbackEnabled ?? false,
-          trimRange: song.trimRange ?? null,
+
           tags: song.tags ?? [],
           artistIds: song.artistIds ?? [],
         };
@@ -222,11 +220,7 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
         ]
       : []),
     {
-      key: "trimRange",
-      label: "Trim Range",
-      value: song.trimRange,
-    },
-    {
+
       key: "description",
       label: "Description",
       value: song.description,
@@ -337,19 +331,6 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
                   </td>
                 </tr>
               )}
-
-              {/* Trim Range */}
-              <tr className="border-b border-slate-300">
-                <td className="px-4 py-3 font-medium text-slate-600">Trim Range</td>
-                <td className="px-4 py-3">
-                  <input
-                    type="text"
-                    {...register("trimRange")}
-                    placeholder="e.g., 10.5-125.8"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
-                  />
-                </td>
-              </tr>
 
               {/* Description */}
               <tr className="border-b border-slate-300">

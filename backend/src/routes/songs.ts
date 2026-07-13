@@ -51,7 +51,6 @@ const songCreateSchema = z.object({
   coverArtId: z.string().uuid().nullable().optional(),
   description: z.string().optional(),
   playbackEnabled: z.boolean().optional(),
-  trimRange: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
 });
 
@@ -66,7 +65,6 @@ const songUpdateSchema = z.object({
   coverArtId: z.string().uuid().nullable().optional(),
   description: z.string().optional(),
   playbackEnabled: z.boolean().optional(),
-  trimRange: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
 });
 

@@ -364,8 +364,6 @@ export function AddSongModal() {
 
           {/* PlaybackEnabled - hidden, defaults to false */}
 
-          {/* Trim Range - hidden, set programmatically */}
-
           {/* File Hash - hidden, set programmatically */}
 
           {/* Tags */}

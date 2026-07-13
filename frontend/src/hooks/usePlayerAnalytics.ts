@@ -3,7 +3,6 @@ import { usePlayerStore } from "../stores/usePlayerStore";
 import { useRecordListening } from "./useRecordListening";
 import { SongSchema } from "../api/schemas";
 import { z } from "zod";
-import { parseTrimRange } from "../lib/format";
 
 /**
  * Hook to centralize listening session tracking and analytics
@@ -107,18 +106,9 @@ export function usePlayerAnalytics() {
 }
 
 /**
- * Get effective duration accounting for trimmed ranges
- * Matches logic from SongDetailPage
+ * Get effective duration - returns the song's duration
  */
 function getEffectiveDuration(song: z.infer<typeof SongSchema> | null): number {
   if (!song) return 1;
-  const baseDuration = song.duration ?? 1;
-
-  // Account for trimmed song durations
-  const { start, end } = parseTrimRange(song.trimRange);
-  if (start != null && end != null) {
-    return Math.max(1, end - start);
-  }
-
-  return baseDuration;
+  return song.duration ?? 1;
 }

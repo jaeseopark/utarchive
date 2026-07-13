@@ -128,7 +128,6 @@ export const SongSchema = z.object({
     .transform((val) => (val ? toBrandId<CoverArtId>(val) : null)),
   description: z.string().nullable().optional(),
   playbackEnabled: z.boolean(),
-  trimRange: z.string().nullable().optional(),
   fileHash: z.string().nullable().optional(),
   tags: z.array(z.string()).optional().default([]),
   createdAt: z.string(),

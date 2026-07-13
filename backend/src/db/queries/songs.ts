@@ -12,7 +12,6 @@ export type SongCreateInput = {
   coverArtId?: string | null;
   description?: string | null;
   playbackEnabled?: boolean;
-  trimRange?: string | null;
   fileHash?: string | null;
   tags?: string[];
 };
@@ -28,7 +27,6 @@ export type SongUpdateInput = {
   coverArtId?: string | null;
   description?: string | null;
   playbackEnabled?: boolean;
-  trimRange?: string | null;
   fileHash?: string | null;
   tags?: string[];
   artistIds?: string[];
@@ -54,7 +52,6 @@ export type Song = {
   coverArtId: string | null;
   description: string | null;
   playbackEnabled: boolean;
-  trimRange: string | null;
   fileHash: string | null;
   tags: string[];
   createdAt: Date;
@@ -83,7 +80,6 @@ export const selectSongById = async (id: string) => {
       coverArtId: songs.coverArtId,
       description: songs.description,
       playbackEnabled: songs.playbackEnabled,
-      trimRange: songs.trimRange,
       fileHash: songs.fileHash,
       tags: songs.tags,
       createdAt: songs.createdAt,
@@ -104,34 +100,6 @@ export const selectSongById = async (id: string) => {
     .limit(1);
 
   return song ?? null;
-};
-
-/**
- * Parse trimRange string into start and end values.
- * Format: "start,end" where either can be omitted.
- * Examples: "30," -> { start: 30, end: null }
- *           ",45" -> { start: null, end: 45 }
- *           "30,45" -> { start: 30, end: 45 }
- */
-export const parseTrimRange = (
-  trimRange: string | null,
-): { start: number | null; end: number | null } => {
-  if (!trimRange || trimRange.trim() === "") {
-    return { start: null, end: null };
-  }
-
-  const parts = trimRange.split(",");
-  const start = parts[0]?.trim() ? Number(parts[0].trim()) : null;
-  const end = parts[1]?.trim() ? Number(parts[1].trim()) : null;
-
-  if (start !== null && Number.isNaN(start)) {
-    return { start: null, end: null };
-  }
-  if (end !== null && Number.isNaN(end)) {
-    return { start: null, end: null };
-  }
-
-  return { start, end };
 };
 
 export const selectSongArtistIds = async (songId: string) => {
@@ -252,7 +220,6 @@ export const createSong = async (
       coverArtId: songData.coverArtId ?? null,
       description: songData.description ?? null,
       playbackEnabled: songData.playbackEnabled,
-      trimRange: songData.trimRange ?? null,
       fileHash: songData.fileHash ?? null,
       tags: songData.tags ?? [],
       searchVector: sql`
@@ -293,7 +260,6 @@ export const createSong = async (
       coverArtId: songData.coverArtId ?? null,
       description: songData.description ?? null,
       playbackEnabled: songData.playbackEnabled ?? true,
-      trimRange: songData.trimRange ?? null,
       fileHash: songData.fileHash ?? null,
       tags: songData.tags ?? [],
       createdAt: new Date(),
@@ -404,7 +370,6 @@ export type SongTreeNode = {
   coverArtId: string | null;
   playbackEnabled: boolean;
   releasedAt: string | null;
-  trimRange: string | null;
 };
 
 export const selectSongTree = async (songId: string) => {
@@ -425,7 +390,6 @@ export const selectSongTree = async (songId: string) => {
         s.cover_art_id,
         s.playback_enabled,
         s.released_at,
-        s.trim_range,
         ARRAY[s.id] AS path,
         0 AS depth
       FROM songs s
@@ -439,7 +403,6 @@ export const selectSongTree = async (songId: string) => {
         s.cover_art_id,
         s.playback_enabled,
         s.released_at,
-        s.trim_range,
         tree.path || s.id,
         tree.depth + 1
       FROM songs s
@@ -461,8 +424,7 @@ export const selectSongTree = async (songId: string) => {
       ) AS "artistIds",
       tree.cover_art_id AS "coverArtId",
       tree.playback_enabled AS "playbackEnabled",
-      tree.released_at AS "releasedAt",
-      tree.trim_range AS "trimRange"
+      tree.released_at AS "releasedAt"
     FROM tree
     ORDER BY tree.path
   `);
