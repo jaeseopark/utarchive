@@ -48,7 +48,6 @@ export function AddSongModal() {
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-    watch,
     setValue,
   } = useForm<SongCreateFormInput>({
     resolver: zodResolver(SongCreateFormSchema),

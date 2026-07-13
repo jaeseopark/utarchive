@@ -211,7 +211,6 @@ function CreateNewSongForm({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-    watch,
     setValue,
   } = useForm<SongCreateFormInput>({
     resolver: zodResolver(SongCreateFormSchema),
