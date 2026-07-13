@@ -50,15 +50,13 @@ const playlistReplaceSongsSchema = z.object({
 router.use(requireAuth);
 
 router.get("/", validateRequest(listQuerySchema, "query"), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const { limit, offset } = req.query as unknown as z.infer<typeof listQuerySchema>;
+  const { limit, offset } = listQuerySchema.parse(req.query);
   const playlists = await selectPlaylists(limit, offset);
   return res.status(200).json({ playlists });
 });
 
 router.post("/", validateRequest(playlistCreateSchema), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const { name } = req.body as z.infer<typeof playlistCreateSchema>;
+  const { name } = playlistCreateSchema.parse(req.body);
   const playlist = await insertPlaylist(name);
   return res.status(201).json(playlist);
 });
@@ -76,8 +74,7 @@ router.get("/:id", async (req, res) => {
 
 router.patch("/:id", validateRequest(playlistUpdateSchema), async (req, res) => {
   const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  // eslint-disable-next-line no-restricted-syntax
-  const { name } = req.body as z.infer<typeof playlistUpdateSchema>;
+  const { name } = playlistUpdateSchema.parse(req.body);
 
   const updatedPlaylist = await updatePlaylistById(playlistId, name);
 
@@ -101,8 +98,7 @@ router.delete("/:id", async (req, res) => {
 
 router.post("/:id/songs", validateRequest(playlistSongCreateSchema), async (req, res) => {
   const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  // eslint-disable-next-line no-restricted-syntax
-  const { songId, position } = req.body as z.infer<typeof playlistSongCreateSchema>;
+  const { songId, position } = playlistSongCreateSchema.parse(req.body);
 
   try {
     const result = await addSongToPlaylist(playlistId, songId, position);
@@ -142,8 +138,7 @@ router.put(
   validateRequest(playlistReplaceSongsSchema),
   async (req, res) => {
     const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    // eslint-disable-next-line no-restricted-syntax
-    const { songIds } = req.body as z.infer<typeof playlistReplaceSongsSchema>;
+    const { songIds } = playlistReplaceSongsSchema.parse(req.body);
 
     try {
       const result = await replacePlaylistSongs(playlistId, songIds);

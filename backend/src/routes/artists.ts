@@ -42,18 +42,13 @@ const paginationSchema = z.object({
 router.use(requireAuth);
 
 router.get("/", validateRequest(paginationSchema, "query"), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const { limit, offset } = req.query as unknown as {
-    limit: number;
-    offset: number;
-  };
+  const { limit, offset } = paginationSchema.parse(req.query);
   const artists = await selectArtists(limit, offset);
   return res.status(200).json({ artists: serializeForApiResponse(artists) });
 });
 
 router.post("/", validateRequest(artistCreateSchema), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const artist = req.body as z.infer<typeof artistCreateSchema>;
+  const artist = artistCreateSchema.parse(req.body);
   const requestId = req.requestId;
 
   const [createdArtist] = await insertArtist(artist);
@@ -88,8 +83,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.patch("/:id", validateRequest(artistUpdateSchema), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const updateData = req.body as z.infer<typeof artistUpdateSchema>;
+  const updateData = artistUpdateSchema.parse(req.body);
   const artistId = String(req.params.id);
   const requestId = req.requestId;
 

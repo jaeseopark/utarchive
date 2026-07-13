@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { WebSocketMessage } from "../types/websocket";
+import { WebSocketMessage, WebSocketMessageSchema } from "../types/websocket";
 import { useSession } from "../context/SessionContext";
 
 export interface UseWebSocketOptions {
@@ -100,8 +100,7 @@ export const useWebSocket = ({
 
       ws.onmessage = (event) => {
         try {
-          // eslint-disable-next-line no-restricted-syntax
-          const message = JSON.parse(event.data) as WebSocketMessage;
+          const message = WebSocketMessageSchema.parse(JSON.parse(event.data));
           onMessage?.(message);
         } catch (err) {
           console.error("[WebSocket] Failed to parse message:", err);

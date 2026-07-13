@@ -21,8 +21,7 @@ router.post("/flush", async (_req, res) => {
 });
 
 router.post("/prune", validateRequest(pruneAnalyticsSchema), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const { retentionDays } = req.body as z.infer<typeof pruneAnalyticsSchema>;
+  const { retentionDays } = pruneAnalyticsSchema.parse(req.body);
 
   await pruneListeningAnalyticsOlderThanDays(retentionDays);
   return res.status(200).json({ ok: true });
