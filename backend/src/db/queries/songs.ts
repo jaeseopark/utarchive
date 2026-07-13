@@ -598,29 +598,37 @@ export const linkChildToParent = async (
       });
     }
 
-    // Cascade masterId update to all descendants
-    // Find all descendants of the child (via recursive parent-child chains)
-    const descendantResult = await tx.execute(sql`
-      WITH RECURSIVE descendants AS (
-        SELECT song_id FROM song_hierarchy WHERE song_id = ${childId}
-        UNION ALL
-        SELECT sh.song_id
-        FROM song_hierarchy sh
-        JOIN descendants d ON sh.parent_id = d.song_id
-      )
-      SELECT song_id FROM descendants WHERE song_id != ${childId}
-    `);
+    // Cascade masterId update to all descendants only (not unrelated songs with same old masterId)
+    // Get the child's current masterId before updating it
+    const oldMasterId = existingChildHierarchy[0]?.masterId ?? childId;
 
-    interface DescendantRow {
-      song_id: string;
+    // Query all songs with the old masterId to get their parent relationships (single DB lookup)
+    const siblingsResult = await tx
+      .select({ songId: songHierarchy.songId, parentId: songHierarchy.parentId })
+      .from(songHierarchy)
+      .where(eq(songHierarchy.masterId, oldMasterId));
+
+    // Build a map of songId -> parentId for client-side traversal
+    const parentMap = new Map(siblingsResult.map((row) => [row.songId, row.parentId]));
+
+    // Find all descendants by recursively traversing from childId through parentId relationships
+    const descendants = new Set<string>();
+    const toVisit = [childId];
+
+    while (toVisit.length > 0) {
+      const current = toVisit.pop()!;
+      // Find all direct children of current (songs whose parentId equals current)
+      for (const [songId, parentId] of parentMap.entries()) {
+        if (parentId === current && !descendants.has(songId)) {
+          descendants.add(songId);
+          toVisit.push(songId);
+        }
+      }
     }
 
-    // eslint-disable-next-line no-restricted-syntax
-    const rows = (descendantResult.rows ?? descendantResult) as unknown as DescendantRow[];
-    const descendantIds = rows.map((row) => row.song_id);
-
-    // Update all descendants' masterId
-    if (descendantIds.length > 0) {
+    // Update only the descendants, not unrelated songs that happen to share the old masterId
+    if (descendants.size > 0) {
+      const descendantIds = Array.from(descendants);
       await tx
         .update(songHierarchy)
         .set({ masterId: newMasterId })
