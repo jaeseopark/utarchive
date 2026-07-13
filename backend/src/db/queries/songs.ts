@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "../../db";
 import { albumSongs, albums, artists, songArtists, songHierarchy, songs } from "../../db/schema";
@@ -225,19 +225,22 @@ export const createSong = async (
 
   return db.transaction(async (tx) => {
     if (songData.parentId) {
-      const parentSong = await tx
-        .select({ masterId: songHierarchy.masterId })
-        .from(songHierarchy)
-        .where(eq(songHierarchy.songId, songData.parentId))
+      // Verify parent exists and get its hierarchy info using the same logic as selectSongById
+      const [parentResult] = await tx
+        .select({
+          parentId: songHierarchy.parentId,
+          masterId: sql<string>`coalesce(${songHierarchy.masterId}, ${songs.id})`,
+        })
+        .from(songs)
+        .leftJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
+        .where(eq(songs.id, songData.parentId))
         .limit(1);
 
-      const parent = parentSong[0];
-
-      if (!parent) {
+      if (!parentResult) {
         throw new Error("PARENT_NOT_FOUND");
       }
 
-      masterId = parent.masterId ?? songData.parentId ?? songId;
+      masterId = parentResult.masterId;
     }
 
     const insertData = {
@@ -543,6 +546,7 @@ export const updateSongTags = async (songId: string, tags: string[]) => {
 /**
  * Link an existing child song to a parent song
  * Creates or updates the song_hierarchy relationship
+ * Also cascades the masterId update to all descendants
  */
 export const linkChildToParent = async (
   childId: string,
@@ -560,14 +564,17 @@ export const linkChildToParent = async (
       throw new Error("PARENT_NOT_FOUND");
     }
 
-    // Get parent's hierarchy info to determine master ID
-    const parentHierarchy = await tx
-      .select({ masterId: songHierarchy.masterId, parentId: songHierarchy.parentId })
-      .from(songHierarchy)
-      .where(eq(songHierarchy.songId, parentId))
+    // Get parent's hierarchy info to determine master ID using the same logic as selectSongById
+    const [parentHierarchy] = await tx
+      .select({
+        masterId: sql<string>`coalesce(${songHierarchy.masterId}, ${songs.id})`,
+      })
+      .from(songs)
+      .leftJoin(songHierarchy, eq(songHierarchy.songId, songs.id))
+      .where(eq(songs.id, parentId))
       .limit(1);
 
-    const masterId = parentHierarchy[0]?.masterId ?? parentId;
+    const newMasterId = parentHierarchy?.masterId ?? parentId;
 
     // Check if child already has a hierarchy entry
     const existingChildHierarchy = await tx
@@ -576,19 +583,56 @@ export const linkChildToParent = async (
       .where(eq(songHierarchy.songId, childId))
       .limit(1);
 
+    // Capture the child's old masterId BEFORE updating (important for master songs)
+    const oldMasterId = existingChildHierarchy[0]?.masterId ?? childId;
+
     if (existingChildHierarchy[0]) {
       // Update existing hierarchy
       await tx
         .update(songHierarchy)
-        .set({ parentId, masterId })
+        .set({ parentId, masterId: newMasterId })
         .where(eq(songHierarchy.songId, childId));
     } else {
       // Insert new hierarchy entry
       await tx.insert(songHierarchy).values({
         songId: childId,
         parentId,
-        masterId,
+        masterId: newMasterId,
       });
+    }
+
+    // Cascade masterId update to all descendants only (not unrelated songs with same old masterId)
+    // Query all songs with the old masterId to get their parent relationships (single DB lookup)
+    const siblingsResult = await tx
+      .select({ songId: songHierarchy.songId, parentId: songHierarchy.parentId })
+      .from(songHierarchy)
+      .where(eq(songHierarchy.masterId, oldMasterId));
+
+    // Build a map of songId -> parentId for client-side traversal
+    const parentMap = new Map(siblingsResult.map((row) => [row.songId, row.parentId]));
+
+    // Find all descendants by recursively traversing from childId through parentId relationships
+    const descendants = new Set<string>();
+    const toVisit = [childId];
+
+    while (toVisit.length > 0) {
+      const current = toVisit.pop()!;
+      // Find all direct children of current (songs whose parentId equals current)
+      for (const [songId, parentId] of parentMap.entries()) {
+        if (parentId === current && !descendants.has(songId)) {
+          descendants.add(songId);
+          toVisit.push(songId);
+        }
+      }
+    }
+
+    // Update only the descendants, not unrelated songs that happen to share the old masterId
+    if (descendants.size > 0) {
+      const descendantIds = Array.from(descendants);
+      await tx
+        .update(songHierarchy)
+        .set({ masterId: newMasterId })
+        .where(inArray(songHierarchy.songId, descendantIds));
     }
 
     // Return updated child song

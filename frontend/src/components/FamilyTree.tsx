@@ -111,7 +111,10 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
                   }
                 >
                   <td className="px-3 py-3 align-top">
-                    <div className="flex items-center gap-2">
+                    <div
+                      className="flex items-center gap-2"
+                      style={{ paddingLeft: `${node.depth * 1.25}rem` }}
+                    >
                       {(() => {
                         const fullSong = getSongDetail(node.id);
                         const hasAudio = fullSong?.filePath;
