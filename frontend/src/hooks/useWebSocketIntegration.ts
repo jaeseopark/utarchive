@@ -50,6 +50,21 @@ export const useWebSocketMessages = (onMessage?: (message: WebSocketMessage) => 
 };
 
 /**
+ * Type guard to check if a WebSocketMessage is a DataChangedMessage
+ */
+function isDataChangedMessage(message: WebSocketMessage): message is DataChangedMessage {
+  return message.type === "DATA_CHANGED";
+}
+
+/**
+ * Helper to safely extract string ID from an item
+ */
+function getId(item: Record<string, unknown>): string | undefined {
+  const id = item.id;
+  return typeof id === "string" ? id : undefined;
+}
+
+/**
  * Function to be passed to WebSocketProvider's onMessage prop
  * Handles routing messages to appropriate handlers
  */
@@ -59,24 +74,30 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
 
     switch (message.type) {
       case "DATA_CHANGED": {
-        // eslint-disable-next-line no-restricted-syntax
-        handleDataChanged(message as DataChangedMessage);
-        // eslint-disable-next-line no-restricted-syntax
-        const dataMsg = message as DataChangedMessage;
+        if (isDataChangedMessage(message)) {
+          handleDataChanged(message);
+          const dataMsg = message;
 
-        // Log each action type separately
-        dataMsg.data.created?.forEach((item: Record<string, unknown>) => {
-          // eslint-disable-next-line no-restricted-syntax
-          logStateUpdate(dataMsg.entity, "add", item.id as string);
-        });
-        dataMsg.data.updated?.forEach((item: Record<string, unknown>) => {
-          // eslint-disable-next-line no-restricted-syntax
-          logStateUpdate(dataMsg.entity, "update", item.id as string);
-        });
-        dataMsg.data.deleted?.forEach((item: Record<string, unknown>) => {
-          // eslint-disable-next-line no-restricted-syntax
-          logStateUpdate(dataMsg.entity, "delete", item.id as string);
-        });
+          // Log each action type separately
+          dataMsg.data.created?.forEach((item: Record<string, unknown>) => {
+            const id = getId(item);
+            if (id) {
+              logStateUpdate(dataMsg.entity, "add", id);
+            }
+          });
+          dataMsg.data.updated?.forEach((item: Record<string, unknown>) => {
+            const id = getId(item);
+            if (id) {
+              logStateUpdate(dataMsg.entity, "update", id);
+            }
+          });
+          dataMsg.data.deleted?.forEach((item: Record<string, unknown>) => {
+            const id = getId(item);
+            if (id) {
+              logStateUpdate(dataMsg.entity, "delete", id);
+            }
+          });
+        }
         break;
       }
 

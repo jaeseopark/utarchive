@@ -170,10 +170,7 @@ router.get("/:id/audio", async (req, res, next) => {
 
 router.get("/", validateRequest(songListSchema, "query"), async (req, res, next) => {
   try {
-    // eslint-disable-next-line no-restricted-syntax
-    const { limit, offset, artistId, masterId, playbackEnabled } = req.query as unknown as z.infer<
-      typeof songListSchema
-    >;
+    const { limit, offset, artistId, masterId, playbackEnabled } = songListSchema.parse(req.query);
 
     const songList = await selectSongs({
       limit,
@@ -191,8 +188,7 @@ router.get("/", validateRequest(songListSchema, "query"), async (req, res, next)
 
 router.post("/", validateRequest(songCreateSchema), async (req, res, next) => {
   try {
-    // eslint-disable-next-line no-restricted-syntax
-    const songData = req.body as z.infer<typeof songCreateSchema>;
+    const songData = songCreateSchema.parse(req.body);
     const artistIds = songData.artistIds;
     const requestId = req.requestId;
 
@@ -252,8 +248,7 @@ router.get("/:id", async (req, res, next) => {
 
 router.patch("/:id", validateRequest(songUpdateSchema), async (req, res, next) => {
   try {
-    // eslint-disable-next-line no-restricted-syntax
-    const updateData = req.body as z.infer<typeof songUpdateSchema>;
+    const updateData = songUpdateSchema.parse(req.body);
     // ✅ PARAMETER VALIDATION FIX: Use Zod validation instead of Array.isArray
     const songId = z.string().uuid().parse(req.params.id);
     const requestId = req.requestId;
@@ -315,8 +310,7 @@ router.post("/:id/children", validateRequest(linkChildSchema), async (req, res, 
   try {
     // ✅ PARAMETER VALIDATION FIX: Use Zod validation instead of Array.isArray
     const parentId = z.string().uuid().parse(req.params.id);
-    // eslint-disable-next-line no-restricted-syntax
-    const { childId } = req.body as z.infer<typeof linkChildSchema>;
+    const { childId } = linkChildSchema.parse(req.body);
     const requestId = req.requestId;
 
     const linkedChild = await linkChildToParent(childId, parentId);
@@ -359,8 +353,7 @@ const tagsUpdateSchema = z.object({
 
 router.patch("/:id/tags", validateRequest(tagsUpdateSchema), async (req, res, next) => {
   try {
-    // eslint-disable-next-line no-restricted-syntax
-    const { tags } = req.body as z.infer<typeof tagsUpdateSchema>;
+    const { tags } = tagsUpdateSchema.parse(req.body);
     // ✅ PARAMETER VALIDATION FIX: Use Zod validation instead of Array.isArray
     const songId = z.string().uuid().parse(req.params.id);
     const requestId = req.requestId;

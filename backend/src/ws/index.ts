@@ -8,10 +8,18 @@ import {
   PongMessage,
   ConnectedMessage,
   ErrorMessage,
+  WebSocketMessageSchema,
 } from "../types/websocket";
 import { logConnection, logMessageSend, logError, logBroadcast } from "../lib/webSocketLogger";
 
 const HEARTBEAT_INTERVAL = 2000; // 2 seconds
+
+/**
+ * Type guard to check if a WebSocket is an AuthenticatedWebSocket
+ */
+function isAuthenticatedWebSocket(socket: WebSocket): socket is AuthenticatedWebSocket {
+  return "userId" in socket && "isAlive" in socket;
+}
 
 export const createWebSocketServer = (server: http.Server) => {
   const wss = new WebSocketServer({ noServer: true });
@@ -84,23 +92,14 @@ export const createWebSocketServer = (server: http.Server) => {
     socket.on("message", (data: Buffer) => {
       try {
         const parsed = JSON.parse(data.toString());
-        // Validate message has required fields
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          "type" in parsed &&
-          "timestamp" in parsed
-        ) {
-          // eslint-disable-next-line no-restricted-syntax
-          const message = parsed as WebSocketMessage;
+        const message = WebSocketMessageSchema.parse(parsed);
 
-          if (message.type === "PING") {
-            const pongMsg: PongMessage = {
-              type: "PONG",
-              timestamp: Date.now(),
-            };
-            socket.send(JSON.stringify(pongMsg));
-          }
+        if (message.type === "PING") {
+          const pongMsg: PongMessage = {
+            type: "PONG",
+            timestamp: Date.now(),
+          };
+          socket.send(JSON.stringify(pongMsg));
         }
       } catch (err) {
         console.error("[WebSocket] Failed to parse message:", err);
@@ -129,17 +128,18 @@ export const createWebSocketServer = (server: http.Server) => {
   // Start heartbeat interval
   const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((socket: WebSocket) => {
-      // eslint-disable-next-line no-restricted-syntax
-      const authWs = socket as AuthenticatedWebSocket;
-
-      if (authWs.isAlive === false) {
-        console.log(`[WebSocket] Terminating unresponsive client: ${authWs.userId}`);
-        authWs.terminate();
+      if (!isAuthenticatedWebSocket(socket)) {
         return;
       }
 
-      authWs.isAlive = false;
-      authWs.ping();
+      if (socket.isAlive === false) {
+        console.log(`[WebSocket] Terminating unresponsive client: ${socket.userId}`);
+        socket.terminate();
+        return;
+      }
+
+      socket.isAlive = false;
+      socket.ping();
     });
   }, HEARTBEAT_INTERVAL);
 
@@ -172,13 +172,11 @@ export const broadcastMessage = (
   let clientCount = 0;
 
   wss.clients.forEach((client) => {
-    if (
-      client.readyState === WebSocket.OPEN &&
-      // eslint-disable-next-line no-restricted-syntax
-      (!excludeSocketId || (client as AuthenticatedWebSocket).userId !== excludeSocketId)
-    ) {
-      client.send(payload);
-      clientCount++;
+    if (client.readyState === WebSocket.OPEN && isAuthenticatedWebSocket(client)) {
+      if (!excludeSocketId || client.userId !== excludeSocketId) {
+        client.send(payload);
+        clientCount++;
+      }
     }
   });
 
@@ -193,12 +191,10 @@ export const sendToClient = (wss: WebSocketServer, userId: string, message: WebS
   const payload = JSON.stringify(message);
 
   wss.clients.forEach((client) => {
-    if (
-      client.readyState === WebSocket.OPEN &&
-      // eslint-disable-next-line no-restricted-syntax
-      (client as AuthenticatedWebSocket).userId === userId
-    ) {
-      client.send(payload);
+    if (client.readyState === WebSocket.OPEN && isAuthenticatedWebSocket(client)) {
+      if (client.userId === userId) {
+        client.send(payload);
+      }
     }
   });
 };

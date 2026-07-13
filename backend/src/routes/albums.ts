@@ -3,8 +3,6 @@ import { z } from "zod";
 import { validateRequest } from "../middleware/validateRequest";
 import { requireAuth } from "../middleware/requireAuth";
 import {
-  AlbumCreateInput,
-  AlbumUpdateInput,
   createAlbum,
   deleteAlbumSong,
   selectAlbumById,
@@ -55,15 +53,13 @@ const albumSongSchema = z.object({
 router.use(requireAuth);
 
 router.get("/", validateRequest(listAlbumsQuerySchema, "query"), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const { limit, offset } = req.query as unknown as z.infer<typeof listAlbumsQuerySchema>;
+  const { limit, offset } = listAlbumsQuerySchema.parse(req.query);
   const albums = await selectAlbums(limit, offset);
   return res.status(200).json({ albums });
 });
 
 router.post("/", validateRequest(albumCreateSchema), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const albumData = req.body as AlbumCreateInput;
+  const albumData = albumCreateSchema.parse(req.body);
   const requestId = req.requestId;
 
   const createdAlbum = await createAlbum(albumData);
@@ -97,8 +93,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.patch("/:id", validateRequest(albumUpdateSchema), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const updateData = req.body as AlbumUpdateInput;
+  const updateData = albumUpdateSchema.parse(req.body);
   const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const requestId = req.requestId;
 
@@ -131,8 +126,7 @@ router.patch("/:id", validateRequest(albumUpdateSchema), async (req, res) => {
 });
 
 router.put("/:id/songs/:songId", validateRequest(albumSongSchema), async (req, res) => {
-  // eslint-disable-next-line no-restricted-syntax
-  const trackNumber = req.body.trackNumber as number;
+  const { trackNumber } = albumSongSchema.parse(req.body);
   const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const songId = Array.isArray(req.params.songId) ? req.params.songId[0] : req.params.songId;
 
