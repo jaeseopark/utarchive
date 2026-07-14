@@ -1,29 +1,23 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { Button } from "../components/ui/Button";
 import { z } from "zod";
 import { useArtistsStore } from "../stores/useArtistsStore";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
+import { useSongsStore } from "../stores/useSongsStore";
 import { getArtistNames } from "../lib/artistNames";
 
 const SearchSongSchema = z.object({
   id: z.string().uuid(),
-  title: z.string(),
-  artistId: z.string().nullable().optional(),
-  playbackEnabled: z.boolean(),
 });
 
 const SearchArtistSchema = z.object({
   id: z.string().uuid(),
-  name: z.string(),
-  aliases: z.array(z.string()).optional().default([]),
 });
 
 const SearchAlbumSchema = z.object({
   id: z.string().uuid(),
-  title: z.string(),
-  artistIds: z.array(z.string().uuid()).optional().default([]),
-  yearReleased: z.number().int().nullable().optional(),
 });
 
 const SearchResponseSchema = z.object({
@@ -42,6 +36,8 @@ function SearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const artists = useArtistsStore((state) => state.artists);
+  const albums = useAlbumsStore((state) => state.albums);
+  const songDetails = useSongsStore((state) => state.songDetails);
 
   const trimmedQuery = queryParam.trim();
   const hasQuery = trimmedQuery.length > 0;
@@ -82,6 +78,39 @@ function SearchPage() {
     results.artists.length === 0 &&
     results.albums.length === 0;
 
+  // Enrich search results with data from stores
+  const enrichedResults = useMemo(() => {
+    if (!results) return null;
+
+    return {
+      songs: results.songs
+        .map((songResult) => {
+          const song = songDetails[songResult.id];
+          return song
+            ? {
+                id: songResult.id,
+                title: song.title,
+                artistIds: song.artistIds || [],
+                playbackEnabled: song.playbackEnabled,
+              }
+            : null;
+        })
+        .filter((song) => song !== null),
+      artists: results.artists
+        .map((artistResult) => {
+          const artist = artists.find((a) => a.id === artistResult.id);
+          return artist ? { id: artistResult.id, name: artist.name } : null;
+        })
+        .filter((artist) => artist !== null),
+      albums: results.albums
+        .map((albumResult) => {
+          const album = albums.find((a) => a.id === albumResult.id);
+          return album ? { id: albumResult.id, title: album.title } : null;
+        })
+        .filter((album) => album !== null),
+    };
+  }, [results, songDetails, artists, albums]);
+
   return (
     <section className="space-y-6">
       <div>
@@ -120,13 +149,13 @@ function SearchPage() {
           No results for "{trimmedQuery}".
         </div>
       ) : (
-        results && (
+        enrichedResults && (
           <div className="space-y-8">
-            {results.songs.length > 0 ? (
+            {enrichedResults.songs.length > 0 ? (
               <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-semibold text-slate-900">Songs</h3>
-                  <span className="text-sm text-slate-600">{results.songs.length} results</span>
+                  <span className="text-sm text-slate-600">{enrichedResults.songs.length} results</span>
                 </div>
                 <div className="mt-4 overflow-x-auto">
                   <table className="min-w-full text-left text-sm text-slate-700">
@@ -138,10 +167,8 @@ function SearchPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {results.songs.map((song) => {
-                        const artistName = song.artistId
-                          ? getArtistNames([song.artistId], artists)[0]
-                          : undefined;
+                      {enrichedResults.songs.map((song) => {
+                        const artistNames = getArtistNames(song.artistIds, artists);
                         return (
                           <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
                             <td className="px-4 py-4">
@@ -153,13 +180,13 @@ function SearchPage() {
                               </Link>
                             </td>
                             <td className="px-4 py-4 text-slate-700">
-                              {song.artistId ? (
-                                <Link
-                                  to={`/artists/${song.artistId}`}
-                                  className="text-sky-500 hover:underline"
-                                >
-                                  {artistName}
-                                </Link>
+                              {artistNames.length > 0 ? (
+                                artistNames.map((name, idx) => (
+                                  <span key={idx}>
+                                    {idx > 0 && ", "}
+                                    {name}
+                                  </span>
+                                ))
                               ) : (
                                 "Unknown"
                               )}
@@ -176,22 +203,21 @@ function SearchPage() {
               </section>
             ) : null}
 
-            {results.artists.length > 0 ? (
+            {enrichedResults.artists.length > 0 ? (
               <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-semibold text-slate-900">Artists</h3>
-                  <span className="text-sm text-slate-600">{results.artists.length} results</span>
+                  <span className="text-sm text-slate-600">{enrichedResults.artists.length} results</span>
                 </div>
                 <div className="mt-4 overflow-x-auto">
                   <table className="min-w-full text-left text-sm text-slate-700">
                     <thead className="border-b border-slate-300 text-slate-600">
                       <tr>
                         <th className="px-4 py-3">Name</th>
-                        <th className="px-4 py-3">Aliases</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {results.artists.map((artist) => (
+                      {enrichedResults.artists.map((artist) => (
                         <tr key={artist.id} className="border-b border-slate-300 last:border-b-0">
                           <td className="px-4 py-4">
                             <Link
@@ -201,9 +227,6 @@ function SearchPage() {
                               {artist.name}
                             </Link>
                           </td>
-                          <td className="px-4 py-4 text-slate-700">
-                            {artist.aliases.join(", ") || "—"}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -212,55 +235,32 @@ function SearchPage() {
               </section>
             ) : null}
 
-            {results.albums.length > 0 ? (
+            {enrichedResults.albums.length > 0 ? (
               <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-semibold text-slate-900">Albums</h3>
-                  <span className="text-sm text-slate-600">{results.albums.length} results</span>
+                  <span className="text-sm text-slate-600">{enrichedResults.albums.length} results</span>
                 </div>
                 <div className="mt-4 overflow-x-auto">
                   <table className="min-w-full text-left text-sm text-slate-700">
                     <thead className="border-b border-slate-300 text-slate-600">
                       <tr>
                         <th className="px-4 py-3">Title</th>
-                        <th className="px-4 py-3">Artist</th>
-                        <th className="px-4 py-3">Year</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {results.albums.map((album) => {
-                        const albumArtistNames = getArtistNames(album.artistIds ?? [], artists);
-                        return (
-                          <tr key={album.id} className="border-b border-slate-300 last:border-b-0">
-                            <td className="px-4 py-4">
-                              <Link
-                                to={`/albums/${album.id}`}
-                                className="text-slate-900 transition hover:text-sky-500\"
-                              >
-                                {album.title}
-                              </Link>
-                            </td>
-                            <td className="px-4 py-4 text-slate-700">
-                              {albumArtistNames.length > 0
-                                ? albumArtistNames.map((name, index) => (
-                                    <span key={index}>
-                                      {index > 0 && ", "}
-                                      <Link
-                                        to={`/artists/${album.artistIds[index]}`}
-                                        className="text-sky-500 hover:underline"
-                                      >
-                                        {name}
-                                      </Link>
-                                    </span>
-                                  ))
-                                : "Unknown"}
-                            </td>
-                            <td className="px-4 py-4 text-slate-700">
-                              {album.yearReleased ?? "—"}
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      {enrichedResults.albums.map((album) => (
+                        <tr key={album.id} className="border-b border-slate-300 last:border-b-0">
+                          <td className="px-4 py-4">
+                            <Link
+                              to={`/albums/${album.id}`}
+                              className="text-slate-900 transition hover:text-sky-500"
+                            >
+                              {album.title}
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

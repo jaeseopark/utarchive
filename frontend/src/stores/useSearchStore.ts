@@ -3,49 +3,28 @@ import { z } from "zod";
 import { api } from "../api/client";
 import { toBrandId, type SongId, type ArtistId, type AlbumId } from "../types/brands";
 
-const SearchSongSchema = z.object({
+export const SearchSongSchema = z.object({
   id: z
     .string()
     .uuid()
     .transform((val) => toBrandId<SongId>(val)),
-  title: z.string(),
-  artistId: z
-    .string()
-    .uuid()
-    .nullable()
-    .optional()
-    .transform((val) => (val ? toBrandId<ArtistId>(val) : null)),
-  playbackEnabled: z.boolean(),
 });
 
-const SearchArtistSchema = z.object({
+export const SearchArtistSchema = z.object({
   id: z
     .string()
     .uuid()
     .transform((val) => toBrandId<ArtistId>(val)),
-  name: z.string(),
-  aliases: z.array(z.string()).optional().default([]),
 });
 
-const SearchAlbumSchema = z.object({
+export const SearchAlbumSchema = z.object({
   id: z
     .string()
     .uuid()
     .transform((val) => toBrandId<AlbumId>(val)),
-  title: z.string(),
-  artistIds: z
-    .array(
-      z
-        .string()
-        .uuid()
-        .transform((val) => toBrandId<ArtistId>(val)),
-    )
-    .optional()
-    .default([]),
-  yearReleased: z.number().int().nullable().optional(),
 });
 
-const SearchResponseSchema = z.object({
+export const SearchResponseSchema = z.object({
   songs: z.array(SearchSongSchema),
   artists: z.array(SearchArtistSchema),
   albums: z.array(SearchAlbumSchema),

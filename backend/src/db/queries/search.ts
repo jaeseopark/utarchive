@@ -1,25 +1,20 @@
 import { sql } from "drizzle-orm";
 import { db } from "../../db";
 
+/**
+ * Search results return only entity IDs.
+ * Frontend is responsible for enriching these IDs with full entity data from Zustand stores.
+ */
 export type SearchSongResult = {
   id: string;
-  title: string;
-  artistId: string | null;
-  playbackEnabled: boolean;
 };
 
 export type SearchArtistResult = {
   id: string;
-  name: string;
-  aliases: string[];
 };
 
-// must match the column configuration in the UI
 export type SearchAlbumResult = {
   id: string;
-  title: string;
-  artistIds: string[];
-  yearReleased: number | null;
 };
 
 const buildTsQuery = (query: string) => {
@@ -51,18 +46,9 @@ export const searchEntities = async (query: string) => {
     WITH search_query AS (
       SELECT to_tsquery('english', ${tsQuery}) AS query
     )
-    SELECT
-      s.id,
-      s.title,
-      (
-        SELECT sa.artist_id
-        FROM song_artists sa
-        WHERE sa.song_id = s.id
-        ORDER BY sa.display_order
-        LIMIT 1
-      ) AS "artistId",
-      s.playback_enabled AS "playbackEnabled"
-    FROM songs s,
+    SELECT s.id
+    FROM songs s
+      LEFT JOIN song_artists sa ON sa.song_id = s.id,
       search_query
     WHERE s.search_vector @@ search_query.query
     ORDER BY ts_rank(s.search_vector, search_query.query) DESC
@@ -75,10 +61,7 @@ export const searchEntities = async (query: string) => {
     WITH search_query AS (
       SELECT to_tsquery('english', ${tsQuery}) AS query
     )
-    SELECT
-      a.id,
-      a.name,
-      a.aliases
+    SELECT a.id
     FROM artists a,
       search_query
     WHERE to_tsvector('english', 
@@ -97,18 +80,9 @@ export const searchEntities = async (query: string) => {
   const artistRows = (artistResult.rows ?? []) as SearchArtistResult[];
 
   const albumResult = await db.execute(sql`
-    SELECT
-      al.id,
-      al.title,
-      COALESCE(
-        array_agg(aa.artist_id ORDER BY aa.display_order),
-        '{}'::uuid[]
-      ) AS "artistIds",
-      al.year_released AS "yearReleased"
+    SELECT al.id
     FROM albums al
-      LEFT JOIN album_artists aa ON aa.album_id = al.id
     WHERE to_tsvector('english', al.title) @@ to_tsquery('english', ${tsQuery})
-    GROUP BY al.id, al.title, al.year_released
     ORDER BY ts_rank(to_tsvector('english', al.title), to_tsquery('english', ${tsQuery})) DESC
     LIMIT 20
   `);
