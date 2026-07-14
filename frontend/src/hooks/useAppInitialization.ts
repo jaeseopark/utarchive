@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "../context/SessionContext";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
@@ -16,7 +16,8 @@ import { useAlbumsStore } from "../stores/useAlbumsStore";
  */
 export function useAppInitialization() {
   const { user } = useSession();
-  const initRef = useRef(false);
+  const inProgressRef = useRef(false);
+  const [initialized, setInitialized] = useState(false);
 
   const artistsStore = useArtistsStore();
   const playlistsStore = usePlaylistsStore();
@@ -25,10 +26,10 @@ export function useAppInitialization() {
 
   useEffect(() => {
     // Only initialize once and only when user is authenticated
-    if (!user || initRef.current) {
+    if (!user || inProgressRef.current) {
       return;
     }
-    initRef.current = true;
+    inProgressRef.current = true;
 
     const initializeApp = async () => {
       try {
@@ -37,6 +38,7 @@ export function useAppInitialization() {
 
         // Level 1: Load primary entities (parallel, depends on Level 0)
         await Promise.all([songsStore.fetchAllSongs(), albumsStore.fetchAllAlbums()]);
+        setInitialized(true);
       } catch (error) {
         console.error("Failed to initialize app data:", error);
       }
@@ -44,4 +46,8 @@ export function useAppInitialization() {
 
     initializeApp();
   }, [user, artistsStore, playlistsStore, songsStore, albumsStore]);
+
+  return {
+    initialized
+  }
 }

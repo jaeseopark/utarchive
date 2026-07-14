@@ -18,7 +18,7 @@ import { NotificationsPage } from "./pages/NotificationsPage";
 
 function App() {
   // Boot-time initialization: hydrate stores in dependency order
-  useAppInitialization();
+  const { initialized } = useAppInitialization();
 
   // Initialize WebSocket message handlers and cleanup
   useWebSocketMessageHandling();
@@ -26,10 +26,14 @@ function App() {
   // Initialize player with user config settings and setup multi-tab sync
   useInitializePlayerWithConfig();
 
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route
+  // do not render protected routes until the app is initialized
+  const getProtectedRoutes = () => {
+    if (!initialized) {
+      return null;
+    }
+
+    return <>
+    <Route
         path="/"
         element={
           <ProtectedRoute>
@@ -37,7 +41,7 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/artists" replace />} />
+        <Route index element={<Navigate to="/songs" replace />} />
         <Route path="artists" element={<ArtistsPage />} />
         <Route path="artists/:id" element={<ArtistDetailPage />} />
         <Route path="songs" element={<SongsPage />} />
@@ -49,7 +53,14 @@ function App() {
         <Route path="search" element={<SearchPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/artists" replace />} />
+      <Route path="*" element={<Navigate to="/songs" replace />} />
+      </>
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      {getProtectedRoutes()}
     </Routes>
   );
 }

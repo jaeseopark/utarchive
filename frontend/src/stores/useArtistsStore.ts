@@ -16,7 +16,6 @@ export interface ArtistsState {
   artists: Artist[];
   artistMap: Map<string, Artist>;
   artistDetails: Record<string, ArtistDetail>;
-  lastFetchedAt: number;
 
   // Loading/Error
   isLoading: boolean;
@@ -46,7 +45,6 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
   artists: [],
   artistMap: new Map(),
   artistDetails: {},
-  lastFetchedAt: 0,
   isLoading: false,
   error: null,
   pagination: {
@@ -59,14 +57,6 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
   setError: (error: string | null) => set({ error }),
 
   fetchArtists: async (page = 0) => {
-    // Check if cache is still fresh (5 minutes TTL)
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().artists.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
     set({ isLoading: true, error: null });
     try {
       const { artists } = await api.get(
@@ -76,7 +66,6 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       set({
         artists,
         artistMap: new Map(artists.map((a) => [a.id, a])),
-        lastFetchedAt: now,
         pagination: {
           page,
           limit: 50,
@@ -92,13 +81,6 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
   },
 
   fetchAllArtists: async () => {
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().artists.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
     set({ isLoading: true, error: null });
     try {
       const allArtists: Artist[] = [];
@@ -122,7 +104,6 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       set({
         artists: allArtists,
         artistMap: new Map(allArtists.map((a) => [a.id, a])),
-        lastFetchedAt: now,
         pagination: {
           page: 0,
           limit: 100,

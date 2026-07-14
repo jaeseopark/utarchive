@@ -16,7 +16,6 @@ export interface SongsState {
   songs: SongListItem[];
   songDetailsMap: Map<string, Song>;
   songDetails: Record<string, Song>;
-  lastFetchedAt: number;
 
   // Loading/Error
   isLoading: boolean;
@@ -47,7 +46,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
   songs: [],
   songDetailsMap: new Map(),
   songDetails: {},
-  lastFetchedAt: 0,
   isLoading: false,
   error: null,
   pagination: {
@@ -60,14 +58,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
   setError: (error: string | null) => set({ error }),
 
   fetchSongs: async (page = 0) => {
-    // Check if cache is still fresh (5 minutes TTL)
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().songs.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
     set({ isLoading: true, error: null });
     try {
       const { songs } = await api.get(
@@ -76,7 +66,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
       );
       set({
         songs,
-        lastFetchedAt: now,
         pagination: {
           page,
           limit: 50,
@@ -92,13 +81,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
   },
 
   fetchAllSongs: async () => {
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().songs.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
     set({ isLoading: true, error: null });
     try {
       const allSongs: SongListItem[] = [];
@@ -121,7 +103,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
 
       set({
         songs: allSongs,
-        lastFetchedAt: now,
         pagination: {
           page: 0,
           limit: 100,

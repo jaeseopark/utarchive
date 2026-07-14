@@ -17,7 +17,6 @@ function isSongDefined(song?: SongListItem | null): song is SongListItem {
 export interface ArtistSongsState {
   // Data
   songIdsByArtist: Record<string, string[]>;
-  lastFetchedAt: Record<string, number>;
 
   // Loading/Error
   isLoading: Record<string, boolean>;
@@ -33,7 +32,6 @@ export interface ArtistSongsState {
 
 export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
   songIdsByArtist: {},
-  lastFetchedAt: {},
   isLoading: {},
   error: {},
 
@@ -54,20 +52,6 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
     })),
 
   fetchArtistSongs: async (artistId: ArtistId) => {
-    const state = get();
-
-    // Check if cache is still fresh (15 seconds TTL)
-    const now = Date.now();
-    const lastFetch = state.lastFetchedAt[artistId] ?? 0;
-    const CACHE_TTL = 15 * 1000; // 15 seconds
-
-    if (state.songIdsByArtist[artistId] && now - lastFetch < CACHE_TTL) {
-      // Return songs from global store using cached IDs
-      const songIds = state.songIdsByArtist[artistId];
-      const songsStore = useSongsStore.getState();
-      return songIds.map((id) => songsStore.songDetails[id]).filter(isSongDefined);
-    }
-
     set((s) => ({
       isLoading: { ...s.isLoading, [artistId]: true },
       error: { ...s.error, [artistId]: null },
@@ -97,10 +81,6 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
         songIdsByArtist: {
           ...s.songIdsByArtist,
           [artistId]: songIds,
-        },
-        lastFetchedAt: {
-          ...s.lastFetchedAt,
-          [artistId]: now,
         },
       }));
 
