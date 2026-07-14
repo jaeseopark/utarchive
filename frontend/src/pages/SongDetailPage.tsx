@@ -1,13 +1,13 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import CoverArtDisplay from "../components/CoverArtDisplay";
 import FamilyTree from "../components/FamilyTree";
 import AudioUploadButton from "../components/AudioUploadButton";
 import { useSongAttributesEditor } from "../components/SongAttributesEditor";
+import { PlayButton } from "../components/PlayButton";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
-import { usePlayerStore } from "../stores/usePlayerStore";
 import { getArtistNames } from "../lib/artistNames";
 import { useSongDetail } from "../hooks/useSongDetail";
 import { toBrandId, type SongId } from "../types/brands";
@@ -17,11 +17,10 @@ interface SongHeaderProps {
   song: Song;
 }
 
-function SongHeader({ song }: SongHeaderProps) {
+function SongHeaderContent({ song }: SongHeaderProps) {
   // Hook call is now unconditional within this component
   const songEditorState = useSongAttributesEditor(song);
   const artists = useArtistsStore((state) => state.artists);
-  const { play } = usePlayerStore();
 
   const artistList = useMemo(() => {
     const artistNames = getArtistNames(song.artistIds ?? [], artists);
@@ -30,11 +29,6 @@ function SongHeader({ song }: SongHeaderProps) {
       name,
     }));
   }, [song, artists]);
-
-  const handlePlay = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
-    play(song as any);
-  };
 
   return (
     <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
@@ -71,9 +65,7 @@ function SongHeader({ song }: SongHeaderProps) {
 
         <div className="flex flex-wrap gap-3">
           {song.filePath && (
-            <Button variant="secondary" onClick={handlePlay}>
-              Play
-            </Button>
+            <PlayButton song={song} />
           )}
           <Button
             variant="secondary"
@@ -93,6 +85,20 @@ function SongHeader({ song }: SongHeaderProps) {
     </div>
   );
 }
+
+/**
+ * Memoized SongHeader that only re-renders when song ID changes.
+ * This prevents unnecessary re-renders from parent updates (e.g., player store updates).
+ * Even if the song object reference changes, as long as the ID is the same, we don't re-render.
+ */
+const SongHeader = React.memo(
+  SongHeaderContent,
+  (prevProps, nextProps) => {
+    // Return true if props are equal (prevents re-render), false if they differ (causes re-render)
+    // Only compare song ID to avoid re-renders from object reference changes
+    return prevProps.song.id === nextProps.song.id;
+  },
+);
 
 function SongDetailPage() {
   const { id } = useParams<"id">();

@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSongs } from "../hooks/useSongs";
 import { useSongSelection } from "../hooks/useSongSelection";
 import { usePlayerStore } from "../stores/usePlayerStore";
+import { useSongsStore } from "../stores/useSongsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
 import { Button } from "../components/ui/Button";
@@ -17,14 +18,29 @@ function SongsPage() {
   const [page, setPage] = useState(0);
   const { songs, isLoading, error } = useSongs(page);
   const artists = useArtistsStore((state) => state.artists);
-  const { play } = usePlayerStore();
+  const { play, setQueue } = usePlayerStore();
   const { openModal } = useAddSongModalStore();
+  const { songs: allSongs, fetchAllSongs } = useSongsStore();
+
+  // Fetch all songs on mount for play all functionality
+  useEffect(() => {
+    fetchAllSongs();
+  }, [fetchAllSongs]);
 
   // Selection and bulk operations
   const { state: selectionState, clearSelection } = useSongSelection(songs);
   // Note: useBulkOperations is used internally by SongActionsDropdown
 
   const canPrevious = page > 0;
+
+  const handlePlayAll = useCallback(() => {
+    // Filter only playable songs and set as queue
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+    const playableSongs = allSongs.filter((song) => song.playbackEnabled) as any[];
+    if (playableSongs.length > 0) {
+      setQueue(playableSongs);
+    }
+  }, [allSongs, setQueue]);
 
   const columns: ColumnDefinition[] = useMemo(
     () => [
@@ -122,9 +138,14 @@ function SongsPage() {
             <h2 className="text-2xl font-semibold">Songs</h2>
             <p className="mt-2 text-slate-600">Browse all songs in the archive.</p>
           </div>
-          <Button variant="primary" onClick={openModal}>
-            Add Song
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" disabled>
+              Play All
+            </Button>
+            <Button variant="primary" onClick={openModal}>
+              Add Song
+            </Button>
+          </div>
         </div>
         <div className="min-h-[240px] flex items-center justify-center text-slate-600">
           Loading songs…
@@ -142,9 +163,14 @@ function SongsPage() {
             <h2 className="text-2xl font-semibold">Songs</h2>
             <p className="mt-2 text-slate-600">Browse all songs in the archive.</p>
           </div>
-          <Button variant="primary" onClick={openModal}>
-            Add Song
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={handlePlayAll} disabled={allSongs.length === 0}>
+              Play All
+            </Button>
+            <Button variant="primary" onClick={openModal}>
+              Add Song
+            </Button>
+          </div>
         </div>
         <div className="min-h-[240px] rounded-2xl border border-rose-400 bg-rose-100/30 p-4 text-rose-700">
           Error loading songs: {error}
@@ -161,9 +187,14 @@ function SongsPage() {
           <h2 className="text-2xl font-semibold">Songs</h2>
           <p className="mt-2 text-slate-600">Browse all songs in the archive.</p>
         </div>
-        <Button variant="primary" onClick={openModal}>
-          Add Song
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={handlePlayAll} disabled={allSongs.length === 0}>
+            Play All
+          </Button>
+          <Button variant="primary" onClick={openModal}>
+            Add Song
+          </Button>
+        </div>
       </div>
 
       {songs.length === 0 ? (
