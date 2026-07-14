@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useUserConfigStore, setUserConfigUpdateCallback } from "../stores/useUserConfigStore";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useWebSocketContext } from "../context/WebSocketContext";
+import { useSession } from "../context/SessionContext";
 
 /**
  * Hook to fetch and manage user configuration
@@ -46,24 +47,32 @@ export function usePlaybackConfig() {
  * Should be used in a root component (e.g., App.tsx)
  * 
  * This hook:
- * 1. Loads user config on mount
+ * 1. Loads user config on mount (only if authenticated)
  * 2. Initializes player with stored settings (or defaults)
  * 3. Syncs config changes to player via websocket
  * 4. Broadcasts config updates to other tabs via websocket
  */
 export function useInitializePlayerWithConfig() {
+  const { user } = useSession();
   const { config: userConfig, fetchConfig } = useUserConfigStore();
   const { updateLocalSettings } = usePlayerStore();
   const { send } = useWebSocketContext();
 
-  // Initialize player settings from user config on mount
+  // Initialize player settings from user config on mount (only when authenticated)
   useEffect(() => {
+    // Only fetch config if user is authenticated
+    if (!user) {
+      // Initialize player with defaults if not authenticated
+      updateLocalSettings(false, "off");
+      return;
+    }
+
     fetchConfig().catch((err) => {
       console.warn("Failed to fetch user config, using defaults:", err);
       // Initialize player with defaults even if fetch fails
       updateLocalSettings(false, "off");
     });
-  }, [fetchConfig, updateLocalSettings]);
+  }, [user, fetchConfig, updateLocalSettings]);
 
   // Sync player settings with user config on config change
   useEffect(() => {
