@@ -322,7 +322,13 @@ export const AlbumDetailSchema = z.object({
     .nullable()
     .optional()
     .transform((val) => (val ? toBrandId<CoverArtId>(val) : null)),
-  trackList: z.array(z.object({ number: z.number().int(), title: z.string(), duration: z.number().int().min(0).optional() })),
+  trackList: z.array(
+    z.object({
+      number: z.number().int(),
+      title: z.string(),
+      duration: z.number().int().min(0).optional(),
+    }),
+  ),
   urls: UrlArraySchema.default([]),
   createdAt: z.string(),
   tracks: z.array(AlbumTrackSchema),
@@ -350,9 +356,11 @@ export const PlaybackConfigSchema = z.object({
   repeat: z.enum(["off", "one", "all"]).optional(),
 });
 
-export const UserConfigSchema = z.object({
-  playback: PlaybackConfigSchema.optional(),
-}).passthrough(); // Allow additional properties for future extensibility
+export const UserConfigSchema = z
+  .object({
+    playback: PlaybackConfigSchema.optional(),
+  })
+  .passthrough(); // Allow additional properties for future extensibility
 
 export const UserConfigResponseSchema = z.object({
   config: UserConfigSchema,

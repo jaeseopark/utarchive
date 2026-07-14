@@ -3,7 +3,7 @@ import { Button } from "./ui/Button";
 import { useUpdateAlbum } from "../hooks/useUpdateAlbum";
 import { useUpsertAlbumSong } from "../hooks/useUpsertAlbumSong";
 import { TrackListEditor } from "./TrackListEditor";
-import { SearchExistingSong } from "./SearchExistingSong";
+import { useSongSelectorModal } from "./SongSelector";
 import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";
 import { toBrandId, type AlbumId, type SongId } from "../types/brands";
 
@@ -28,11 +28,34 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
   const { linkSongToTrack } = useUpsertAlbumSong();
 
   const [tracks, setTracks] = useState<NumberedTrack[]>([]);
-  const [songSelectOpen, setSongSelectOpen] = useState(false);
   const [trackNumberForSongSelect, setTrackNumberForSongSelect] = useState<number | null>(null);
   const [linkingTrackNumber, setLinkingTrackNumber] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initializedAlbumId, setInitializedAlbumId] = useState<AlbumId | null>(null);
+
+  const handleSongSelected = useCallback(
+    async (songId: string) => {
+      if (trackNumberForSongSelect !== null) {
+        setError(null);
+        setLinkingTrackNumber(trackNumberForSongSelect);
+
+        try {
+          await linkSongToTrack(album.id, toBrandId<SongId>(songId), trackNumberForSongSelect);
+          setLinkingTrackNumber(null);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Failed to link song");
+          setLinkingTrackNumber(null);
+        }
+      }
+      setTrackNumberForSongSelect(null);
+    },
+    [trackNumberForSongSelect, album.id, linkSongToTrack],
+  );
+
+  const songSelectorModal = useSongSelectorModal({
+    onSongSelected: handleSongSelected,
+    onClose: () => setTrackNumberForSongSelect(null),
+  });
 
   // Initialize tracks from album data when modal opens for a new album
   useEffect(() => {
@@ -50,33 +73,12 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
     }
   }, [isOpen, album.id]);
 
-  const handleSelectExistingSong = useCallback((trackNumber: number) => {
-    setTrackNumberForSongSelect(trackNumber);
-    setSongSelectOpen(true);
-  }, []);
-
-  const handleSongSelected = useCallback(
-    async (songId: string) => {
-      if (trackNumberForSongSelect !== null) {
-        setError(null);
-        setLinkingTrackNumber(trackNumberForSongSelect);
-
-        try {
-          await linkSongToTrack(
-            album.id,
-            toBrandId<SongId>(songId),
-            trackNumberForSongSelect,
-          );
-          setLinkingTrackNumber(null);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Failed to link song");
-          setLinkingTrackNumber(null);
-        }
-      }
-      setSongSelectOpen(false);
-      setTrackNumberForSongSelect(null);
+  const handleSelectExistingSong = useCallback(
+    (trackNumber: number) => {
+      setTrackNumberForSongSelect(trackNumber);
+      songSelectorModal.open();
     },
-    [trackNumberForSongSelect, album.id, linkSongToTrack],
+    [songSelectorModal],
   );
 
   const validateTracks = useCallback((): boolean => {
@@ -106,11 +108,13 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
     try {
       // Validate tracks before saving
       if (!validateTracks()) {
-        throw new Error("All literal tracks must have a title. Either reference an existing song or provide a title for each track.");
+        throw new Error(
+          "All literal tracks must have a title. Either reference an existing song or provide a title for each track.",
+        );
       }
 
       const trackListData: Array<{ number: number; title: string; duration?: number }> = [];
-      
+
       for (const track of tracks) {
         // Only save literal tracks, not song associations
         if (!Object.prototype.hasOwnProperty.call(track, "songId")) {
@@ -150,7 +154,8 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
                 Track Information
               </label>
               <p className="mb-3 text-xs text-slate-600">
-                Edit track titles, artists, and duration. Use the Link Song button to associate existing songs.
+                Edit track titles, artists, and duration. Use the Link Song button to associate
+                existing songs.
               </p>
               <TrackListEditor
                 tracks={tracks}
@@ -175,17 +180,10 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-3 border-t border-slate-200 pt-6">
-              <Button
-                onClick={onClose}
-                disabled={isOperationInProgress}
-                variant="secondary"
-              >
+              <Button onClick={onClose} disabled={isOperationInProgress} variant="secondary">
                 Cancel
               </Button>
-              <Button
-                onClick={handleSaveTrackList}
-                disabled={isOperationInProgress}
-              >
+              <Button onClick={handleSaveTrackList} disabled={isOperationInProgress}>
                 {isLoading ? "Saving…" : "Save Changes"}
               </Button>
             </div>
@@ -194,14 +192,7 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
       </div>
 
       {/* Song Select Modal */}
-      <SearchExistingSong
-        isOpen={songSelectOpen}
-        onClose={() => {
-          setSongSelectOpen(false);
-          setTrackNumberForSongSelect(null);
-        }}
-        onSongSelected={handleSongSelected}
-      />
+      {songSelectorModal.Component}
     </>
   );
 }

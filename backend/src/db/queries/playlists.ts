@@ -93,6 +93,17 @@ export const addSongToPlaylist = async (playlistId: string, songId: string, posi
       throw new Error("SONG_NOT_FOUND");
     }
 
+    // Check if song already exists in playlist
+    const [existingEntry] = await tx
+      .select()
+      .from(playlistSongs)
+      .where(and(eq(playlistSongs.playlistId, playlistId), eq(playlistSongs.songId, songId)))
+      .limit(1);
+
+    if (existingEntry) {
+      throw new Error("SONG_ALREADY_IN_PLAYLIST");
+    }
+
     const countRows = await tx
       .select({ count: sql`count(*)` })
       .from(playlistSongs)

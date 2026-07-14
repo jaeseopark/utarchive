@@ -220,7 +220,6 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
         ]
       : []),
     {
-
       key: "description",
       label: "Description",
       value: song.description,

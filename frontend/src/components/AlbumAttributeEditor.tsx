@@ -47,14 +47,18 @@ type UrlOption = {
 function isArtistOptionArray(value: unknown): value is ArtistOption[] {
   return (
     Array.isArray(value) &&
-    value.every((item) => typeof item === "object" && item !== null && "value" in item && "label" in item)
+    value.every(
+      (item) => typeof item === "object" && item !== null && "value" in item && "label" in item,
+    )
   );
 }
 
 function isUrlOptionArray(value: unknown): value is UrlOption[] {
   return (
     Array.isArray(value) &&
-    value.every((item) => typeof item === "object" && item !== null && "value" in item && "label" in item)
+    value.every(
+      (item) => typeof item === "object" && item !== null && "value" in item && "label" in item,
+    )
   );
 }
 
@@ -64,11 +68,7 @@ interface AlbumAttributesEditorProps {
   onExitEditMode: () => void;
 }
 
-function AlbumAttributesEditorContent({
-  album,
-  mode,
-  onExitEditMode,
-}: AlbumAttributesEditorProps) {
+function AlbumAttributesEditorContent({ album, mode, onExitEditMode }: AlbumAttributesEditorProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
   const [selectedUrls, setSelectedUrls] = useState<UrlOption[]>([]);
@@ -265,12 +265,7 @@ function AlbumAttributesEditorContent({
 
       {/* Action Buttons */}
       <div className="flex gap-2 pt-2">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onExitEditMode}
-          disabled={isSubmitting}
-        >
+        <Button type="button" variant="secondary" onClick={onExitEditMode} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>

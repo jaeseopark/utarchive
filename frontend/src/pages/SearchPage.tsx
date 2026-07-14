@@ -155,7 +155,9 @@ function SearchPage() {
               <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-semibold text-slate-900">Songs</h3>
-                  <span className="text-sm text-slate-600">{enrichedResults.songs.length} results</span>
+                  <span className="text-sm text-slate-600">
+                    {enrichedResults.songs.length} results
+                  </span>
                 </div>
                 <div className="mt-4 overflow-x-auto">
                   <table className="min-w-full text-left text-sm text-slate-700">
@@ -180,16 +182,14 @@ function SearchPage() {
                               </Link>
                             </td>
                             <td className="px-4 py-4 text-slate-700">
-                              {artistNames.length > 0 ? (
-                                artistNames.map((name, idx) => (
-                                  <span key={idx}>
-                                    {idx > 0 && ", "}
-                                    {name}
-                                  </span>
-                                ))
-                              ) : (
-                                "Unknown"
-                              )}
+                              {artistNames.length > 0
+                                ? artistNames.map((name, idx) => (
+                                    <span key={idx}>
+                                      {idx > 0 && ", "}
+                                      {name}
+                                    </span>
+                                  ))
+                                : "Unknown"}
                             </td>
                             <td className="px-4 py-4 text-slate-700">
                               {song.playbackEnabled ? "Yes" : "No"}
@@ -207,7 +207,9 @@ function SearchPage() {
               <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-semibold text-slate-900">Artists</h3>
-                  <span className="text-sm text-slate-600">{enrichedResults.artists.length} results</span>
+                  <span className="text-sm text-slate-600">
+                    {enrichedResults.artists.length} results
+                  </span>
                 </div>
                 <div className="mt-4 overflow-x-auto">
                   <table className="min-w-full text-left text-sm text-slate-700">
@@ -239,7 +241,9 @@ function SearchPage() {
               <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-semibold text-slate-900">Albums</h3>
-                  <span className="text-sm text-slate-600">{enrichedResults.albums.length} results</span>
+                  <span className="text-sm text-slate-600">
+                    {enrichedResults.albums.length} results
+                  </span>
                 </div>
                 <div className="mt-4 overflow-x-auto">
                   <table className="min-w-full text-left text-sm text-slate-700">

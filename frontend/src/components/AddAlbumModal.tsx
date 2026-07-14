@@ -14,7 +14,7 @@ import { useCreateArtist } from "../hooks/useCreateArtist";
 import { useAddAlbumModalStore } from "../stores/useAddAlbumModalStore";
 import { toBrandId, type ArtistId, type SongId, type CoverArtId } from "../types/brands";
 import { TrackListEditor } from "./TrackListEditor";
-import { SearchExistingSong } from "./SearchExistingSong";
+import { useSongSelectorModal } from "./SongSelector";
 import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";
 import clsx from "clsx";
 
@@ -34,8 +34,32 @@ export function AddAlbumModal() {
   const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
   const [isCreatingArtist, setIsCreatingArtist] = useState(false);
   const [tracks, setTracks] = useState<NumberedTrack[]>([]);
-  const [songSelectOpen, setSongSelectOpen] = useState(false);
   const [trackNumberForSongSelect, setTrackNumberForSongSelect] = useState<number | null>(null);
+
+  const handleSongSelected = useCallback(
+    (songId: string) => {
+      if (trackNumberForSongSelect !== null) {
+        setTracks((prevTracks) =>
+          prevTracks.map((track) => {
+            if (track.trackNumber === trackNumberForSongSelect) {
+              return {
+                trackNumber: track.trackNumber,
+                songId: toBrandId<SongId>(songId),
+              };
+            }
+            return track;
+          }),
+        );
+      }
+      setTrackNumberForSongSelect(null);
+    },
+    [trackNumberForSongSelect],
+  );
+
+  const songSelectorModal = useSongSelectorModal({
+    onSongSelected: handleSongSelected,
+    onClose: () => setTrackNumberForSongSelect(null),
+  });
 
   const {
     register,
@@ -58,7 +82,6 @@ export function AddAlbumModal() {
       reset();
       setSelectedArtists([]);
       setTracks([]);
-      setSongSelectOpen(false);
       setTrackNumberForSongSelect(null);
     }
   }, [isOpen, reset]);
@@ -176,30 +199,12 @@ export function AddAlbumModal() {
     [selectedArtists, createArtist],
   );
 
-  const handleSelectExistingSong = useCallback((trackNumber: number) => {
-    setTrackNumberForSongSelect(trackNumber);
-    setSongSelectOpen(true);
-  }, []);
-
-  const handleSongSelected = useCallback(
-    (songId: string) => {
-      if (trackNumberForSongSelect !== null) {
-        setTracks((prevTracks) =>
-          prevTracks.map((track) => {
-            if (track.trackNumber === trackNumberForSongSelect) {
-              return {
-                trackNumber: track.trackNumber,
-                songId: toBrandId<SongId>(songId),
-              };
-            }
-            return track;
-          }),
-        );
-      }
-      setSongSelectOpen(false);
-      setTrackNumberForSongSelect(null);
+  const handleSelectExistingSong = useCallback(
+    (trackNumber: number) => {
+      setTrackNumberForSongSelect(trackNumber);
+      songSelectorModal.open();
     },
-    [trackNumberForSongSelect],
+    [songSelectorModal],
   );
 
   if (!isOpen) {
@@ -337,13 +342,7 @@ export function AddAlbumModal() {
       </div>
 
       {/* Song selection modal for linking tracks */}
-      {songSelectOpen && (
-        <SearchExistingSong
-          isOpen={songSelectOpen}
-          onClose={() => setSongSelectOpen(false)}
-          onSongSelected={handleSongSelected}
-        />
-      )}
+      {songSelectorModal.Component}
     </>
   );
 }

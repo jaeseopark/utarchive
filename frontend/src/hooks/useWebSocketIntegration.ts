@@ -59,7 +59,9 @@ function isDataChangedMessage(message: WebSocketMessage): message is DataChanged
 /**
  * Type guard to check if a WebSocketMessage is a UserConfigChangedMessage
  */
-function isUserConfigChangedMessage(message: WebSocketMessage): message is UserConfigChangedMessage {
+function isUserConfigChangedMessage(
+  message: WebSocketMessage,
+): message is UserConfigChangedMessage {
   return message.type === "USER_CONFIG_CHANGED";
 }
 
