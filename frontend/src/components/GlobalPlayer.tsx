@@ -64,16 +64,18 @@ export function GlobalPlayer() {
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  if (!currentSong) {
-    return null;
-  }
-
   return (
     <div className="flex flex-1 items-center gap-4">
       {/* Song Info */}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-slate-900">{currentSong.title}</p>
-        <p className="truncate text-xs text-slate-500">{artistNames.join(", ")}</p>
+        {currentSong ? (
+          <>
+            <p className="truncate text-xs font-medium text-slate-900">{currentSong.title}</p>
+            <p className="truncate text-xs text-slate-500">{artistNames.join(", ")}</p>
+          </>
+        ) : (
+          <p className="truncate text-xs text-slate-400">No song playing</p>
+        )}
       </div>
 
       {/* Progress Bar */}
@@ -82,7 +84,11 @@ export function GlobalPlayer() {
         <div
           ref={progressRef}
           onClick={handleProgressClick}
-          className="h-1 flex-1 cursor-pointer rounded-full bg-slate-300 hover:bg-slate-400"
+          className={`h-1 flex-1 rounded-full ${
+            currentSong
+              ? "cursor-pointer bg-slate-300 hover:bg-slate-400"
+              : "cursor-not-allowed bg-slate-200"
+          }`}
         >
           <div
             className="h-full rounded-full bg-sky-500 transition-all"
@@ -109,7 +115,8 @@ export function GlobalPlayer() {
         <button
           type="button"
           onClick={() => (isPlaying ? pause() : resume())}
-          className="rounded-full bg-sky-500 p-1.5 text-white hover:bg-sky-600 disabled:opacity-50"
+          disabled={!currentSong}
+          className="rounded-full bg-sky-500 p-1.5 text-white hover:bg-sky-600 disabled:bg-slate-300 disabled:hover:bg-slate-300"
         >
           {isPlaying ? (
             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
