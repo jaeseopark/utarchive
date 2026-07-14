@@ -147,11 +147,7 @@ const AlbumDetailPage = () => {
   );
 
   // Selection and bulk operations
-  const {
-    state: selectionState,
-    toggleSelection,
-    clearSelection,
-  } = useSongSelection(albumSongs);
+  const { state: selectionState, toggleSelection, clearSelection } = useSongSelection(albumSongs);
   // Note: useBulkOperations is used internally by SongActionsDropdown
 
   const formatDuration = (seconds: number | undefined): string => {

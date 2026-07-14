@@ -7,11 +7,6 @@ export { SongSelector } from "./SongSelector";
 /**
  * Hook for managing song selector modal state and rendering
  * Returns an object with the modal Component, visibility state, and control functions
- *
- * Usage:
- * const { Component, isOpen, open, close } = useSongSelectorModal({
- *   onSongSelected: (songId) => handleSongSelect(songId),
- * });
  */
 export function useSongSelectorModal(props: React.ComponentProps<typeof SongSelector>) {
   const [isOpen, setOpen] = useState(false);

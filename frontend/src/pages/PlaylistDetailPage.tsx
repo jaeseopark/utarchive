@@ -274,9 +274,7 @@ function PlaylistDetailPage() {
                         return (
                           <tr
                             key={item.song.id}
-                            onClick={() =>
-                              toggleSelection(item.song.id, false)
-                            }
+                            onClick={() => toggleSelection(item.song.id, false)}
                             className={`border-b border-slate-300 last:border-b-0 cursor-pointer transition ${
                               isSelected ? "bg-blue-50" : "hover:bg-slate-50"
                             }`}
@@ -294,7 +292,10 @@ function PlaylistDetailPage() {
                             <td className="px-4 py-4 text-slate-700">
                               {item.song.playbackEnabled ? "Yes" : "No"}
                             </td>
-                            <td className="px-4 py-4 space-x-2" onClick={(e) => e.stopPropagation()}>
+                            <td
+                              className="px-4 py-4 space-x-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {item.song.playbackEnabled && (
                                 <Button
                                   type="button"
