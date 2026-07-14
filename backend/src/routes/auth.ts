@@ -149,7 +149,7 @@ router.use(requireAuth);
 router.post("/logout", (_req, res) => {
   res.clearCookie("session", {
     httpOnly: true,
-    secure: true,
+    secure: config.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
   });
