@@ -209,7 +209,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }
 
     try {
-      await api.put(`/api/playlists/${id}`, { name: trimmedName }, PlaylistSchema);
+      await api.patch(`/api/playlists/${id}`, { name: trimmedName }, PlaylistSchema);
 
       // Update both list and detail
       set((state) => {
