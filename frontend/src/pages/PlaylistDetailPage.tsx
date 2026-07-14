@@ -6,6 +6,8 @@ import { z } from "zod";
 import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useSongSelectorModal } from "../components/SongSelector";
+import { useSongSelection } from "../hooks/useSongSelection";
+import { SongActionsDropdown } from "../components/SongTable";
 import { buildPlaylistQueue } from "../lib/queueBuilder";
 import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
 
@@ -141,6 +143,19 @@ function PlaylistDetailPage() {
 
   const playlistSongs = playlist?.songs ?? [];
 
+  // Selection and bulk operations - convert to minimal song-like objects for selection
+  const {
+    state: selectionState,
+    toggleSelection,
+    clearSelection,
+  } = useSongSelection(
+    playlistSongs.map((item) => {
+      // eslint-disable-next-line no-restricted-syntax
+      return { id: item.song.id } as { id: SongId };
+    }),
+  );
+  // Note: useBulkOperations is used internally by SongActionsDropdown
+
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -242,71 +257,90 @@ function PlaylistDetailPage() {
             {playlistSongs.length === 0 ? (
               <p className="mt-4 text-slate-600">No songs added to this playlist yet.</p>
             ) : (
-              <div className="mt-4 overflow-x-auto">
-                <table className="min-w-full text-left text-sm text-slate-700">
-                  <thead className="border-b border-slate-300 text-slate-600">
-                    <tr>
-                      <th className="px-4 py-3">#</th>
-                      <th className="px-4 py-3">Title</th>
-                      <th className="px-4 py-3">Playback Enabled</th>
-                      <th className="px-4 py-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {playlistSongs.map((item, index) => (
-                      <tr key={item.song.id} className="border-b border-slate-300 last:border-b-0">
-                        <td className="px-4 py-4 text-slate-700">{index + 1}</td>
-                        <td className="px-4 py-4">
-                          <Link
-                            to={`/songs/${item.song.id}`}
-                            className="text-slate-900 transition hover:text-sky-500"
-                          >
-                            {item.song.title}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-4 text-slate-700">
-                          {item.song.playbackEnabled ? "Yes" : "No"}
-                        </td>
-                        <td className="px-4 py-4 space-x-2">
-                          {item.song.playbackEnabled && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
-                              onClick={() => usePlayerStore().play(item.song as any)}
-                            >
-                              ▶ Play
-                            </Button>
-                          )}
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            disabled={index === 0}
-                            onClick={() => handleReorder(index, index - 1)}
-                          >
-                            Up
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            disabled={index === playlistSongs.length - 1}
-                            onClick={() => handleReorder(index, index + 1)}
-                          >
-                            Down
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => handleRemoveSong(item.position)}
-                          >
-                            Remove
-                          </Button>
-                        </td>
+              <>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="min-w-full text-left text-sm text-slate-700">
+                    <thead className="border-b border-slate-300 text-slate-600">
+                      <tr>
+                        <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">Title</th>
+                        <th className="px-4 py-3">Playback Enabled</th>
+                        <th className="px-4 py-3">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {playlistSongs.map((item, index) => {
+                        const isSelected = selectionState.selectedIds.has(item.song.id);
+                        return (
+                          <tr
+                            key={item.song.id}
+                            onClick={() => toggleSelection(item.song.id, false)}
+                            className={`border-b border-slate-300 last:border-b-0 cursor-pointer transition ${
+                              isSelected ? "bg-blue-50" : "hover:bg-slate-50"
+                            }`}
+                          >
+                            <td className="px-4 py-4 text-slate-700">{index + 1}</td>
+                            <td className="px-4 py-4">
+                              <Link
+                                to={`/songs/${item.song.id}`}
+                                className="text-slate-900 transition hover:text-sky-500"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {item.song.title}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-4 text-slate-700">
+                              {item.song.playbackEnabled ? "Yes" : "No"}
+                            </td>
+                            <td
+                              className="px-4 py-4 space-x-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.song.playbackEnabled && (
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+                                  onClick={() => usePlayerStore().play(item.song as any)}
+                                >
+                                  ▶ Play
+                                </Button>
+                              )}
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                disabled={index === 0}
+                                onClick={() => handleReorder(index, index - 1)}
+                              >
+                                Up
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                disabled={index === playlistSongs.length - 1}
+                                onClick={() => handleReorder(index, index + 1)}
+                              >
+                                Down
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => handleRemoveSong(item.position)}
+                              >
+                                Remove
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <SongActionsDropdown
+                  selectedSongIds={Array.from(selectionState.selectedIds)}
+                  onClose={clearSelection}
+                />
+              </>
             )}
           </section>
         </div>

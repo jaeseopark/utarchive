@@ -3,9 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import { formatDate } from "../lib/format";
 import { useArtistDetail } from "../hooks/useArtistDetail";
 import { useArtistAlbums } from "../hooks/useArtistAlbums";
+import { useSongSelection } from "../hooks/useSongSelection";
 import { PlaybackEnabledToggle } from "../components/PlaybackEnabledToggle";
 import { useArtistAttributesEditor } from "../components/ArtistAttributesEditor";
 import { Button } from "../components/ui/Button";
+import { SongTable, SongActionsDropdown } from "../components/SongTable";
 import { toBrandId, type ArtistId } from "../types/brands";
 import type { Artist } from "../api/schemas";
 import { useArtistSongsStore } from "../stores/useArtistSongsStore";
@@ -51,6 +53,10 @@ function ArtistDetailPage() {
 
   const { albums, isLoading: albumsLoading, error: albumsError } = useArtistAlbums(artistId);
 
+  // Selection and bulk operations
+  const { state: selectionState, clearSelection } = useSongSelection(songs);
+  // Note: useBulkOperations is used internally by SongActionsDropdown
+
   useEffect(() => {
     if (!id) return;
     fetchArtistSongs(artistId).catch(() => {
@@ -92,30 +98,32 @@ function ArtistDetailPage() {
             {songs.length === 0 ? (
               <p className="mt-4 text-slate-600">No songs found for this artist.</p>
             ) : (
-              <div className="mt-4 overflow-x-auto">
-                <table className="min-w-full text-left text-sm text-slate-700">
-                  <thead className="border-b border-slate-300 text-slate-600">
-                    <tr>
-                      <th className="px-4 py-3">Title</th>
-                      <th className="px-4 py-3">Released</th>
-                      <th className="px-4 py-3">Playback Enabled</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {songs.map((song) => (
-                      <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
-                        <td className="px-4 py-4">
+              <>
+                <div className="mt-4">
+                  <SongTable
+                    songs={songs}
+                    columns={[
+                      {
+                        key: "title",
+                        label: "Title",
+                        render: (song) => (
                           <Link
                             to={`/songs/${song.id}`}
                             className="text-slate-900 transition hover:text-sky-500"
                           >
                             {song.title}
                           </Link>
-                        </td>
-                        <td className="px-4 py-4 text-slate-700">
-                          {formatDate(song.releasedAt) ?? "—"}
-                        </td>
-                        <td className="px-4 py-4 align-middle">
+                        ),
+                      },
+                      {
+                        key: "released",
+                        label: "Released",
+                        render: (song) => <>{formatDate(song.releasedAt) ?? "—"}</>,
+                      },
+                      {
+                        key: "playback",
+                        label: "Playback Enabled",
+                        render: (song) => (
                           <div className="h-6">
                             <PlaybackEnabledToggle
                               songId={song.id}
@@ -123,12 +131,16 @@ function ArtistDetailPage() {
                               onPlaybackEnabledChange={handlePlaybackEnabledChange}
                             />
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        ),
+                      },
+                    ]}
+                  />
+                </div>
+                <SongActionsDropdown
+                  selectedSongIds={Array.from(selectionState.selectedIds)}
+                  onClose={clearSelection}
+                />
+              </>
             )}
           </section>
 
