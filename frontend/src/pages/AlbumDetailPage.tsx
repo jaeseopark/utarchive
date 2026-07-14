@@ -1,8 +1,5 @@
 import { Fragment, useMemo, useState, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api } from "../api/client";
-import { SongTreeSchema, type SongTree } from "../api/schemas";
-import FamilyTree from "../components/FamilyTree";
 import { Button } from "../components/ui/Button";
 import { EditAlbumModal } from "../components/EditAlbumModal";
 import { useSongSelectorModal } from "../components/SongSelector";
@@ -11,35 +8,50 @@ import { useAlbumDetail } from "../hooks/useAlbumDetail";
 import { useUnlinkSongFromAlbum } from "../hooks/useUnlinkSongFromAlbum";
 import { useUpsertAlbumSong } from "../hooks/useUpsertAlbumSong";
 import { useSongSelection } from "../hooks/useSongSelection";
+import { useFamilyTree } from "../hooks/useFamilyTree";
 import { SongActionsDropdown } from "../components/SongTable";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useSongsStore } from "../stores/useSongsStore";
+import { useEditAlbumModalStore } from "../stores/useEditAlbumModalStore";
+import FamilyTree from "../components/FamilyTree";
 import { buildAlbumQueue } from "../lib/queueBuilder";
 import { toBrandId, type AlbumId, type ArtistId, type SongId } from "../types/brands";
-
-const SongTreeResponseSchema = SongTreeSchema;
 
 const AlbumDetailPage = () => {
   const { id } = useParams();
   const { album, isLoading, error } = useAlbumDetail(toBrandId<AlbumId>(id || ""));
+  const { isOpen: isEditModalOpen, openModal: openEditModal, closeModal: closeEditModal } =
+    useEditAlbumModalStore();
+
+  // Track which song's tree is currently expanded
   const [expandedSongId, setExpandedSongId] = useState<string | null>(null);
-  const [tree, setTree] = useState<SongTree | null>(null);
-  const [treeLoading, setTreeLoading] = useState(false);
-  const [treeError, setTreeError] = useState<string | null>(null);
-  const [isPlayLoading, setIsPlayLoading] = useState(false);
-  const [unlinkingTrackNumber, setUnlinkingTrackNumber] = useState<number | null>(null);
-  const [unlinkError, setUnlinkError] = useState<string | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Track operations (linking/unlinking) per track number: { trackNumber -> { type, error? } }
+  const [trackOperations, setTrackOperations] = useState<
+    Map<number, { type: "linking" | "unlinking"; error?: string }>
+  >(new Map());
+
+  // Track which track is waiting for song selection
   const [trackNumberForSongSelect, setTrackNumberForSongSelect] = useState<number | null>(null);
-  const [linkingTrackNumber, setLinkingTrackNumber] = useState<number | null>(null);
-  const [linkError, setLinkError] = useState<string | null>(null);
+
+  // Play album loading state
+  const [isPlayLoading, setIsPlayLoading] = useState(false);
+
+  // Family tree data and loading state - gets the masterId from the expanded song
+  const expandedSongDetail = expandedSongId
+    ? useSongsStore((state) => state.getSongDetail(toBrandId<SongId>(expandedSongId)))
+    : undefined;
+  const { tree, isLoading: treeLoading, error: treeError } = useFamilyTree(
+    expandedSongDetail?.masterId || toBrandId<SongId>("0"),
+    expandedSongId ? toBrandId<SongId>(expandedSongId) : undefined,
+  );
 
   const { setQueue, play } = usePlayerStore();
   const artists = useArtistsStore((state) => state.artists);
+  const getSongDetail = useSongsStore((state) => state.getSongDetail);
   const { unlinkSong } = useUnlinkSongFromAlbum();
   const { linkSongToTrack } = useUpsertAlbumSong();
-  const getSongDetail = useSongsStore((state) => state.getSongDetail);
 
   // Album attributes editor hook - always call unconditionally (hook handles null albums internally)
   const albumEditorState = useAlbumAttributeEditor(album ?? null);
@@ -48,17 +60,21 @@ const AlbumDetailPage = () => {
     async (songId: string) => {
       if (!album || trackNumberForSongSelect === null) return;
 
-      setLinkError(null);
-      setLinkingTrackNumber(trackNumberForSongSelect);
+      setTrackOperations((prev) => new Map(prev).set(trackNumberForSongSelect, { type: "linking" }));
 
       try {
         await linkSongToTrack(album.id, toBrandId<SongId>(songId), trackNumberForSongSelect);
-        setLinkingTrackNumber(null);
+        setTrackOperations((prev) => {
+          const updated = new Map(prev);
+          updated.delete(trackNumberForSongSelect);
+          return updated;
+        });
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to link song";
-        setLinkError(message);
+        setTrackOperations((prev) =>
+          new Map(prev).set(trackNumberForSongSelect, { type: "linking", error: message }),
+        );
         console.error("Link error:", message);
-        setLinkingTrackNumber(null);
       }
       setTrackNumberForSongSelect(null);
     },
@@ -79,22 +95,7 @@ const AlbumDetailPage = () => {
   );
 
   const toggleTree = (songId: string) => {
-    if (expandedSongId === songId) {
-      setExpandedSongId(null);
-      setTree(null);
-      setTreeError(null);
-      return;
-    }
-
-    setExpandedSongId(songId);
-    setTreeLoading(true);
-    setTreeError(null);
-
-    api
-      .get(`/api/songs/${songId}/tree`, SongTreeResponseSchema)
-      .then(setTree)
-      .catch((err) => setTreeError(err instanceof Error ? err.message : String(err)))
-      .finally(() => setTreeLoading(false));
+    setExpandedSongId(expandedSongId === songId ? null : songId);
   };
 
   const handlePlayAlbum = async () => {
@@ -119,16 +120,18 @@ const AlbumDetailPage = () => {
   };
 
   const handleUnlinkSong = async (albumId: AlbumId, songId: SongId, trackNumber: number) => {
-    setUnlinkingTrackNumber(trackNumber);
-    setUnlinkError(null);
+    setTrackOperations((prev) => new Map(prev).set(trackNumber, { type: "unlinking" }));
     try {
       await unlinkSong(albumId, songId);
+      setTrackOperations((prev) => {
+        const updated = new Map(prev);
+        updated.delete(trackNumber);
+        return updated;
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to unlink song";
-      setUnlinkError(message);
+      setTrackOperations((prev) => new Map(prev).set(trackNumber, { type: "unlinking", error: message }));
       console.error("Unlink error:", message);
-    } finally {
-      setUnlinkingTrackNumber(null);
     }
   };
 
@@ -259,7 +262,7 @@ const AlbumDetailPage = () => {
                     {isPlayLoading ? "Loading…" : "▶ Play Album"}
                   </Button>
                 )}
-                <Button variant="secondary" onClick={() => setIsEditModalOpen(true)}>
+                <Button variant="secondary" onClick={openEditModal}>
                   ✎ Edit Tracks
                 </Button>
               </div>
@@ -385,28 +388,30 @@ const AlbumDetailPage = () => {
                                           track.trackNumber,
                                         )
                                       }
-                                      disabled={unlinkingTrackNumber === track.trackNumber}
+                                      disabled={trackOperations.get(track.trackNumber)?.type === "unlinking"}
                                       className="text-xs px-3 py-2 bg-rose-100 text-rose-700 hover:bg-rose-200"
                                       title="Unlink song and restore original literal track info"
                                     >
-                                      {unlinkingTrackNumber === track.trackNumber
+                                      {trackOperations.get(track.trackNumber)?.type === "unlinking"
                                         ? "Unlinking…"
                                         : "Unlink"}
                                     </Button>
                                   </div>
-                                  {unlinkError && unlinkingTrackNumber === track.trackNumber && (
-                                    <div className="text-xs text-rose-600">{unlinkError}</div>
+                                  {trackOperations.get(track.trackNumber)?.error && trackOperations.get(track.trackNumber)?.type === "unlinking" && (
+                                    <div className="text-xs text-rose-600">
+                                      {trackOperations.get(track.trackNumber)?.error}
+                                    </div>
                                   )}
                                 </div>
                               ) : (
                                 <button
                                   type="button"
                                   onClick={() => handleSelectExistingSong(track.trackNumber)}
-                                  disabled={linkingTrackNumber === track.trackNumber}
+                                  disabled={trackOperations.get(track.trackNumber)?.type === "linking"}
                                   className="rounded bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700 hover:bg-sky-200 disabled:opacity-50"
                                   title="Link an existing song to this track"
                                 >
-                                  {linkingTrackNumber === track.trackNumber
+                                  {trackOperations.get(track.trackNumber)?.type === "linking"
                                     ? "Linking…"
                                     : "Link Song"}
                                 </button>
@@ -435,9 +440,9 @@ const AlbumDetailPage = () => {
                 </table>
               </div>
             )}
-            {linkError && (
+            {Array.from(trackOperations.values()).some((op) => op.type === "linking" && op.error) && (
               <div className="mt-4 rounded-lg border border-rose-400 bg-rose-100/30 p-3 text-sm text-rose-700">
-                {linkError}
+                {Array.from(trackOperations.values()).find((op) => op.type === "linking" && op.error)?.error}
               </div>
             )}
             {albumSongs.length > 0 && (
@@ -463,7 +468,7 @@ const AlbumDetailPage = () => {
             })),
           }}
           isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
+          onClose={closeEditModal}
         />
 
         {/* Song Select Modal */}
