@@ -105,11 +105,10 @@ function SongDetailPage() {
   // Get album titles for the song's albums
   const songAlbums = useMemo(() => {
     if (!song?.albumIds) return [];
-    return song.albumIds
-      .map((albumId) => {
-        const album = albums.find((a) => a.id === albumId);
-        return album ? { id: albumId, title: album.title } : { id: albumId, title: "Unknown" };
-      });
+    return song.albumIds.map((albumId) => {
+      const album = albums.find((a) => a.id === albumId);
+      return album ? { id: albumId, title: album.title } : { id: albumId, title: "Unknown" };
+    });
   }, [song?.albumIds, albums]);
 
   return (
@@ -133,7 +132,9 @@ function SongDetailPage() {
 
           {songAlbums.length > 0 && (
             <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
-              <h3 className="text-xl font-semibold text-slate-900">Album{songAlbums.length > 1 ? "s" : ""}</h3>
+              <h3 className="text-xl font-semibold text-slate-900">
+                Album{songAlbums.length > 1 ? "s" : ""}
+              </h3>
               <div className="mt-4">
                 <ul className="space-y-2">
                   {songAlbums.map((album) => (

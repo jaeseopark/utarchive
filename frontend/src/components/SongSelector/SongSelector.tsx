@@ -7,9 +7,7 @@ import { useAlbumsStore } from "../../stores/useAlbumsStore";
 import { useSongsStore } from "../../stores/useSongsStore";
 import { getArtistNames } from "../../lib/artistNames";
 import { formatDate } from "../../lib/format";
-import {
-  SearchResponseSchema,
-} from "../../stores/useSearchStore";
+import { SearchResponseSchema } from "../../stores/useSearchStore";
 import { SongSchema, type Song } from "../../api/schemas";
 
 /**
@@ -39,8 +37,7 @@ type SongSelectorProps = {
   disabledSongIds?: string[];
   onClose?: () => void;
 } & (
-  | { onSongSelected: (songId: string) => void }
-  | { onSongsSelected: (songIds: string[]) => void }
+  { onSongSelected: (songId: string) => void } | { onSongsSelected: (songIds: string[]) => void }
 );
 
 /**
@@ -184,7 +181,8 @@ export function SongSelector(props: SongSelectorProps) {
     return songs;
   }, [selectedSongs, songDetails]);
 
-  const noResultsFound = !isSearching && query && enabledResults.length === 0 && disabledResults.length === 0;
+  const noResultsFound =
+    !isSearching && query && enabledResults.length === 0 && disabledResults.length === 0;
 
   const handleToggleSelection = (songId: string, isDisabled: boolean) => {
     // Prevent selection of disabled songs
@@ -238,16 +236,18 @@ export function SongSelector(props: SongSelectorProps) {
 
           <div className="flex-1 min-w-0">
             {/* Song Title */}
-            <p className={`font-semibold truncate ${isDisabled ? "text-slate-500" : "text-slate-900"}`}>
+            <p
+              className={`font-semibold truncate ${isDisabled ? "text-slate-500" : "text-slate-900"}`}
+            >
               {song.title}
             </p>
 
             {/* Metadata Row */}
-            <div className={`mt-2 flex flex-wrap gap-3 text-sm ${isDisabled ? "text-slate-500" : "text-slate-600"}`}>
+            <div
+              className={`mt-2 flex flex-wrap gap-3 text-sm ${isDisabled ? "text-slate-500" : "text-slate-600"}`}
+            >
               {/* Artists */}
-              {artistNames.length > 0 && (
-                <span className="truncate">{artistNames.join(", ")}</span>
-              )}
+              {artistNames.length > 0 && <span className="truncate">{artistNames.join(", ")}</span>}
 
               {/* Duration */}
               {song.duration && <span>{formatDuration(song.duration)}</span>}
@@ -345,9 +345,7 @@ export function SongSelector(props: SongSelectorProps) {
               onClick={() => setIsSelectedExpanded(!isSelectedExpanded)}
               className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-100 transition rounded-lg"
             >
-              <span className="font-medium text-slate-900">
-                Selected ({selectedSongs.size})
-              </span>
+              <span className="font-medium text-slate-900">Selected ({selectedSongs.size})</span>
               <span className={`transition ${isSelectedExpanded ? "rotate-180" : ""}`}>▼</span>
             </button>
 
@@ -370,9 +368,7 @@ export function SongSelector(props: SongSelectorProps) {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-900 truncate">{song.title}</p>
                         <div className="text-xs text-slate-600 space-x-2">
-                          {artistNames.length > 0 && (
-                            <span>{artistNames.join(", ")}</span>
-                          )}
+                          {artistNames.length > 0 && <span>{artistNames.join(", ")}</span>}
                         </div>
                       </div>
                     </div>
@@ -408,9 +404,7 @@ export function SongSelector(props: SongSelectorProps) {
 
       {/* OK Button (multi-select mode only) */}
       <div className="flex justify-end gap-3 pt-6 border-t border-slate-200 mt-6">
-        <Button onClick={handleConfirm}>
-          OK
-        </Button>
+        <Button onClick={handleConfirm}>OK</Button>
       </div>
     </>
   );

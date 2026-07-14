@@ -32,9 +32,7 @@ export function hasSongId(track: Track): track is { songId: SongId } {
 /**
  * Type guard to check if a track is a literal track entry
  */
-export function isLiteralTrack(
-  track: Track,
-): track is {
+export function isLiteralTrack(track: Track): track is {
   title: string;
   artists?: string;
   duration?: number;

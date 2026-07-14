@@ -45,7 +45,7 @@ export function usePlaybackConfig() {
 /**
  * Hook to initialize player with user config settings
  * Should be used in a root component (e.g., App.tsx)
- * 
+ *
  * This hook:
  * 1. Loads user config on mount (only if authenticated)
  * 2. Initializes player with stored settings (or defaults)

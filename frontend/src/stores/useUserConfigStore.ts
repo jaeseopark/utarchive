@@ -43,7 +43,11 @@ export const useUserConfigStore = create<UserConfigStore>((set, get) => ({
   updateConfig: async (updates: Partial<UserConfig>, fromWebSocket = false) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.put("/api/user/config", { config: updates }, UserConfigResponseSchema);
+      const response = await api.put(
+        "/api/user/config",
+        { config: updates },
+        UserConfigResponseSchema,
+      );
       set({ config: response.config, isLoading: false });
 
       // Only emit websocket if this update came from a local action (not from websocket)

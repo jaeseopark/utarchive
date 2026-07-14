@@ -148,17 +148,23 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { shuffleEnabled } = usePlayerStore.getState();
     const newShuffle = !shuffleEnabled;
     // Update user config store (which will handle API call and websocket emission)
-    useUserConfigStore.getState().setPlaybackShuffle(newShuffle).catch((err) => {
-      console.error("Failed to save shuffle setting:", err);
-    });
+    useUserConfigStore
+      .getState()
+      .setPlaybackShuffle(newShuffle)
+      .catch((err) => {
+        console.error("Failed to save shuffle setting:", err);
+      });
     usePlayerStore.setState({ shuffleEnabled: newShuffle });
   },
 
   setRepeatMode: (mode: "off" | "one" | "all") => {
     // Update user config store (which will handle API call and websocket emission)
-    useUserConfigStore.getState().setPlaybackRepeat(mode).catch((err) => {
-      console.error("Failed to save repeat setting:", err);
-    });
+    useUserConfigStore
+      .getState()
+      .setPlaybackRepeat(mode)
+      .catch((err) => {
+        console.error("Failed to save repeat setting:", err);
+      });
     usePlayerStore.setState({ repeatMode: mode });
   },
 

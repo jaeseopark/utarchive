@@ -199,10 +199,13 @@ export function AddAlbumModal() {
     [selectedArtists, createArtist],
   );
 
-  const handleSelectExistingSong = useCallback((trackNumber: number) => {
-    setTrackNumberForSongSelect(trackNumber);
-    songSelectorModal.open();
-  }, [songSelectorModal]);
+  const handleSelectExistingSong = useCallback(
+    (trackNumber: number) => {
+      setTrackNumberForSongSelect(trackNumber);
+      songSelectorModal.open();
+    },
+    [songSelectorModal],
+  );
 
   if (!isOpen) {
     return null;

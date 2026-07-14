@@ -42,37 +42,39 @@ const AlbumDetailPage = () => {
   // Album attributes editor hook - always call unconditionally (hook handles null albums internally)
   const albumEditorState = useAlbumAttributeEditor(album ?? null);
 
-  const handleSongSelected = useCallback(async (songId: string) => {
-    if (!album || trackNumberForSongSelect === null) return;
-    
-    setLinkError(null);
-    setLinkingTrackNumber(trackNumberForSongSelect);
+  const handleSongSelected = useCallback(
+    async (songId: string) => {
+      if (!album || trackNumberForSongSelect === null) return;
 
-    try {
-      await linkSongToTrack(
-        album.id,
-        toBrandId<SongId>(songId),
-        trackNumberForSongSelect,
-      );
-      setLinkingTrackNumber(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to link song";
-      setLinkError(message);
-      console.error("Link error:", message);
-      setLinkingTrackNumber(null);
-    }
-    setTrackNumberForSongSelect(null);
-  }, [album, trackNumberForSongSelect, linkSongToTrack]);
+      setLinkError(null);
+      setLinkingTrackNumber(trackNumberForSongSelect);
+
+      try {
+        await linkSongToTrack(album.id, toBrandId<SongId>(songId), trackNumberForSongSelect);
+        setLinkingTrackNumber(null);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to link song";
+        setLinkError(message);
+        console.error("Link error:", message);
+        setLinkingTrackNumber(null);
+      }
+      setTrackNumberForSongSelect(null);
+    },
+    [album, trackNumberForSongSelect, linkSongToTrack],
+  );
 
   const songSelectorModal = useSongSelectorModal({
     onSongSelected: handleSongSelected,
     onClose: () => setTrackNumberForSongSelect(null),
   });
 
-  const handleSelectExistingSong = useCallback((trackNumber: number) => {
-    setTrackNumberForSongSelect(trackNumber);
-    songSelectorModal.open();
-  }, [songSelectorModal]);
+  const handleSelectExistingSong = useCallback(
+    (trackNumber: number) => {
+      setTrackNumberForSongSelect(trackNumber);
+      songSelectorModal.open();
+    },
+    [songSelectorModal],
+  );
 
   const toggleTree = (songId: string) => {
     if (expandedSongId === songId) {
@@ -235,18 +237,11 @@ const AlbumDetailPage = () => {
               <h3 className="text-xl font-semibold text-slate-900">Track list</h3>
               <div className="flex gap-3">
                 {hasPlayableTracks && (
-                  <Button
-                    variant="primary"
-                    onClick={handlePlayAlbum}
-                    disabled={isPlayLoading}
-                  >
+                  <Button variant="primary" onClick={handlePlayAlbum} disabled={isPlayLoading}>
                     {isPlayLoading ? "Loading…" : "▶ Play Album"}
                   </Button>
                 )}
-                <Button
-                  variant="secondary"
-                  onClick={() => setIsEditModalOpen(true)}
-                >
+                <Button variant="secondary" onClick={() => setIsEditModalOpen(true)}>
                   ✎ Edit Tracks
                 </Button>
               </div>
@@ -305,14 +300,18 @@ const AlbumDetailPage = () => {
                                   </Link>
                                 </div>
                               ) : (
-                                <span className="text-slate-700">{track.referenceTitle ?? "—"}</span>
+                                <span className="text-slate-700">
+                                  {track.referenceTitle ?? "—"}
+                                </span>
                               )}
                             </td>
                             <td className="px-4 py-4 text-slate-600">
                               {(() => {
                                 const artistIds = getTrackArtistIds(track);
                                 if (artistIds.length === 0) return "—";
-                                const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
+                                const artistMap = new Map(
+                                  artists.map((artist) => [artist.id, artist.name]),
+                                );
                                 return (
                                   <div className="flex flex-wrap gap-1">
                                     {artistIds.map((artistId, index) => {
@@ -350,12 +349,20 @@ const AlbumDetailPage = () => {
                                     </Button>
                                     <Button
                                       variant="secondary"
-                                      onClick={() => handleUnlinkSong(album.id, toBrandId<SongId>(song.id), track.trackNumber)}
+                                      onClick={() =>
+                                        handleUnlinkSong(
+                                          album.id,
+                                          toBrandId<SongId>(song.id),
+                                          track.trackNumber,
+                                        )
+                                      }
                                       disabled={unlinkingTrackNumber === track.trackNumber}
                                       className="text-xs px-3 py-2 bg-rose-100 text-rose-700 hover:bg-rose-200"
                                       title="Unlink song and restore original literal track info"
                                     >
-                                      {unlinkingTrackNumber === track.trackNumber ? "Unlinking…" : "Unlink"}
+                                      {unlinkingTrackNumber === track.trackNumber
+                                        ? "Unlinking…"
+                                        : "Unlink"}
                                     </Button>
                                   </div>
                                   {unlinkError && unlinkingTrackNumber === track.trackNumber && (
@@ -370,7 +377,9 @@ const AlbumDetailPage = () => {
                                   className="rounded bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700 hover:bg-sky-200 disabled:opacity-50"
                                   title="Link an existing song to this track"
                                 >
-                                  {linkingTrackNumber === track.trackNumber ? "Linking…" : "Link Song"}
+                                  {linkingTrackNumber === track.trackNumber
+                                    ? "Linking…"
+                                    : "Link Song"}
                                 </button>
                               )}
                             </td>
@@ -426,11 +435,7 @@ const AlbumDetailPage = () => {
     );
   };
 
-  return (
-    <section className="space-y-6">
-      {getContent()}
-    </section>
-  );
+  return <section className="space-y-6">{getContent()}</section>;
 };
 
 export default AlbumDetailPage;

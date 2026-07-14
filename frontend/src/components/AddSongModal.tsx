@@ -88,8 +88,6 @@ export function AddSongModal() {
     setValue("tags", tags);
   }, [selectedTags, setValue]);
 
-
-
   // Convert artists to options for CreatableSelect
   const artistOptions: ArtistOption[] = artists.map((artist) => ({
     value: artist.id,
@@ -160,8 +158,6 @@ export function AddSongModal() {
     },
     [selectedArtists, createArtist],
   );
-
-
 
   if (!isOpen) {
     return null;
@@ -296,7 +292,9 @@ export function AddSongModal() {
 
           {/* External URLs */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">External URLs (optional)</label>
+            <label className="block text-sm font-medium text-slate-700">
+              External URLs (optional)
+            </label>
             <CreatableSelect
               isMulti
               isClearable

@@ -244,8 +244,6 @@ function CreateNewSongForm({
     setValue("tags", tags);
   }, [selectedTags, setValue]);
 
-
-
   const artistOptions: ArtistOption[] = artists.map((artist) => ({
     value: artist.id,
     label: artist.name,
@@ -298,8 +296,6 @@ function CreateNewSongForm({
     },
     [selectedArtists, createArtist],
   );
-
-
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -426,7 +422,9 @@ function CreateNewSongForm({
 
           {/* External URLs */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">External URLs (optional)</label>
+            <label className="block text-sm font-medium text-slate-700">
+              External URLs (optional)
+            </label>
             <CreatableSelect
               isMulti
               isClearable

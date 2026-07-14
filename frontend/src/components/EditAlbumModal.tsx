@@ -40,11 +40,7 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
         setLinkingTrackNumber(trackNumberForSongSelect);
 
         try {
-          await linkSongToTrack(
-            album.id,
-            toBrandId<SongId>(songId),
-            trackNumberForSongSelect,
-          );
+          await linkSongToTrack(album.id, toBrandId<SongId>(songId), trackNumberForSongSelect);
           setLinkingTrackNumber(null);
         } catch (err) {
           setError(err instanceof Error ? err.message : "Failed to link song");
@@ -77,10 +73,13 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
     }
   }, [isOpen, album.id]);
 
-  const handleSelectExistingSong = useCallback((trackNumber: number) => {
-    setTrackNumberForSongSelect(trackNumber);
-    songSelectorModal.open();
-  }, [songSelectorModal]);
+  const handleSelectExistingSong = useCallback(
+    (trackNumber: number) => {
+      setTrackNumberForSongSelect(trackNumber);
+      songSelectorModal.open();
+    },
+    [songSelectorModal],
+  );
 
   const validateTracks = useCallback((): boolean => {
     // Check that each literal track has a non-empty title
@@ -109,11 +108,13 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
     try {
       // Validate tracks before saving
       if (!validateTracks()) {
-        throw new Error("All literal tracks must have a title. Either reference an existing song or provide a title for each track.");
+        throw new Error(
+          "All literal tracks must have a title. Either reference an existing song or provide a title for each track.",
+        );
       }
 
       const trackListData: Array<{ number: number; title: string; duration?: number }> = [];
-      
+
       for (const track of tracks) {
         // Only save literal tracks, not song associations
         if (!Object.prototype.hasOwnProperty.call(track, "songId")) {
@@ -153,7 +154,8 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
                 Track Information
               </label>
               <p className="mb-3 text-xs text-slate-600">
-                Edit track titles, artists, and duration. Use the Link Song button to associate existing songs.
+                Edit track titles, artists, and duration. Use the Link Song button to associate
+                existing songs.
               </p>
               <TrackListEditor
                 tracks={tracks}
@@ -178,17 +180,10 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-3 border-t border-slate-200 pt-6">
-              <Button
-                onClick={onClose}
-                disabled={isOperationInProgress}
-                variant="secondary"
-              >
+              <Button onClick={onClose} disabled={isOperationInProgress} variant="secondary">
                 Cancel
               </Button>
-              <Button
-                onClick={handleSaveTrackList}
-                disabled={isOperationInProgress}
-              >
+              <Button onClick={handleSaveTrackList} disabled={isOperationInProgress}>
                 {isLoading ? "Saving…" : "Save Changes"}
               </Button>
             </div>

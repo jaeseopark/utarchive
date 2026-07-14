@@ -49,11 +49,7 @@ const mockSongDetails = {
 };
 
 const mockSearchResponse = {
-  songs: [
-    { id: "song-1" },
-    { id: "song-2" },
-    { id: "song-3" },
-  ],
+  songs: [{ id: "song-1" }, { id: "song-2" }, { id: "song-3" }],
   artists: [],
   albums: [],
 };
@@ -300,9 +296,7 @@ export const NoResults: Story = {
     );
 
     // Verify no song cards are displayed
-    await expect(
-      canvas.queryByRole("button", { name: /select/i }),
-    ).not.toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: /select/i })).not.toBeInTheDocument();
   },
 };
 
@@ -336,9 +330,7 @@ export const ApiError: Story = {
     await expect(errorBox).toHaveClass("bg-red-50");
 
     // No results should be displayed
-    await expect(
-      canvas.queryByRole("button", { name: /select/i }),
-    ).not.toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: /select/i })).not.toBeInTheDocument();
   },
 };
 
