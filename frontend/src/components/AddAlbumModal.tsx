@@ -14,7 +14,7 @@ import { useCreateArtist } from "../hooks/useCreateArtist";
 import { useAddAlbumModalStore } from "../stores/useAddAlbumModalStore";
 import { toBrandId, type ArtistId, type SongId, type CoverArtId } from "../types/brands";
 import { TrackListEditor } from "./TrackListEditor";
-import { SearchExistingSongModal } from "./SearchExistingSongModal";
+import { SearchExistingSong } from "./SearchExistingSong";
 import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";
 import clsx from "clsx";
 
@@ -338,7 +338,7 @@ export function AddAlbumModal() {
 
       {/* Song selection modal for linking tracks */}
       {songSelectOpen && (
-        <SearchExistingSongModal
+        <SearchExistingSong
           isOpen={songSelectOpen}
           onClose={() => setSongSelectOpen(false)}
           onSongSelected={handleSongSelected}

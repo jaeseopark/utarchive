@@ -3,7 +3,7 @@ import { Button } from "./ui/Button";
 import { useUpdateAlbum } from "../hooks/useUpdateAlbum";
 import { useUpsertAlbumSong } from "../hooks/useUpsertAlbumSong";
 import { TrackListEditor } from "./TrackListEditor";
-import { SearchExistingSongModal } from "./SearchExistingSongModal";
+import { SearchExistingSong } from "./SearchExistingSong";
 import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";
 import { toBrandId, type AlbumId, type SongId } from "../types/brands";
 
@@ -194,7 +194,7 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
       </div>
 
       {/* Song Select Modal */}
-      <SearchExistingSongModal
+      <SearchExistingSong
         isOpen={songSelectOpen}
         onClose={() => {
           setSongSelectOpen(false);

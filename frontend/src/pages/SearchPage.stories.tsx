@@ -14,12 +14,9 @@ export default meta;
 type Story = StoryObj<typeof SearchPage>;
 
 const searchResults = {
-  songs: [
-    { id: "song-1", title: "Space Anthem", artistIds: ["artist-1"], playbackEnabled: true },
-    { id: "song-2", title: "Moonlight Drive", artistIds: ["artist-2"], playbackEnabled: false },
-  ],
-  artists: [{ id: "artist-1", name: "Astro Child", aliases: ["A.Child"] }],
-  albums: [{ id: "album-1", title: "Galactic Path", artistIds: ["artist-1"], yearReleased: 2024 }],
+  songs: [{ id: "550e8400-e29b-41d4-a716-446655440001" }, { id: "550e8400-e29b-41d4-a716-446655440002" }],
+  artists: [{ id: "550e8400-e29b-41d4-a716-446655440003" }],
+  albums: [{ id: "550e8400-e29b-41d4-a716-446655440004" }],
 };
 
 const createMockRouterDecorator = (initialEntries: string[], response: unknown) => {

@@ -5,7 +5,7 @@ import { SongTreeSchema, type SongTree } from "../api/schemas";
 import FamilyTree from "../components/FamilyTree";
 import { Button } from "../components/ui/Button";
 import { EditAlbumModal } from "../components/EditAlbumModal";
-import { SearchExistingSongModal } from "../components/SearchExistingSongModal";
+import { SearchExistingSong } from "../components/SearchExistingSong";
 import { useAlbumAttributeEditor } from "../components/AlbumAttributeEditor";
 import { useAlbumDetail } from "../hooks/useAlbumDetail";
 import { useUnlinkSongFromAlbum } from "../hooks/useUnlinkSongFromAlbum";
@@ -418,7 +418,7 @@ const AlbumDetailPage = () => {
         />
 
         {/* Song Select Modal */}
-        <SearchExistingSongModal
+        <SearchExistingSong
           isOpen={songSelectOpen}
           onClose={() => {
             setSongSelectOpen(false);

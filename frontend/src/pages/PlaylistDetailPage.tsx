@@ -5,27 +5,20 @@ import { Button } from "../components/ui/Button";
 import { z } from "zod";
 import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
 import { usePlayerStore } from "../stores/usePlayerStore";
+import { useSongsStore } from "../stores/useSongsStore";
 import { buildPlaylistQueue } from "../lib/queueBuilder";
 import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
 
 const SearchSongSchema = z.object({
   id: z.string().uuid(),
-  title: z.string(),
-  artistId: z.string().nullable().optional(),
-  playbackEnabled: z.boolean(),
 });
 
 const SearchArtistSchema = z.object({
   id: z.string().uuid(),
-  name: z.string(),
-  aliases: z.array(z.string()).optional().default([]),
 });
 
 const SearchAlbumSchema = z.object({
   id: z.string().uuid(),
-  title: z.string(),
-  artistIds: z.array(z.string().uuid()).optional().default([]),
-  yearReleased: z.number().int().nullable().optional(),
 });
 
 const SearchResponseSchema = z.object({
@@ -196,7 +189,30 @@ function PlaylistDetailPage() {
     }
   };
 
-  const searchSongResults = searchResults?.songs ?? [];
+  const songDetails = useSongsStore((state) => state.songDetails);
+
+  // Enrich search results with data from store
+  const enrichedSearchResults = useMemo(() => {
+    if (!searchResults) return null;
+
+    return {
+      ...searchResults,
+      songs: searchResults.songs
+        .map((songResult) => {
+          const song = songDetails[songResult.id];
+          return song
+            ? {
+                id: songResult.id,
+                title: song.title,
+                playbackEnabled: song.playbackEnabled,
+              }
+            : null;
+        })
+        .filter((song) => song !== null),
+    };
+  }, [searchResults, songDetails]);
+
+  const searchSongResults = enrichedSearchResults?.songs ?? [];
   const playlistSongs = playlist?.songs ?? [];
 
   return (

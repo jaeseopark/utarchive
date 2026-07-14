@@ -12,7 +12,7 @@ import { useSongCreation } from "../hooks/useSongCreation";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useCreateArtist } from "../hooks/useCreateArtist";
 import { useLinkChildToParent } from "../hooks/useLinkChildToParent";
-import { SearchExistingSongModal } from "./SearchExistingSongModal";
+import { SearchExistingSong } from "./SearchExistingSong";
 import { toBrandId, type SongId, type ArtistId, type CoverArtId } from "../types/brands";
 import clsx from "clsx";
 
@@ -50,7 +50,6 @@ interface AddChildModalProps {
  */
 export function AddChildModal({ isOpen, parentSongId, onClose, onChildAdded }: AddChildModalProps) {
   const [mode, setMode] = useState<ModalMode>("menu");
-  const [isLinking, setIsLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
   const { linkChild } = useLinkChildToParent();
 
@@ -70,7 +69,6 @@ export function AddChildModal({ isOpen, parentSongId, onClose, onChildAdded }: A
 
   const handleExistingSongSelected = useCallback(
     async (childSongId: string) => {
-      setIsLinking(true);
       setLinkError(null);
 
       try {
@@ -81,7 +79,6 @@ export function AddChildModal({ isOpen, parentSongId, onClose, onChildAdded }: A
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to link song";
         setLinkError(message);
-        setIsLinking(false);
       }
     },
     [parentSongId, linkChild, onChildAdded],
@@ -90,7 +87,6 @@ export function AddChildModal({ isOpen, parentSongId, onClose, onChildAdded }: A
   const handleClose = useCallback(() => {
     setMode("menu");
     setLinkError(null);
-    setIsLinking(false);
     onClose();
   }, [onClose]);
 
@@ -171,11 +167,10 @@ export function AddChildModal({ isOpen, parentSongId, onClose, onChildAdded }: A
               <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">{linkError}</div>
             )}
 
-            <SearchExistingSongModal
+            <SearchExistingSong
               isOpen={true}
               onClose={handleBackToMenu}
               onSongSelected={handleExistingSongSelected}
-              isLinking={isLinking}
             />
           </div>
         </div>
