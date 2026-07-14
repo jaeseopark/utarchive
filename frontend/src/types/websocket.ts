@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export type EntityType = "song" | "album" | "artist" | "playlist" | "coverArt";
 
-export type MessageType = "DATA_CHANGED" | "PING" | "PONG" | "CONNECTED" | "ERROR";
+export type MessageType = "DATA_CHANGED" | "PING" | "PONG" | "CONNECTED" | "ERROR" | "USER_CONFIG_CHANGED";
 
 export interface WebSocketMessage {
   type: MessageType;
@@ -24,10 +24,17 @@ export interface DataChangedMessage extends WebSocketMessage {
   requestId?: string;
 }
 
+export interface UserConfigChangedMessage extends WebSocketMessage {
+  type: "USER_CONFIG_CHANGED";
+  data: {
+    config: Record<string, unknown>;
+  };
+}
+
 // Zod schemas for runtime validation
 export const WebSocketMessageSchema: z.ZodType<WebSocketMessage> = z.lazy(() =>
   z.object({
-    type: z.enum(["DATA_CHANGED", "PING", "PONG", "CONNECTED", "ERROR"]),
+    type: z.enum(["DATA_CHANGED", "PING", "PONG", "CONNECTED", "ERROR", "USER_CONFIG_CHANGED"]),
     entity: z.enum(["song", "album", "artist", "playlist", "coverArt"]).optional(),
     timestamp: z.number(),
     data: z.unknown().optional(),
@@ -46,4 +53,12 @@ export const DataChangedMessageSchema: z.ZodType<DataChangedMessage> = z.object(
     deleted: z.array(z.object({ id: z.string() })).optional(),
   }),
   requestId: z.string().optional(),
+}).strict();
+
+export const UserConfigChangedMessageSchema: z.ZodType<UserConfigChangedMessage> = z.object({
+  type: z.literal("USER_CONFIG_CHANGED"),
+  timestamp: z.number(),
+  data: z.object({
+    config: z.record(z.string(), z.unknown()),
+  }),
 }).strict();

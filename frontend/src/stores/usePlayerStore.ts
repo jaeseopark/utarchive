@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { type Song } from "../api/schemas";
+import { useUserConfigStore } from "./useUserConfigStore";
 
 export interface PlayerState {
   currentSong: Song | null;
@@ -25,6 +26,7 @@ export interface PlayerState {
   removeFromQueue: (index: number) => void;
   toggleShuffle: () => void;
   setRepeatMode: (mode: "off" | "one" | "all") => void;
+  updateLocalSettings: (shuffle: boolean, repeatMode: "off" | "one" | "all") => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -143,10 +145,24 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   toggleShuffle: () => {
-    set((state) => ({ shuffleEnabled: !state.shuffleEnabled }));
+    const { shuffleEnabled } = usePlayerStore.getState();
+    const newShuffle = !shuffleEnabled;
+    // Update user config store (which will handle API call and websocket emission)
+    useUserConfigStore.getState().setPlaybackShuffle(newShuffle).catch((err) => {
+      console.error("Failed to save shuffle setting:", err);
+    });
+    usePlayerStore.setState({ shuffleEnabled: newShuffle });
   },
 
   setRepeatMode: (mode: "off" | "one" | "all") => {
-    set({ repeatMode: mode });
+    // Update user config store (which will handle API call and websocket emission)
+    useUserConfigStore.getState().setPlaybackRepeat(mode).catch((err) => {
+      console.error("Failed to save repeat setting:", err);
+    });
+    usePlayerStore.setState({ repeatMode: mode });
+  },
+
+  updateLocalSettings: (shuffle: boolean, repeatMode: "off" | "one" | "all") => {
+    set({ shuffleEnabled: shuffle, repeatMode });
   },
 }));

@@ -3,6 +3,7 @@ import RootLayout from "./layouts/RootLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useWebSocketMessageHandling } from "./hooks/useWebSocketIntegration";
 import { useAppInitialization } from "./hooks/useAppInitialization";
+import { useInitializePlayerWithConfig } from "./hooks/useUserConfig";
 import LoginPage from "./pages/LoginPage";
 import ArtistsPage from "./pages/ArtistsPage";
 import ArtistDetailPage from "./pages/ArtistDetailPage";
@@ -21,6 +22,9 @@ function App() {
 
   // Initialize WebSocket message handlers and cleanup
   useWebSocketMessageHandling();
+
+  // Initialize player with user config settings and setup multi-tab sync
+  useInitializePlayerWithConfig();
 
   return (
     <Routes>
