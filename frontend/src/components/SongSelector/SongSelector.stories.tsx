@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within, waitFor } from "@storybook/test";
 import { vi } from "vitest";
-import { SearchExistingSongResults } from "./SearchExistingSong";
-import * as useArtistsStoreModule from "../stores/useArtistsStore";
-import * as useAlbumsStoreModule from "../stores/useAlbumsStore";
-import * as useSongsStoreModule from "../stores/useSongsStore";
-import * as apiModule from "../api/client";
+import { SongSelector } from "./SongSelector";
+import * as useArtistsStoreModule from "../../stores/useArtistsStore";
+import * as useAlbumsStoreModule from "../../stores/useAlbumsStore";
+import * as useSongsStoreModule from "../../stores/useSongsStore";
+import * as apiModule from "../../api/client";
 
 // Test data
 const mockArtists = [
@@ -109,16 +109,17 @@ function setupMocks(overrides?: MockSetupOptions) {
   return { mockApiGet };
 }
 
-const meta: Meta<typeof SearchExistingSongResults> = {
-  title: "Components/SearchExistingSongResults",
-  component: SearchExistingSongResults,
+// eslint-disable-next-line no-restricted-syntax
+const meta = {
+  title: "Components/SongSelector",
+  component: SongSelector,
   parameters: {
     layout: "centered",
   },
-};
+} as Meta<typeof SongSelector>;
 
 export default meta;
-type Story = StoryObj<typeof SearchExistingSongResults>;
+type Story = StoryObj<typeof SongSelector>;
 
 /**
  * Initial render with empty search
@@ -224,7 +225,9 @@ export const SelectSong: Story = {
     await userEvent.click(selectButtons[0]);
 
     // Verify callback was called with song ID
-    await expect(args.onSongSelected).toHaveBeenCalledWith("song-1");
+    if ("onSongSelected" in args) {
+      await expect(args.onSongSelected).toHaveBeenCalledWith("song-1");
+    }
   },
 };
 

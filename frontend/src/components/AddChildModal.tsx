@@ -12,7 +12,7 @@ import { useSongCreation } from "../hooks/useSongCreation";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useCreateArtist } from "../hooks/useCreateArtist";
 import { useLinkChildToParent } from "../hooks/useLinkChildToParent";
-import { SearchExistingSong } from "./SearchExistingSong";
+import { SongSelector } from "./SongSelector";
 import { toBrandId, type SongId, type ArtistId, type CoverArtId } from "../types/brands";
 import clsx from "clsx";
 
@@ -167,8 +167,8 @@ export function AddChildModal({ isOpen, parentSongId, onClose, onChildAdded }: A
               <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">{linkError}</div>
             )}
 
-            <SearchExistingSong
-              isOpen={true}
+            <SongSelector
+              disabledSongIds={[parentSongId]}
               onClose={handleBackToMenu}
               onSongSelected={handleExistingSongSelected}
             />

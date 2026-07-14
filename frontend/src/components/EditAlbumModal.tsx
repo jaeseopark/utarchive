@@ -3,7 +3,7 @@ import { Button } from "./ui/Button";
 import { useUpdateAlbum } from "../hooks/useUpdateAlbum";
 import { useUpsertAlbumSong } from "../hooks/useUpsertAlbumSong";
 import { TrackListEditor } from "./TrackListEditor";
-import { SearchExistingSong } from "./SearchExistingSong";
+import { useSongSelectorModal } from "./SongSelector";
 import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";
 import { toBrandId, type AlbumId, type SongId } from "../types/brands";
 
@@ -28,32 +28,10 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
   const { linkSongToTrack } = useUpsertAlbumSong();
 
   const [tracks, setTracks] = useState<NumberedTrack[]>([]);
-  const [songSelectOpen, setSongSelectOpen] = useState(false);
   const [trackNumberForSongSelect, setTrackNumberForSongSelect] = useState<number | null>(null);
   const [linkingTrackNumber, setLinkingTrackNumber] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initializedAlbumId, setInitializedAlbumId] = useState<AlbumId | null>(null);
-
-  // Initialize tracks from album data when modal opens for a new album
-  useEffect(() => {
-    if (isOpen && album && album.id !== initializedAlbumId) {
-      // Convert trackList to NumberedTrack format
-      const trackData: NumberedTrack[] = album.trackList.map((track) => ({
-        trackNumber: track.number,
-        title: track.title,
-        duration: track.duration,
-      }));
-      setTracks(trackData);
-      setInitializedAlbumId(album.id);
-      setError(null);
-      setLinkingTrackNumber(null);
-    }
-  }, [isOpen, album.id]);
-
-  const handleSelectExistingSong = useCallback((trackNumber: number) => {
-    setTrackNumberForSongSelect(trackNumber);
-    setSongSelectOpen(true);
-  }, []);
 
   const handleSongSelected = useCallback(
     async (songId: string) => {
@@ -73,11 +51,36 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
           setLinkingTrackNumber(null);
         }
       }
-      setSongSelectOpen(false);
       setTrackNumberForSongSelect(null);
     },
     [trackNumberForSongSelect, album.id, linkSongToTrack],
   );
+
+  const songSelectorModal = useSongSelectorModal({
+    onSongSelected: handleSongSelected,
+    onClose: () => setTrackNumberForSongSelect(null),
+  });
+
+  // Initialize tracks from album data when modal opens for a new album
+  useEffect(() => {
+    if (isOpen && album && album.id !== initializedAlbumId) {
+      // Convert trackList to NumberedTrack format
+      const trackData: NumberedTrack[] = album.trackList.map((track) => ({
+        trackNumber: track.number,
+        title: track.title,
+        duration: track.duration,
+      }));
+      setTracks(trackData);
+      setInitializedAlbumId(album.id);
+      setError(null);
+      setLinkingTrackNumber(null);
+    }
+  }, [isOpen, album.id]);
+
+  const handleSelectExistingSong = useCallback((trackNumber: number) => {
+    setTrackNumberForSongSelect(trackNumber);
+    songSelectorModal.open();
+  }, [songSelectorModal]);
 
   const validateTracks = useCallback((): boolean => {
     // Check that each literal track has a non-empty title
@@ -194,14 +197,7 @@ export function EditAlbumModal({ album, isOpen, onClose }: EditAlbumModalProps) 
       </div>
 
       {/* Song Select Modal */}
-      <SearchExistingSong
-        isOpen={songSelectOpen}
-        onClose={() => {
-          setSongSelectOpen(false);
-          setTrackNumberForSongSelect(null);
-        }}
-        onSongSelected={handleSongSelected}
-      />
+      {songSelectorModal.Component}
     </>
   );
 }

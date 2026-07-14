@@ -1,33 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import { Button } from "../components/ui/Button";
 import { z } from "zod";
 import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
 import { usePlayerStore } from "../stores/usePlayerStore";
-import { useSongsStore } from "../stores/useSongsStore";
+import { useSongSelectorModal } from "../components/SongSelector";
 import { buildPlaylistQueue } from "../lib/queueBuilder";
 import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
-
-const SearchSongSchema = z.object({
-  id: z.string().uuid(),
-});
-
-const SearchArtistSchema = z.object({
-  id: z.string().uuid(),
-});
-
-const SearchAlbumSchema = z.object({
-  id: z.string().uuid(),
-});
-
-const SearchResponseSchema = z.object({
-  songs: z.array(SearchSongSchema),
-  artists: z.array(SearchArtistSchema),
-  albums: z.array(SearchAlbumSchema),
-});
-
-type SearchResponse = z.infer<typeof SearchResponseSchema>;
 
 function PlaylistDetailPage() {
   const { id } = useParams<"id">();
@@ -39,25 +19,36 @@ function PlaylistDetailPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
   const [isPlayLoading, setIsPlayLoading] = useState(false);
 
   const { setQueue } = usePlayerStore();
+
+  const handleAddSongs = useCallback(
+    (songIds: string[]) => {
+      // Add songs sequentially to avoid race conditions
+      // Send them one at a time so the position counter increments properly
+      (async () => {
+        for (const songId of songIds) {
+          try {
+            await addSong(toBrandId<SongId>(songId));
+          } catch {
+            // Error is already in store, continue with next song
+          }
+        }
+      })();
+    },
+    [addSong],
+  );
+
+  const songSelectorModal = useSongSelectorModal({
+    onSongsSelected: handleAddSongs,
+  });
 
   useEffect(() => {
     if (playlist) {
       setDraftName(playlist.name);
     }
   }, [playlist]);
-
-  const songIds = useMemo(
-    () => new Set(playlist?.songs.map((item) => item.song.id) ?? []),
-    [playlist],
-  );
 
   const handleSaveName = async () => {
     if (!playlist) {
@@ -148,71 +139,6 @@ function PlaylistDetailPage() {
     }
   };
 
-  useEffect(() => {
-    if (!isModalOpen) {
-      setSearchQuery("");
-      setSearchResults(null);
-      setSearchError(null);
-      setSearchLoading(false);
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      const trimmed = searchQuery.trim();
-      if (!trimmed) {
-        setSearchResults(null);
-        setSearchError(null);
-        setSearchLoading(false);
-        return;
-      }
-
-      setSearchLoading(true);
-      setSearchError(null);
-
-      api
-        .get(`/api/search?q=${encodeURIComponent(trimmed)}`, SearchResponseSchema)
-        .then(setSearchResults)
-        .catch((err) => setSearchError(err instanceof Error ? err.message : String(err)))
-        .finally(() => setSearchLoading(false));
-    }, 250);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [isModalOpen, searchQuery]);
-
-  const handleAddSong = async (songId: SongId) => {
-    try {
-      await addSong(songId);
-    } catch {
-      // Error is already in store
-    }
-  };
-
-  const songDetails = useSongsStore((state) => state.songDetails);
-
-  // Enrich search results with data from store
-  const enrichedSearchResults = useMemo(() => {
-    if (!searchResults) return null;
-
-    return {
-      ...searchResults,
-      songs: searchResults.songs
-        .map((songResult) => {
-          const song = songDetails[songResult.id];
-          return song
-            ? {
-                id: songResult.id,
-                title: song.title,
-                playbackEnabled: song.playbackEnabled,
-              }
-            : null;
-        })
-        .filter((song) => song !== null),
-    };
-  }, [searchResults, songDetails]);
-
-  const searchSongResults = enrichedSearchResults?.songs ?? [];
   const playlistSongs = playlist?.songs ?? [];
 
   return (
@@ -224,7 +150,7 @@ function PlaylistDetailPage() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button type="button" variant="secondary" onClick={() => setIsModalOpen(true)}>
+          <Button type="button" variant="secondary" onClick={() => songSelectorModal.open()}>
             Add Songs
           </Button>
           <Button
@@ -390,95 +316,7 @@ function PlaylistDetailPage() {
         </div>
       )}
 
-      {isModalOpen ? (
-        <div className="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto bg-white/70 p-4">
-          <div
-            className="min-h-full w-full max-w-3xl rounded-3xl border border-slate-300 bg-slate-50 p-6 shadow-xl shadow-slate-200/40"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-semibold text-slate-900">Add Songs</h3>
-                <p className="mt-1 text-sm text-slate-600">
-                  Search for songs and add them to the playlist.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="rounded-full border border-slate-400 bg-slate-200 px-3 py-2 text-sm text-slate-700 transition hover:border-slate-500 hover:bg-slate-300"
-                onClick={() => setIsModalOpen(false)}
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-                <label htmlFor="playlist-add-search" className="sr-only">
-                  Search songs to add
-                </label>
-                <input
-                  id="playlist-add-search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search by song title or artist"
-                  className="min-w-0 rounded-3xl border border-slate-400 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
-                />
-              </div>
-
-              {searchLoading ? (
-                <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 text-slate-600">
-                  Searching for songs…
-                </div>
-              ) : searchError ? (
-                <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">
-                  Search error: {searchError}
-                </div>
-              ) : !searchQuery.trim() ? (
-                <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 text-slate-600">
-                  Enter a search term to find songs.
-                </div>
-              ) : searchSongResults.length === 0 ? (
-                <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 text-slate-600">
-                  No song results found.
-                </div>
-              ) : (
-                <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4">
-                  <table className="min-w-full text-left text-sm text-slate-700">
-                    <thead className="border-b border-slate-300 text-slate-600">
-                      <tr>
-                        <th className="px-4 py-3">Title</th>
-                        <th className="px-4 py-3">Playback Enabled</th>
-                        <th className="px-4 py-3">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {searchSongResults.map((song) => (
-                        <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
-                          <td className="px-4 py-4 text-slate-900">{song.title}</td>
-                          <td className="px-4 py-4 text-slate-700">
-                            {song.playbackEnabled ? "Yes" : "No"}
-                          </td>
-                          <td className="px-4 py-4">
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              disabled={songIds.has(toBrandId<SongId>(song.id))}
-                              onClick={() => handleAddSong(toBrandId<SongId>(song.id))}
-                            >
-                              {songIds.has(toBrandId<SongId>(song.id)) ? "Added" : "Add"}
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {songSelectorModal.Component}
     </section>
   );
 }

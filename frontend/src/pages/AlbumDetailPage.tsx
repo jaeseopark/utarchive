@@ -1,11 +1,11 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import { SongTreeSchema, type SongTree } from "../api/schemas";
 import FamilyTree from "../components/FamilyTree";
 import { Button } from "../components/ui/Button";
 import { EditAlbumModal } from "../components/EditAlbumModal";
-import { SearchExistingSong } from "../components/SearchExistingSong";
+import { useSongSelectorModal } from "../components/SongSelector";
 import { useAlbumAttributeEditor } from "../components/AlbumAttributeEditor";
 import { useAlbumDetail } from "../hooks/useAlbumDetail";
 import { useUnlinkSongFromAlbum } from "../hooks/useUnlinkSongFromAlbum";
@@ -29,7 +29,6 @@ const AlbumDetailPage = () => {
   const [unlinkingTrackNumber, setUnlinkingTrackNumber] = useState<number | null>(null);
   const [unlinkError, setUnlinkError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [songSelectOpen, setSongSelectOpen] = useState(false);
   const [trackNumberForSongSelect, setTrackNumberForSongSelect] = useState<number | null>(null);
   const [linkingTrackNumber, setLinkingTrackNumber] = useState<number | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -42,6 +41,38 @@ const AlbumDetailPage = () => {
 
   // Album attributes editor hook - always call unconditionally (hook handles null albums internally)
   const albumEditorState = useAlbumAttributeEditor(album ?? null);
+
+  const handleSongSelected = useCallback(async (songId: string) => {
+    if (!album || trackNumberForSongSelect === null) return;
+    
+    setLinkError(null);
+    setLinkingTrackNumber(trackNumberForSongSelect);
+
+    try {
+      await linkSongToTrack(
+        album.id,
+        toBrandId<SongId>(songId),
+        trackNumberForSongSelect,
+      );
+      setLinkingTrackNumber(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to link song";
+      setLinkError(message);
+      console.error("Link error:", message);
+      setLinkingTrackNumber(null);
+    }
+    setTrackNumberForSongSelect(null);
+  }, [album, trackNumberForSongSelect, linkSongToTrack]);
+
+  const songSelectorModal = useSongSelectorModal({
+    onSongSelected: handleSongSelected,
+    onClose: () => setTrackNumberForSongSelect(null),
+  });
+
+  const handleSelectExistingSong = useCallback((trackNumber: number) => {
+    setTrackNumberForSongSelect(trackNumber);
+    songSelectorModal.open();
+  }, [songSelectorModal]);
 
   const toggleTree = (songId: string) => {
     if (expandedSongId === songId) {
@@ -95,34 +126,6 @@ const AlbumDetailPage = () => {
     } finally {
       setUnlinkingTrackNumber(null);
     }
-  };
-
-  const handleSelectExistingSong = (trackNumber: number) => {
-    setTrackNumberForSongSelect(trackNumber);
-    setSongSelectOpen(true);
-  };
-
-  const handleSongSelected = async (songId: string) => {
-    if (!album || trackNumberForSongSelect === null) return;
-    
-    setLinkError(null);
-    setLinkingTrackNumber(trackNumberForSongSelect);
-
-    try {
-      await linkSongToTrack(
-        album.id,
-        toBrandId<SongId>(songId),
-        trackNumberForSongSelect,
-      );
-      setLinkingTrackNumber(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to link song";
-      setLinkError(message);
-      console.error("Link error:", message);
-      setLinkingTrackNumber(null);
-    }
-    setSongSelectOpen(false);
-    setTrackNumberForSongSelect(null);
   };
 
   const trackRows = useMemo(() => album?.tracks ?? [], [album]);
@@ -418,14 +421,7 @@ const AlbumDetailPage = () => {
         />
 
         {/* Song Select Modal */}
-        <SearchExistingSong
-          isOpen={songSelectOpen}
-          onClose={() => {
-            setSongSelectOpen(false);
-            setTrackNumberForSongSelect(null);
-          }}
-          onSongSelected={handleSongSelected}
-        />
+        {songSelectorModal.Component}
       </>
     );
   };
