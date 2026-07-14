@@ -10,6 +10,8 @@ import { useAlbumAttributeEditor } from "../components/AlbumAttributeEditor";
 import { useAlbumDetail } from "../hooks/useAlbumDetail";
 import { useUnlinkSongFromAlbum } from "../hooks/useUnlinkSongFromAlbum";
 import { useUpsertAlbumSong } from "../hooks/useUpsertAlbumSong";
+import { useSongSelection } from "../hooks/useSongSelection";
+import { SongActionsDropdown } from "../components/SongTable";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useSongsStore } from "../stores/useSongsStore";
@@ -131,6 +133,26 @@ const AlbumDetailPage = () => {
   };
 
   const trackRows = useMemo(() => album?.tracks ?? [], [album]);
+
+  // Get all songs from tracks for selection (registered songs only) - use minimal objects
+  const albumSongs = useMemo(
+    () =>
+      trackRows
+        .filter((t) => t.isRegistered && t.song?.id)
+        .map((t) => {
+          // eslint-disable-next-line no-restricted-syntax
+          return { id: toBrandId<SongId>(t.song!.id) } as { id: SongId };
+        }),
+    [trackRows],
+  );
+
+  // Selection and bulk operations
+  const {
+    state: selectionState,
+    toggleSelection,
+    clearSelection,
+  } = useSongSelection(albumSongs);
+  // Note: useBulkOperations is used internally by SongActionsDropdown
 
   const formatDuration = (seconds: number | undefined): string => {
     if (seconds === undefined || seconds === null) return "—";
@@ -267,7 +289,18 @@ const AlbumDetailPage = () => {
                       const isExpanded = expandedSongId === song?.id;
                       return (
                         <Fragment key={`${track.trackNumber}-${song?.id ?? "unreg"}`}>
-                          <tr className="border-b border-slate-300 last:border-b-0">
+                          <tr
+                            onClick={() => {
+                              if (song?.id) {
+                                toggleSelection(song.id, false);
+                              }
+                            }}
+                            className={`border-b border-slate-300 last:border-b-0 ${
+                              song?.id && selectionState.selectedIds.has(song.id)
+                                ? "bg-blue-50 cursor-pointer"
+                                : "hover:bg-slate-50"
+                            } ${song?.id ? "cursor-pointer transition" : ""}`}
+                          >
                             <td className="px-4 py-4 text-slate-700">{track.trackNumber}</td>
                             <td className="px-4 py-4 text-slate-900 min-w-48">
                               {isRegistered && song ? (
@@ -409,6 +442,14 @@ const AlbumDetailPage = () => {
             {linkError && (
               <div className="mt-4 rounded-lg border border-rose-400 bg-rose-100/30 p-3 text-sm text-rose-700">
                 {linkError}
+              </div>
+            )}
+            {albumSongs.length > 0 && (
+              <div className="mt-6">
+                <SongActionsDropdown
+                  selectedSongIds={Array.from(selectionState.selectedIds)}
+                  onClose={clearSelection}
+                />
               </div>
             )}
           </section>

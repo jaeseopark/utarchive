@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Song, SongListItem } from "../api/schemas";
 import type { SongId } from "../types/brands";
+
+/**
+ * Minimal type for objects that can be used with song selection.
+ * Only requires an id property.
+ */
+type SelectableItem = {
+  id: SongId;
+};
 
 export interface SongSelectionState {
   selectedIds: Set<SongId>;
@@ -29,7 +36,7 @@ export interface UseSongSelectionReturn {
  * - Shift+click: Select range from last clicked to current
  * - Ctrl/Cmd+click: Toggle individual song
  */
-export function useSongSelection(songs: (Song | SongListItem)[]): UseSongSelectionReturn {
+export function useSongSelection(songs: SelectableItem[]): UseSongSelectionReturn {
   const [selectedIds, setSelectedIds] = useState<Set<SongId>>(new Set());
   const [lastClickedId, setLastClickedId] = useState<SongId | null>(null);
 
