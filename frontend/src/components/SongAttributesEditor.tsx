@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import CreatableSelect from "react-select/creatable";
@@ -87,6 +87,7 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
   });
 
   // Sync form and component state with song data
+  // Only reset when song ID changes to avoid losing edits during view mode
   useEffect(() => {
     reset(getFormValuesFromSong(song));
 
@@ -115,7 +116,8 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
     const urls = song.urls ?? [];
     const selectedUrlsList = urls.map((url) => ({ value: url, label: url }));
     setSelectedUrls(selectedUrlsList);
-  }, [song, artists, reset]);
+  }, [song.id, artists, reset]);
+  // Note: song is used in body but only song.id in deps - effect runs only when song ID changes
 
   const onSubmit = useCallback(
     async (data: SongUpdateInput) => {
@@ -478,6 +480,19 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
   );
 }
 
+/**
+ * Memoized content component that only re-renders when song ID or mode changes.
+ * This prevents unnecessary re-renders while playback position updates occur.
+ */
+const MemoizedSongAttributesEditorContent = React.memo(
+  SongAttributesEditorContent,
+  (prevProps, nextProps) => {
+    // Return true if props are equal (prevents re-render), false if they differ
+    // Only compare song.id and mode to avoid re-renders from reference changes
+    return prevProps.song.id === nextProps.song.id && prevProps.mode === nextProps.mode;
+  },
+);
+
 interface UseSongAttributesEditorReturn {
   Component: React.FC;
   enterEditMode: () => void;
@@ -510,9 +525,12 @@ export function useSongAttributesEditor(song: Song): UseSongAttributesEditorRetu
     setMode("view");
   }, []);
 
-  const Component = React.memo(() => (
-    <SongAttributesEditorContent song={song} mode={mode} onExitEditMode={exitEditMode} />
-  ));
+  const Component = useMemo(
+    () => () => (
+      <MemoizedSongAttributesEditorContent song={song} mode={mode} onExitEditMode={exitEditMode} />
+    ),
+    [song.id, mode, exitEditMode],
+  );
 
   return {
     Component,
