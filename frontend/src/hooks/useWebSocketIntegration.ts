@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useWebSocketContext } from "../context/WebSocketContext";
-import { handleDataChanged } from "../lib/webSocketHandlers";
-import { DataChangedMessage, WebSocketMessage } from "../types/websocket";
+import { handleDataChanged, handleUserConfigChanged } from "../lib/webSocketHandlers";
+import { DataChangedMessage, UserConfigChangedMessage, WebSocketMessage } from "../types/websocket";
 import { startRequestIdCleanup, stopRequestIdCleanup } from "../lib/requestIdDeduplication";
 import {
   logConnection,
@@ -54,6 +54,13 @@ export const useWebSocketMessages = (onMessage?: (message: WebSocketMessage) => 
  */
 function isDataChangedMessage(message: WebSocketMessage): message is DataChangedMessage {
   return message.type === "DATA_CHANGED";
+}
+
+/**
+ * Type guard to check if a WebSocketMessage is a UserConfigChangedMessage
+ */
+function isUserConfigChangedMessage(message: WebSocketMessage): message is UserConfigChangedMessage {
+  return message.type === "USER_CONFIG_CHANGED";
 }
 
 /**
@@ -114,6 +121,13 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
       case "ERROR": {
         console.error("[WebSocket] Server error:", message.error);
         logError(message.error || "Unknown error");
+        break;
+      }
+
+      case "USER_CONFIG_CHANGED": {
+        if (isUserConfigChangedMessage(message)) {
+          handleUserConfigChanged(message);
+        }
         break;
       }
 

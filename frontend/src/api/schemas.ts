@@ -344,6 +344,20 @@ export const LogoutResponseSchema = z.object({
   ok: z.literal(true),
 });
 
+// User config schemas
+export const PlaybackConfigSchema = z.object({
+  shuffle: z.boolean().optional(),
+  repeat: z.enum(["off", "one", "all"]).optional(),
+});
+
+export const UserConfigSchema = z.object({
+  playback: PlaybackConfigSchema.optional(),
+}).passthrough(); // Allow additional properties for future extensibility
+
+export const UserConfigResponseSchema = z.object({
+  config: UserConfigSchema,
+});
+
 export type Artist = z.infer<typeof ArtistSchema>;
 export type ArtistCreateInput = z.infer<typeof ArtistCreateSchema>;
 export type CoverArt = z.infer<typeof CoverArtSchema>;
@@ -357,3 +371,5 @@ export type Album = z.infer<typeof AlbumSchema>;
 export type AlbumDetail = z.infer<typeof AlbumDetailSchema>;
 export type AlbumCreateInput = z.infer<typeof AlbumCreateSchema>;
 export type AlbumCreateFormInput = z.infer<typeof AlbumCreateFormSchema>;
+export type UserConfig = z.infer<typeof UserConfigSchema>;
+export type PlaybackConfig = z.infer<typeof PlaybackConfigSchema>;

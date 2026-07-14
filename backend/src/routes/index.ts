@@ -9,6 +9,7 @@ import albumsRouter from "./albums";
 import playlistsRouter from "./playlists";
 import searchRouter from "./search";
 import analyticsRouter from "./analytics";
+import userRouter from "./user";
 import adminAnalyticsRouter from "./admin/analytics";
 import adminWebSocketRouter from "./admin/websocket";
 
@@ -31,6 +32,7 @@ router.use("/api/albums", albumsRouter);
 router.use("/api/playlists", playlistsRouter);
 router.use("/api/search", searchRouter);
 router.use("/api/analytics", analyticsRouter);
+router.use("/api/user", userRouter);
 router.use("/api/admin/analytics", adminAnalyticsRouter);
 router.use("/api/admin/websocket", adminWebSocketRouter);
 

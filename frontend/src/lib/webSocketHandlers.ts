@@ -1,10 +1,11 @@
-import { DataChangedMessage } from "../types/websocket";
+import { DataChangedMessage, UserConfigChangedMessage } from "../types/websocket";
 import { isOwnRequest } from "./requestIdDeduplication";
 import { useSongsStore } from "../stores/useSongsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
 import { useNotificationStore } from "../stores/useNotificationStore";
+import { useUserConfigStore } from "../stores/useUserConfigStore";
 import {
   toBrandId,
   type SongId,
@@ -122,4 +123,30 @@ export const handleWebSocketNotification = (
     type,
     message,
   });
+};
+
+/**
+ * Handles user config change messages from other tabs/clients
+ * Applies the config locally without making an API call (prevents infinite loops)
+ */
+export const handleUserConfigChanged = (message: UserConfigChangedMessage): void => {
+  if (!message.data || typeof message.data !== "object" || !("config" in message.data)) {
+    console.warn("[WebSocket] Invalid user config change message:", message);
+    return;
+  }
+
+  const data = message.data;
+  if (!("config" in data)) {
+    console.warn("[WebSocket] Invalid user config change message:", message);
+    return;
+  }
+
+  const config = data.config;
+  if (typeof config !== "object" || config === null) {
+    console.warn("[WebSocket] Invalid config in user config change message:", message);
+    return;
+  }
+
+  // Apply config locally without triggering an API call
+  useUserConfigStore.getState().applyConfigLocally(config);
 };

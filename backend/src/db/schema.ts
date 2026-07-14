@@ -20,6 +20,13 @@ const tsvector = customType<{ data: string; driverData: string }>({
   fromDriver: (value) => value,
 });
 
+export const globals = pgTable("globals", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  config: jsonb("config").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
 export const totpKeys = pgTable("totp_keys", {
   id: varchar("id", { length: 255 }).primaryKey(),
   totpKeyHash: varchar("totp_key_hash", { length: 64 }),
@@ -194,3 +201,5 @@ export type SongHierarchy = typeof songHierarchy.$inferSelect;
 export type SongHierarchyInsert = typeof songHierarchy.$inferInsert;
 export type ListeningAnalytics = typeof listeningAnalytics.$inferSelect;
 export type ListeningAnalyticsInsert = typeof listeningAnalytics.$inferInsert;
+export type User = typeof globals.$inferSelect;
+export type UserInsert = typeof globals.$inferInsert;
