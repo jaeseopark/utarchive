@@ -57,6 +57,8 @@ export interface SongTableProps {
   /** Column definitions. Can use predefined keys ("title", "released") or custom definitions */
   columns?: ColumnInput[];
   actions?: RowAction[];
+  /** Callback when a row is double-clicked */
+  onDoubleClickRow?: (song: Song | SongListItem) => void;
 }
 
 export interface RowAction {
@@ -121,6 +123,7 @@ export function SongTable({
   onReorder,
   columns,
   actions,
+  onDoubleClickRow,
 }: SongTableProps) {
   // Selection management
   const {
@@ -221,6 +224,11 @@ export function SongTable({
                   onClick={(e) => {
                     // eslint-disable-next-line no-restricted-syntax
                     handleRowClick(e, song.id as SongId);
+                  }}
+                  onDoubleClick={() => {
+                    if (onDoubleClickRow) {
+                      onDoubleClickRow(song);
+                    }
                   }}
                   onContextMenu={(e) => {
                     // eslint-disable-next-line no-restricted-syntax
