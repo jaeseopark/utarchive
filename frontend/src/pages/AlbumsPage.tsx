@@ -1,17 +1,16 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useAlbums } from "../hooks/useAlbums";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
 import { Button } from "../components/ui/Button";
 import { AddAlbumModal } from "../components/AddAlbumModal";
 import { useAddAlbumModalStore } from "../stores/useAddAlbumModalStore";
 
-const PAGE_SIZE = 50;
-
 function AlbumsPage() {
-  const [page, setPage] = useState(0);
-  const { albums, isLoading, error } = useAlbums(page);
+  const albums = useAlbumsStore((state) => state.albums);
+  const isLoaded = useAlbumsStore((state) => state.isLoaded);
+  const error = useAlbumsStore((state) => state.error);
   const artists = useArtistsStore((state) => state.artists);
   const { openModal } = useAddAlbumModalStore();
 
@@ -36,7 +35,7 @@ function AlbumsPage() {
       </div>
 
       <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-xl shadow-slate-200/20">
-        {isLoading ? (
+        {!isLoaded ? (
           <div className="min-h-[240px] flex items-center justify-center text-slate-600">
             Loading albums…
           </div>
@@ -91,25 +90,7 @@ function AlbumsPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-between text-sm text-slate-700">
-        <button
-          type="button"
-          className="rounded-2xl border border-slate-400 bg-slate-200 px-4 py-2 transition hover:border-slate-500 hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={page === 0}
-          onClick={() => setPage((current) => Math.max(current - 1, 0))}
-        >
-          Previous
-        </button>
-        <span>Page {page + 1}</span>
-        <button
-          type="button"
-          className="rounded-2xl border border-slate-400 bg-slate-200 px-4 py-2 transition hover:border-slate-500 hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={albumsWithArtistNames.length < PAGE_SIZE}
-          onClick={() => setPage((current) => current + 1)}
-        >
-          Next
-        </button>
-      </div>
+
 
       <AddAlbumModal />
     </section>

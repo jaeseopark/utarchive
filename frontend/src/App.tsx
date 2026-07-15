@@ -2,11 +2,10 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import RootLayout from "./layouts/RootLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useWebSocketMessageHandling } from "./hooks/useWebSocketIntegration";
-import { useAppInitialization } from "./hooks/useAppInitialization";
 import { useInitializePlayerWithConfig } from "./hooks/useUserConfig";
 import LoginPage from "./pages/LoginPage";
 import ArtistsPage from "./pages/ArtistsPage";
-import ArtistDetailPage from "./pages/ArtistDetailPage";
+import ArtistDetailPage from "./pages/ArtistDetailPage/";
 import SongDetailPage from "./pages/SongDetailPage";
 import SongsPage from "./pages/SongsPage";
 import AlbumsPage from "./pages/AlbumsPage";
@@ -17,9 +16,6 @@ import SearchPage from "./pages/SearchPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 
 function App() {
-  // Boot-time initialization: hydrate stores in dependency order
-  useAppInitialization();
-
   // Initialize WebSocket message handlers and cleanup
   useWebSocketMessageHandling();
 
@@ -29,7 +25,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route
+     <Route
         path="/"
         element={
           <ProtectedRoute>
@@ -37,7 +33,7 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/artists" replace />} />
+        <Route index element={<Navigate to="/songs" replace />} />
         <Route path="artists" element={<ArtistsPage />} />
         <Route path="artists/:id" element={<ArtistDetailPage />} />
         <Route path="songs" element={<SongsPage />} />
@@ -49,7 +45,7 @@ function App() {
         <Route path="search" element={<SearchPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/artists" replace />} />
+      <Route path="*" element={<Navigate to="/songs" replace />} />
     </Routes>
   );
 }

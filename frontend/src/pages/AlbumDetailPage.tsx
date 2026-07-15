@@ -1,10 +1,10 @@
-import { Fragment, useMemo, useState, useCallback } from "react";
+import { Fragment, useMemo, useState, useCallback, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { EditAlbumModal } from "../components/EditAlbumModal";
 import { useSongSelectorModal } from "../components/SongSelector";
 import { useAlbumAttributeEditor } from "../components/AlbumAttributeEditor";
-import { useAlbumDetail } from "../hooks/useAlbumDetail";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useUnlinkSongFromAlbum } from "../hooks/useUnlinkSongFromAlbum";
 import { useUpsertAlbumSong } from "../hooks/useUpsertAlbumSong";
 import { useSongSelection } from "../hooks/useSongSelection";
@@ -20,7 +20,23 @@ import { toBrandId, type AlbumId, type ArtistId, type SongId } from "../types/br
 
 const AlbumDetailPage = () => {
   const { id } = useParams();
-  const { album, isLoading, error } = useAlbumDetail(toBrandId<AlbumId>(id || ""));
+  const albumId = toBrandId<AlbumId>(id || "");
+  const album = useAlbumsStore((state) => state.getAlbum(albumId));
+  const fetchAlbumDetail = useAlbumsStore((state) => state.fetchAlbumDetail);
+  const error = useAlbumsStore((state) => state.error);
+  
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch full album detail when page loads
+  useEffect(() => {
+    if (!albumId || album?.tracks) return; // Already loaded or no ID
+
+    setIsLoading(true);
+    fetchAlbumDetail(albumId).finally(() => {
+      setIsLoading(false);
+    });
+  }, [albumId, fetchAlbumDetail, album?.tracks]);
+
   const { isOpen: isEditModalOpen, openModal: openEditModal, closeModal: closeEditModal } =
     useEditAlbumModalStore();
 
@@ -99,7 +115,7 @@ const AlbumDetailPage = () => {
   };
 
   const handlePlayAlbum = async () => {
-    if (!album || !album.tracks.length) {
+    if (!album || !album.tracks || !album.tracks.length) {
       return;
     }
 
@@ -191,7 +207,7 @@ const AlbumDetailPage = () => {
 
   // Check if album has at least one track with a registered song that has an audio file (from store)
   const hasPlayableTracks = useMemo(() => {
-    if (!album || !album.tracks.length) return false;
+    if (!album || !album.tracks || !album.tracks.length) return false;
     return album.tracks.some((track) => {
       if (!track.isRegistered || !track.song?.id) return false;
       const fullSong = getSongDetail(toBrandId<SongId>(track.song.id));
@@ -460,7 +476,7 @@ const AlbumDetailPage = () => {
             id: album.id,
             title: album.title,
             trackList: album.trackList,
-            tracks: album.tracks.map((t) => ({
+            tracks: (album.tracks || []).map((t) => ({
               trackNumber: t.trackNumber,
               song: t.song ? { id: t.song.id, title: t.song.title } : null,
               referenceTitle: t.referenceTitle ?? null,

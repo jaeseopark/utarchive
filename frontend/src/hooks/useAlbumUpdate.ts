@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { api } from "../api/client";
-import { AlbumDetailSchema, type AlbumDetail } from "../api/schemas";
+import { AlbumSchema, type Album } from "../api/schemas";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { type AlbumId } from "../types/brands";
 
@@ -11,7 +11,7 @@ export function useAlbumUpdate() {
   const { updateAlbum } = useAlbumsStore();
 
   const updateAlbumData = useCallback(
-    async (albumId: AlbumId, updates: Partial<AlbumDetail>) => {
+    async (albumId: AlbumId, updates: Partial<Album>) => {
       try {
         // Filter out fields that shouldn't be sent to API
         const fieldsToUpdate = Object.fromEntries(
@@ -24,7 +24,7 @@ export function useAlbumUpdate() {
         const updatedAlbum = await api.patch(
           `/api/albums/${albumId}`,
           fieldsToUpdate,
-          AlbumDetailSchema,
+          AlbumSchema,
         );
 
         // Update local store

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSongDetail } from "./useSongDetail";
-import { useAlbumDetail } from "./useAlbumDetail";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { type SongId, type AlbumId } from "../types/brands";
 
 interface CoverArtOwner {
@@ -16,8 +16,8 @@ interface CoverArtOwner {
  */
 export function useResolveCoverArt(owner: CoverArtOwner) {
   const { songId, albumId } = owner;
-  const { song } = useSongDetail(songId!);
-  const { album } = useAlbumDetail(albumId!);
+  const { song } = useSongDetail(songId);
+  const album = useAlbumsStore((state) => (albumId ? state.getAlbum(albumId) : undefined));
   const [resolvedCoverArtId, setResolvedCoverArtId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 

@@ -2,14 +2,14 @@ import { useCallback } from "react";
 import { api } from "../api/client";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { type AlbumId, type SongId } from "../types/brands";
-import { AlbumDetailSchema } from "../api/schemas";
+import { AlbumSchema } from "../api/schemas";
 
 /**
  * Hook to link a song to a track number in an album
  * Updates the album detail with the new association
  */
 export function useUpsertAlbumSong() {
-  const { fetchAlbumDetail, updateAlbum } = useAlbumsStore();
+  const { updateAlbum } = useAlbumsStore();
 
   const linkSongToTrack = useCallback(
     async (albumId: AlbumId, songId: SongId, trackNumber: number): Promise<void> => {
@@ -17,7 +17,7 @@ export function useUpsertAlbumSong() {
         const response = await api.put(
           `/api/albums/${albumId}/songs/${songId}`,
           { trackNumber },
-          AlbumDetailSchema,
+          AlbumSchema,
         );
 
         // Update store with the response
@@ -28,7 +28,7 @@ export function useUpsertAlbumSong() {
         });
       }
     },
-    [fetchAlbumDetail, updateAlbum],
+    [updateAlbum],
   );
 
   return { linkSongToTrack };

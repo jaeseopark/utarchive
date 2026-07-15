@@ -2,102 +2,67 @@ import { create } from "zustand";
 import { z } from "zod";
 import { api } from "../api/client";
 import { withStoreLoadingSilent } from "../api/middleware";
-import { AlbumSchema, AlbumDetailSchema, type Album, type AlbumDetail } from "../api/schemas";
+import { AlbumListItemSchema, AlbumSchema, type Album, type AlbumListItem } from "../api/schemas";
 import { type AlbumId } from "../types/brands";
 
-const AlbumsResponseSchema = z.object({
-  albums: z.array(AlbumSchema),
+const AlbumsListResponseSchema = z.object({
+  albums: z.array(AlbumListItemSchema),
 });
 
 export interface AlbumsState {
   // Data
   albums: Album[];
-  albumDetailsMap: Map<string, AlbumDetail>;
-  albumDetails: Record<string, AlbumDetail>;
-  lastFetchedAt: number;
+  albumsMap: Map<string, Album>;
+  albumDetails: Record<string, Album>;
+  albumDetailsMap: Map<string, Album>;
 
   // Loading/Error
-  isLoading: boolean;
+  isLoaded: boolean;
   error: string | null;
 
   // Pagination
   pagination: {
     page: number;
     limit: number;
-    total: number;
+    hasMore: boolean;
   };
 
   // Actions
-  fetchAlbums: (page?: number) => Promise<void>;
   fetchAllAlbums: () => Promise<void>;
   fetchAlbumDetail: (id: AlbumId) => Promise<void>;
-  getAlbumDetail: (id: AlbumId) => AlbumDetail | undefined;
+  getAlbum: (id: AlbumId) => Album | undefined;
   addAlbum: (album: Album) => void;
   updateAlbum: (id: AlbumId, updates: Partial<Album>) => void;
   removeAlbum: (id: AlbumId) => void;
-  setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  // Internal methods (for detail fetches)
+  setLoading: (loading: boolean) => void;
 }
 
 export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   albums: [],
-  albumDetailsMap: new Map(),
+  albumsMap: new Map(),
   albumDetails: {},
-  lastFetchedAt: 0,
-  isLoading: false,
+  albumDetailsMap: new Map(),
+  isLoaded: false,
   error: null,
   pagination: {
     page: 0,
     limit: 50,
-    total: 0,
+    hasMore: false,
   },
 
-  setLoading: (loading: boolean) => set({ isLoading: loading }),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setLoading: (_loading: boolean) => {
+    // No-op: detail fetches are silent and don't affect isLoaded
+    // isLoaded only reflects the state of fetchAllAlbums
+  },
   setError: (error: string | null) => set({ error }),
 
-  fetchAlbums: async (page = 0) => {
-    // Check if cache is still fresh (5 minutes TTL)
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().albums.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
-    set({ isLoading: true, error: null });
-    try {
-      const { albums } = await api.get(
-        `/api/albums?limit=50&offset=${page * 50}`,
-        AlbumsResponseSchema,
-      );
-      set({
-        albums,
-        lastFetchedAt: now,
-        pagination: {
-          page,
-          limit: 50,
-          total: albums.length,
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch albums";
-      set({ error: message });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
   fetchAllAlbums: async () => {
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().albums.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
-      const allAlbums: Album[] = [];
+      const allAlbums: AlbumListItem[] = [];
       let offset = 0;
       const limit = 100;
 
@@ -105,7 +70,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       while (true) {
         const { albums: batch } = await api.get(
           `/api/albums?limit=${limit}&offset=${offset}`,
-          AlbumsResponseSchema,
+          AlbumsListResponseSchema,
         );
 
         if (batch.length === 0) break;
@@ -116,20 +81,31 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       }
 
       set({
-        albums: allAlbums,
-        lastFetchedAt: now,
+        // eslint-disable-next-line no-restricted-syntax
+        albums: allAlbums as unknown as Album[],
+        // eslint-disable-next-line no-restricted-syntax
+        albumsMap: new Map(allAlbums.map((a) => [a.id, a as unknown as Album])),
         pagination: {
           page: 0,
           limit: 100,
-          total: allAlbums.length,
+          hasMore: false,
         },
+        isLoaded: true,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to fetch albums";
-      set({ error: message });
-    } finally {
-      set({ isLoading: false });
+      set({ error: message, isLoaded: true });
     }
+  },
+
+  getAlbum: (id: AlbumId) => {
+    // Check details cache first (full album with tracks)
+    const detailedAlbum = get().albumDetailsMap.get(id);
+    if (detailedAlbum) {
+      return detailedAlbum;
+    }
+    // Fall back to list items
+    return get().albumsMap.get(id);
   },
 
   fetchAlbumDetail: async (id: string) => {
@@ -138,11 +114,15 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       return;
     }
 
-    const store = {
-      setLoading: (val: boolean) => set({ isLoading: val }),
-      setError: (err: string | null) => set({ error: err }),
-    };
-    const detail = await withStoreLoadingSilent(store, `/api/albums/${id}`, AlbumDetailSchema);
+    const detail = await withStoreLoadingSilent(
+      { 
+        setError: (err: string | null) => set({ error: err }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent
+      },
+      `/api/albums/${id}`,
+      AlbumSchema,
+    );
 
     if (detail) {
       set((state) => {
@@ -158,61 +138,45 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     }
   },
 
-  getAlbumDetail: (id: AlbumId) => {
-    return get().albumDetails[id];
-  },
-
   addAlbum: (album: Album) => {
-    set((state) => {
-      const newAlbums = [album, ...state.albums];
-      return {
-        albums: newAlbums,
-        pagination: {
-          ...state.pagination,
-          total: state.pagination.total + 1,
-        },
-      };
-    });
+    set((state) => ({
+      albums: [album, ...state.albums],
+      albumsMap: new Map([...state.albumsMap, [album.id, album]]),
+    }));
   },
 
   updateAlbum: (id: string, updates: Partial<Album>) => {
     set((state) => {
-      // Update album details if cached
-      const updatedDetails = { ...state.albumDetails };
-      if (updatedDetails[id]) {
-        // eslint-disable-next-line no-restricted-syntax
-        updatedDetails[id] = { ...updatedDetails[id], ...updates } as AlbumDetail;
-      }
-
-      // Update album list item if present
+      // Update album in the main array
       const updatedAlbums = state.albums.map((album) => {
         if (album.id === id) {
-          return { ...album, ...updates };
+          // eslint-disable-next-line no-restricted-syntax
+          return { ...album, ...updates } as Album;
         }
         return album;
       });
 
+      // Update the map
+      const updatedAlbum = updatedAlbums.find((a) => a.id === id);
+      const newMap = new Map(state.albumsMap);
+      if (updatedAlbum) {
+        newMap.set(id, updatedAlbum);
+      }
+
       return {
         albums: updatedAlbums,
-        albumDetails: updatedDetails,
-        albumDetailsMap: new Map(Object.entries(updatedDetails)),
+        albumsMap: newMap,
       };
     });
   },
 
   removeAlbum: (id: string) => {
     set((state) => {
-      const updatedDetails = { ...state.albumDetails };
-      delete updatedDetails[id];
-
+      const newMap = new Map(state.albumsMap);
+      newMap.delete(id);
       return {
         albums: state.albums.filter((album) => album.id !== id),
-        albumDetails: updatedDetails,
-        albumDetailsMap: new Map(Object.entries(updatedDetails)),
-        pagination: {
-          ...state.pagination,
-          total: Math.max(0, state.pagination.total - 1),
-        },
+        albumsMap: newMap,
       };
     });
   },

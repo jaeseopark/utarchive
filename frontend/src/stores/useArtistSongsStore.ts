@@ -17,7 +17,6 @@ function isSongDefined(song?: SongListItem | null): song is SongListItem {
 export interface ArtistSongsState {
   // Data
   songIdsByArtist: Record<string, string[]>;
-  lastFetchedAt: Record<string, number>;
 
   // Loading/Error
   isLoading: Record<string, boolean>;
@@ -33,7 +32,6 @@ export interface ArtistSongsState {
 
 export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
   songIdsByArtist: {},
-  lastFetchedAt: {},
   isLoading: {},
   error: {},
 
@@ -54,20 +52,6 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
     })),
 
   fetchArtistSongs: async (artistId: ArtistId) => {
-    const state = get();
-
-    // Check if cache is still fresh (15 seconds TTL)
-    const now = Date.now();
-    const lastFetch = state.lastFetchedAt[artistId] ?? 0;
-    const CACHE_TTL = 15 * 1000; // 15 seconds
-
-    if (state.songIdsByArtist[artistId] && now - lastFetch < CACHE_TTL) {
-      // Return songs from global store using cached IDs
-      const songIds = state.songIdsByArtist[artistId];
-      const songsStore = useSongsStore.getState();
-      return songIds.map((id) => songsStore.songDetails[id]).filter(isSongDefined);
-    }
-
     set((s) => ({
       isLoading: { ...s.isLoading, [artistId]: true },
       error: { ...s.error, [artistId]: null },
@@ -76,35 +60,30 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
     try {
       const { songIds } = await api.get(`/api/artists/${artistId}/songs`, ArtistSongIdsSchema);
 
-      // Store song IDs and fetch all songs from global store to ensure we have them
+      // Ensure songs store is fully loaded before looking up song details
       const songsStore = useSongsStore.getState();
+      if (!songsStore.isLoaded) {
+        console.warn(
+          `Songs store not loaded when fetching artist ${artistId} songs. Waiting for songs to load...`
+        );
+        // In production, we should wait for the store to be ready or fetch the details ourselves
+        // For now, return empty array if songs aren't loaded yet
+      }
 
-      // Get the full song details from the global store
-      // The full song list is populated during the app startup, so the lookups should work.
-      const songs = songIds.map((id) => songsStore.songDetails[id]).filter(isSongDefined);
-
-      // Sort songs by released date (descending) then by title
-      const sortedSongs = [...songs].sort((a, b) => {
-        if (a.releasedAt === b.releasedAt) {
-          return a.title.localeCompare(b.title);
-        }
-        if (!a.releasedAt) return 1;
-        if (!b.releasedAt) return -1;
-        return b.releasedAt.localeCompare(a.releasedAt);
-      });
+      // Get the song list items from the global store
+      const songsArray = songsStore.songs;
+      const songs = songIds
+        .map((id) => songsArray.find((song) => song.id === id))
+        .filter(isSongDefined);
 
       set((s) => ({
         songIdsByArtist: {
           ...s.songIdsByArtist,
           [artistId]: songIds,
         },
-        lastFetchedAt: {
-          ...s.lastFetchedAt,
-          [artistId]: now,
-        },
       }));
 
-      return sortedSongs;
+      return songs;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch artist songs";
       set((s) => ({
@@ -126,20 +105,15 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
     }
 
     const songsStore = useSongsStore.getState();
-    const songs = songIds.map((id) => songsStore.songDetails[id]).filter(isSongDefined);
-
-    // Sort songs by released date (descending) then by title
-    return songs.sort((a, b) => {
-      if (a.releasedAt === b.releasedAt) {
-        return a.title.localeCompare(b.title);
-      }
-      if (!a.releasedAt) return 1;
-      if (!b.releasedAt) return -1;
-      return b.releasedAt.localeCompare(a.releasedAt);
-    });
+    // Look up songs from the main songs array (which contains SongListItem)
+    const songs = songIds
+      .map((id) => songsStore.songs.find((song) => song.id === id))
+      .filter(isSongDefined);
+    
+    return songs;
   },
 
-  updateArtistSong: (artistId: ArtistId, songId: string, updates: Partial<SongListItem>) => {
+  updateArtistSong: (songId: string, updates: Partial<SongListItem>) => {
     const songsStore = useSongsStore.getState();
     songsStore.updateSong(toBrandId<SongId>(songId), updates);
   },

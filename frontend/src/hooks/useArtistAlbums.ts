@@ -11,7 +11,7 @@ const AlbumPreviewSchema = z.object({
   createdAt: z.string(),
 });
 
-type AlbumPreview = z.infer<typeof AlbumPreviewSchema>;
+export type AlbumPreview = z.infer<typeof AlbumPreviewSchema>;
 
 const ArtistAlbumsResponseSchema = z.object({
   albums: z.array(AlbumPreviewSchema),

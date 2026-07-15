@@ -6,7 +6,7 @@ import { useSongUpdate } from "../hooks/useSongUpdate";
 import { useAlbumUpdate } from "../hooks/useAlbumUpdate";
 import { useResolveCoverArt } from "../hooks/useResolveCoverArt";
 import { useSongDetail } from "../hooks/useSongDetail";
-import { useAlbumDetail } from "../hooks/useAlbumDetail";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { type SongId, type AlbumId } from "../types/brands";
 
 interface CoverArtDisplayProps {
@@ -39,7 +39,7 @@ export const CoverArtDisplay: FC<CoverArtDisplayProps> = ({ owner, size = 1024, 
 
   // Get owner's direct cover art ID
   const { song } = useSongDetail(songId);
-  const { album } = useAlbumDetail(albumId);
+  const album = useAlbumsStore((state) => (albumId ? state.getAlbum(albumId) : undefined));
   const ownerCoverArtId = songId
     ? (song?.coverArtId ?? null)
     : albumId

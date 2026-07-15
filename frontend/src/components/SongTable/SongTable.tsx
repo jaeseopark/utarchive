@@ -5,13 +5,38 @@ import type { Song, SongListItem } from "../../api/schemas";
 import type { SongId } from "../../types/brands";
 import clsx from "clsx";
 
-export interface SongTableProps {
-  songs: (Song | SongListItem)[];
-  reorderable?: boolean;
-  onReorder?: (reorderedSongs: (Song | SongListItem)[]) => void;
-  columns?: ColumnDefinition[];
-  actions?: RowAction[];
-}
+/**
+ * Predefined column specifications for common song table columns.
+ * These can be referenced by key instead of defining full ColumnDefinition.
+ */
+// eslint-disable-next-line no-restricted-syntax
+const PREDEFINED_COLUMNS_SPEC = {
+  title: {
+    label: "Title",
+    width: undefined,
+    render: (song: Song | SongListItem) => (
+      <div className="font-medium text-slate-900">
+        {song.title}
+        {song.playbackEnabled && (
+          <span className="ml-2 text-xs font-semibold text-emerald-600">★</span>
+        )}
+      </div>
+    ),
+  },
+  released: {
+    label: "Released",
+    width: undefined,
+    render: (song: Song | SongListItem) => {
+      if (song && "releasedAt" in song && typeof song.releasedAt === "string") {
+        return <span>{new Date(song.releasedAt).toLocaleDateString()}</span>;
+      }
+      return <span>—</span>;
+    },
+  },
+} as const;
+
+/** Type-safe reference to predefined column keys */
+export type PredefinedColumnKey = keyof typeof PREDEFINED_COLUMNS_SPEC;
 
 export interface ColumnDefinition {
   key: string;
@@ -20,10 +45,60 @@ export interface ColumnDefinition {
   render?: (song: Song | SongListItem) => React.ReactNode;
 }
 
+/** Column input can be either a predefined key or a full custom definition */
+export type ColumnInput = PredefinedColumnKey | ColumnDefinition;
+
+export interface SongTableProps {
+  songs: (Song | SongListItem)[];
+  reorderable?: boolean;
+  onReorder?: (reorderedSongs: (Song | SongListItem)[]) => void;
+  /** Column definitions. Can use predefined keys ("title", "released") or custom definitions */
+  columns?: ColumnInput[];
+  actions?: RowAction[];
+}
+
 export interface RowAction {
   label: string;
   onClick: (songId: SongId) => void;
   className?: string;
+}
+
+/**
+ * Expands column inputs to full column definitions.
+ * - Converts predefined column keys to their full definitions
+ * - Preserves order of first appearance
+ * - Later definitions override earlier ones with the same key
+ */
+function expandColumns(columnInputs: ColumnInput[]): ColumnDefinition[] {
+  const columnMap = new Map<string, ColumnDefinition>();
+
+  // Populate map with all definitions
+  for (const col of columnInputs) {
+    if (typeof col === "string") {
+      // Predefined column key
+      columnMap.set(col, {
+        key: col,
+        ...PREDEFINED_COLUMNS_SPEC[col],
+      });
+    } else {
+      // Custom column definition - overrides any predefined
+      columnMap.set(col.key, col);
+    }
+  }
+
+  // Return in order of first appearance in input
+  const result: ColumnDefinition[] = [];
+  const seen = new Set<string>();
+
+  for (const col of columnInputs) {
+    const key = typeof col === "string" ? col : col.key;
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(columnMap.get(key)!);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -56,23 +131,15 @@ export function SongTable({
   // Drag-and-drop reordering (always called, enabled parameter gates functionality)
   const { handlers: dragHandlers } = useDragAndDrop(songs, onReorder || (() => {}), reorderable);
 
-  // Default columns if not provided
-  const defaultColumns: ColumnDefinition[] = [
-    {
-      key: "title",
-      label: "Title",
-      render: (song) => (
-        <div className="font-medium text-slate-900">
-          {song.title}
-          {song.playbackEnabled && (
-            <span className="ml-2 text-xs font-semibold text-emerald-600">★</span>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  const displayColumns = columns || defaultColumns;
+  // Expand column inputs to full definitions, or use default title column
+  const displayColumns = columns
+    ? expandColumns(columns)
+    : [
+        {
+          key: "title",
+          ...PREDEFINED_COLUMNS_SPEC.title,
+        },
+      ];
 
   const handleRowClick = (e: React.MouseEvent, songId: SongId) => {
     // Prevent selection if clicking on action buttons

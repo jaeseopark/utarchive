@@ -1,9 +1,7 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { useSongs } from "../hooks/useSongs";
 import { useSongSelection } from "../hooks/useSongSelection";
 import { usePlayerStore } from "../stores/usePlayerStore";
-import { useSongsStore } from "../stores/useSongsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
 import { Button } from "../components/ui/Button";
@@ -11,36 +9,26 @@ import { AddSongModal } from "../components/AddSongModal";
 import { useAddSongModalStore } from "../stores/useAddSongModalStore";
 import { SongTable, SongActionsDropdown } from "../components/SongTable";
 import type { ColumnDefinition } from "../components/SongTable";
-
-const PAGE_SIZE = 50;
+import { useSongsStore } from "../stores/useSongsStore";
 
 function SongsPage() {
-  const [page, setPage] = useState(0);
-  const { songs, isLoading, error } = useSongs(page);
+    const { songs, isLoaded, error } = useSongsStore();
   const artists = useArtistsStore((state) => state.artists);
   const { play, setQueue } = usePlayerStore();
   const { openModal } = useAddSongModalStore();
-  const { songs: allSongs, fetchAllSongs } = useSongsStore();
-
-  // Fetch all songs on mount for play all functionality
-  useEffect(() => {
-    fetchAllSongs();
-  }, [fetchAllSongs]);
 
   // Selection and bulk operations
   const { state: selectionState, clearSelection } = useSongSelection(songs);
   // Note: useBulkOperations is used internally by SongActionsDropdown
 
-  const canPrevious = page > 0;
-
   const handlePlayAll = useCallback(() => {
     // Filter only playable songs and set as queue
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
-    const playableSongs = allSongs.filter((song) => song.playbackEnabled) as any[];
+    const playableSongs = songs.filter((song) => song.playbackEnabled) as any[];
     if (playableSongs.length > 0) {
       setQueue(playableSongs);
     }
-  }, [allSongs, setQueue]);
+  }, [songs, setQueue]);
 
   const columns: ColumnDefinition[] = useMemo(
     () => [
@@ -130,7 +118,7 @@ function SongsPage() {
     [artists, play],
   );
 
-  if (isLoading) {
+  if (!isLoaded) {
     return (
       <section className="space-y-6">
         <div className="flex items-center justify-between">
@@ -164,7 +152,7 @@ function SongsPage() {
             <p className="mt-2 text-slate-600">Browse all songs in the archive.</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={handlePlayAll} disabled={allSongs.length === 0}>
+            <Button variant="secondary" onClick={handlePlayAll} disabled={songs.length === 0}>
               Play All
             </Button>
             <Button variant="primary" onClick={openModal}>
@@ -188,7 +176,7 @@ function SongsPage() {
           <p className="mt-2 text-slate-600">Browse all songs in the archive.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={handlePlayAll} disabled={allSongs.length === 0}>
+          <Button variant="secondary" onClick={handlePlayAll} disabled={songs.length === 0}>
             Play All
           </Button>
           <Button variant="primary" onClick={openModal}>
@@ -204,27 +192,6 @@ function SongsPage() {
       ) : (
         <>
           <SongTable songs={songs} columns={columns} />
-
-          <div className="flex items-center justify-between text-sm text-slate-700">
-            <button
-              type="button"
-              className="rounded-2xl border border-slate-400 bg-slate-100 px-4 py-2 transition hover:border-slate-500 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!canPrevious}
-              onClick={() => setPage((current) => Math.max(current - 1, 0))}
-            >
-              Previous
-            </button>
-            <span>Page {page + 1}</span>
-            <button
-              type="button"
-              className="rounded-2xl border border-slate-400 bg-slate-100 px-4 py-2 transition hover:border-slate-500 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={songs.length < PAGE_SIZE}
-              onClick={() => setPage((current) => current + 1)}
-            >
-              Next
-            </button>
-          </div>
-
           <SongActionsDropdown
             selectedSongIds={Array.from(selectionState.selectedIds)}
             onClose={clearSelection}

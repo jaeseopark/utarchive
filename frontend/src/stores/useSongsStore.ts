@@ -16,21 +16,19 @@ export interface SongsState {
   songs: SongListItem[];
   songDetailsMap: Map<string, Song>;
   songDetails: Record<string, Song>;
-  lastFetchedAt: number;
 
   // Loading/Error
-  isLoading: boolean;
+  isLoaded: boolean;
   error: string | null;
 
   // Pagination
   pagination: {
     page: number;
     limit: number;
-    total: number;
+    hasMore: boolean; // Track if there are more pages
   };
 
   // Actions
-  fetchSongs: (page?: number) => Promise<void>;
   fetchAllSongs: () => Promise<void>;
   fetchSongDetail: (id: SongId) => Promise<void>;
   fetchSongTree: (id: SongId) => Promise<SongTree | null>;
@@ -39,67 +37,32 @@ export interface SongsState {
   addSong: (song: Song) => void;
   updateSong: (id: SongId, updates: Partial<Song>) => void;
   removeSong: (id: SongId) => void;
-  setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  // Internal methods (for detail fetches)
+  setLoading: (loading: boolean) => void;
 }
 
 export const useSongsStore = create<SongsState>((set, get) => ({
   songs: [],
   songDetailsMap: new Map(),
   songDetails: {},
-  lastFetchedAt: 0,
-  isLoading: false,
+  isLoaded: false,
   error: null,
   pagination: {
     page: 0,
     limit: 50,
-    total: 0,
+    hasMore: false,
   },
 
-  setLoading: (loading: boolean) => set({ isLoading: loading }),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setLoading: (_loading: boolean) => {
+    // No-op: detail fetches are silent and don't affect isLoaded
+    // isLoaded only reflects the state of fetchAllSongs
+  },
   setError: (error: string | null) => set({ error }),
 
-  fetchSongs: async (page = 0) => {
-    // Check if cache is still fresh (5 minutes TTL)
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().songs.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
-    set({ isLoading: true, error: null });
-    try {
-      const { songs } = await api.get(
-        `/api/songs?limit=50&offset=${page * 50}`,
-        SongsResponseSchema,
-      );
-      set({
-        songs,
-        lastFetchedAt: now,
-        pagination: {
-          page,
-          limit: 50,
-          total: songs.length,
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch songs";
-      set({ error: message });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
   fetchAllSongs: async () => {
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().songs.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       const allSongs: SongListItem[] = [];
       let offset = 0;
@@ -121,18 +84,16 @@ export const useSongsStore = create<SongsState>((set, get) => ({
 
       set({
         songs: allSongs,
-        lastFetchedAt: now,
         pagination: {
           page: 0,
           limit: 100,
-          total: allSongs.length,
+          hasMore: false, // All songs are loaded
         },
+        isLoaded: true,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to fetch songs";
-      set({ error: message });
-    } finally {
-      set({ isLoading: false });
+      set({ error: message, isLoaded: true });
     }
   },
 
@@ -142,11 +103,15 @@ export const useSongsStore = create<SongsState>((set, get) => ({
       return;
     }
 
-    const store = {
-      setLoading: (val: boolean) => set({ isLoading: val }),
-      setError: (err: string | null) => set({ error: err }),
-    };
-    const detail = await withStoreLoadingSilent(store, `/api/songs/${id}`, SongSchema);
+    const detail = await withStoreLoadingSilent(
+      { 
+        setError: (err: string | null) => set({ error: err }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent
+      },
+      `/api/songs/${id}`,
+      SongSchema,
+    );
 
     if (detail) {
       set((state) => {
@@ -164,11 +129,15 @@ export const useSongsStore = create<SongsState>((set, get) => ({
 
   fetchSongTree: async (id: string) => {
     // Fetch tree without caching - always returns fresh data
-    const store = {
-      setLoading: (val: boolean) => set({ isLoading: val }),
-      setError: (err: string | null) => set({ error: err }),
-    };
-    const tree = await withStoreLoadingSilent(store, `/api/songs/${id}/tree`, SongTreeSchema);
+    const tree = await withStoreLoadingSilent(
+      { 
+        setError: (err: string | null) => set({ error: err }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent
+      },
+      `/api/songs/${id}/tree`,
+      SongTreeSchema,
+    );
     return tree;
   },
 
@@ -210,10 +179,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         songs: [songListItem, ...state.songs],
         songDetails: newDetails,
         songDetailsMap: new Map(Object.entries(newDetails)),
-        pagination: {
-          ...state.pagination,
-          total: state.pagination.total + 1,
-        },
       };
     });
   },
@@ -258,10 +223,6 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         songs: state.songs.filter((song) => song.id !== id),
         songDetails: updatedDetails,
         songDetailsMap: new Map(Object.entries(updatedDetails)),
-        pagination: {
-          ...state.pagination,
-          total: Math.max(0, state.pagination.total - 1),
-        },
       };
     });
   },

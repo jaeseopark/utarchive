@@ -1,5 +1,5 @@
 import { api } from "../api/client";
-import { type Song, AlbumDetailSchema } from "../api/schemas";
+import { type Song, AlbumSchema } from "../api/schemas";
 import { PlaylistDetailSchema } from "../stores/usePlaylistsStore";
 
 /**
@@ -14,7 +14,7 @@ export async function buildAlbumQueue(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any[]> {
   try {
-    const album = await api.get(`/api/albums/${albumId}`, AlbumDetailSchema);
+    const album = await api.get(`/api/albums/${albumId}`, AlbumSchema);
 
     // Extract songs from tracks - only return registered songs
     const songs = (album.tracks || [])

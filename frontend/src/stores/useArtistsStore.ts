@@ -16,21 +16,19 @@ export interface ArtistsState {
   artists: Artist[];
   artistMap: Map<string, Artist>;
   artistDetails: Record<string, ArtistDetail>;
-  lastFetchedAt: number;
 
   // Loading/Error
-  isLoading: boolean;
+  isLoaded: boolean;
   error: string | null;
 
   // Pagination
   pagination: {
     page: number;
     limit: number;
-    total: number;
+    hasMore: boolean;
   };
 
   // Actions
-  fetchArtists: (page?: number) => Promise<void>;
   fetchAllArtists: () => Promise<void>;
   fetchArtistDetail: (id: ArtistId) => Promise<void>;
   getArtistDetail: (id: ArtistId) => ArtistDetail | undefined;
@@ -38,68 +36,32 @@ export interface ArtistsState {
   updateArtist: (id: ArtistId, updates: Partial<Artist>) => void;
   removeArtist: (id: ArtistId) => void;
   incrementArtistSongCount: (artistId: ArtistId) => void;
-  setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  // Internal methods (for detail fetches)
+  setLoading: (loading: boolean) => void;
 }
 
 export const useArtistsStore = create<ArtistsState>((set, get) => ({
   artists: [],
   artistMap: new Map(),
   artistDetails: {},
-  lastFetchedAt: 0,
-  isLoading: false,
+  isLoaded: false,
   error: null,
   pagination: {
     page: 0,
     limit: 50,
-    total: 0,
+    hasMore: false,
   },
 
-  setLoading: (loading: boolean) => set({ isLoading: loading }),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setLoading: (_loading: boolean) => {
+    // No-op: detail fetches are silent and don't affect isLoaded
+    // isLoaded only reflects the state of fetchAllArtists
+  },
   setError: (error: string | null) => set({ error }),
 
-  fetchArtists: async (page = 0) => {
-    // Check if cache is still fresh (5 minutes TTL)
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().artists.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
-    set({ isLoading: true, error: null });
-    try {
-      const { artists } = await api.get(
-        `/api/artists?limit=50&offset=${page * 50}`,
-        ArtistsResponseSchema,
-      );
-      set({
-        artists,
-        artistMap: new Map(artists.map((a) => [a.id, a])),
-        lastFetchedAt: now,
-        pagination: {
-          page,
-          limit: 50,
-          total: artists.length,
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch artists";
-      set({ error: message });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
   fetchAllArtists: async () => {
-    const now = Date.now();
-    const lastFetch = get().lastFetchedAt;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-    if (get().artists.length > 0 && now - lastFetch < CACHE_TTL) {
-      return;
-    }
-
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       const allArtists: Artist[] = [];
       let offset = 0;
@@ -122,18 +84,16 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       set({
         artists: allArtists,
         artistMap: new Map(allArtists.map((a) => [a.id, a])),
-        lastFetchedAt: now,
         pagination: {
           page: 0,
           limit: 100,
-          total: allArtists.length,
+          hasMore: false,
         },
+        isLoaded: true,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to fetch artists";
-      set({ error: message });
-    } finally {
-      set({ isLoading: false });
+      set({ error: message, isLoaded: true });
     }
   },
 
@@ -143,11 +103,15 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       return;
     }
 
-    const store = {
-      setLoading: (val: boolean) => set({ isLoading: val }),
-      setError: (err: string | null) => set({ error: err }),
-    };
-    const detail = await withStoreLoadingSilent(store, `/api/artists/${id}`, ArtistSchema);
+    const detail = await withStoreLoadingSilent(
+      { 
+        setError: (err: string | null) => set({ error: err }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent
+      },
+      `/api/artists/${id}`,
+      ArtistSchema,
+    );
 
     if (detail) {
       set((state) => ({
@@ -169,10 +133,6 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       return {
         artists: newArtists,
         artistMap: new Map(newArtists.map((a) => [a.id, a])),
-        pagination: {
-          ...state.pagination,
-          total: state.pagination.total + 1,
-        },
       };
     });
   },
@@ -212,10 +172,6 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
         artists: filteredArtists,
         artistMap: new Map(filteredArtists.map((a) => [a.id, a])),
         artistDetails: updatedDetails,
-        pagination: {
-          ...state.pagination,
-          total: Math.max(0, state.pagination.total - 1),
-        },
       };
     });
   },

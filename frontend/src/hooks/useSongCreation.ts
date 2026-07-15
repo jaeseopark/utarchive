@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useSongsStore } from "../stores/useSongsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { api } from "../api/client";
@@ -9,11 +9,13 @@ import { SongSchema, type SongCreateInput } from "../api/schemas";
  * Also updates artist song counts when a song is added with existing artists
  */
 export function useSongCreation() {
-  const { addSongDetail, addSong, setLoading, setError, isLoading, error } = useSongsStore();
+  const { addSongDetail, addSong } = useSongsStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const createSong = useCallback(
     async (data: SongCreateInput) => {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
 
       try {
@@ -27,16 +29,16 @@ export function useSongCreation() {
           response.artistIds.forEach((artistId) => incrementArtistSongCount(artistId));
         }
 
-        setLoading(false);
+        setIsLoading(false);
         return response;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to create song";
         setError(message);
-        setLoading(false);
+        setIsLoading(false);
         throw err;
       }
     },
-    [addSongDetail, addSong, setLoading, setError],
+    [addSongDetail, addSong],
   );
 
   return {
