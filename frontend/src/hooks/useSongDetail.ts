@@ -8,7 +8,10 @@ import { type SongId } from "../types/brands";
  * Fetches song detail from the store. Tree fetching is handled separately by useFamilyTree.
  */
 export function useSongDetail(songId: SongId | undefined) {
-  const { error, fetchSongDetail, getSongDetail } = useSongsStore();
+  // Use selectors to properly subscribe to store changes
+  const song = useSongsStore((state) => (songId ? state.songDetails[songId] : undefined));
+  const error = useSongsStore((state) => state.error);
+  const fetchSongDetail = useSongsStore((state) => state.fetchSongDetail);
   const [detailLoading, setDetailLoading] = useState(false);
 
   /**
@@ -17,8 +20,7 @@ export function useSongDetail(songId: SongId | undefined) {
   useEffect(() => {
     if (!songId) return;
 
-    const cached = getSongDetail(songId);
-    if (cached) {
+    if (song) {
       return; // Already have it
     }
 
@@ -26,9 +28,7 @@ export function useSongDetail(songId: SongId | undefined) {
     fetchSongDetail(songId).finally(() => {
       setDetailLoading(false);
     });
-  }, [songId, fetchSongDetail, getSongDetail]);
-
-  const song = songId ? getSongDetail(songId) : undefined;
+  }, [songId, song, fetchSongDetail]);
 
   return { song, isLoading: detailLoading, error };
 }
