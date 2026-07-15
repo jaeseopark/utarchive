@@ -5,7 +5,7 @@ import { useWebSocketMessageHandling } from "./hooks/useWebSocketIntegration";
 import { useInitializePlayerWithConfig } from "./hooks/useUserConfig";
 import LoginPage from "./pages/LoginPage";
 import ArtistsPage from "./pages/ArtistsPage";
-import ArtistDetailPage from "./pages/ArtistDetailPage";
+import ArtistDetailPage from "./pages/ArtistDetailPage/";
 import SongDetailPage from "./pages/SongDetailPage";
 import SongsPage from "./pages/SongsPage";
 import AlbumsPage from "./pages/AlbumsPage";

@@ -86,7 +86,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to fetch albums";
-      set({ error: message });
+      set({ error: message, isLoaded: true });
     }
   },
 

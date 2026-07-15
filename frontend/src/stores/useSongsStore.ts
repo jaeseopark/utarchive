@@ -93,7 +93,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to fetch songs";
-      set({ error: message });
+      set({ error: message, isLoaded: true });
     }
   },
 

@@ -93,7 +93,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to fetch artists";
-      set({ error: message });
+      set({ error: message, isLoaded: true });
     }
   },
 
