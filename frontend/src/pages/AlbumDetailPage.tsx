@@ -54,10 +54,17 @@ const AlbumDetailPage = () => {
   // Play album loading state
   const [isPlayLoading, setIsPlayLoading] = useState(false);
 
+  // Always call the hook unconditionally (required by Rules of Hooks)
+  // Subscribe to songDetails to trigger re-renders when song data (including names) changes
+  const songDetailsMap = useSongsStore((state) => state.songDetails);
+  const getSongDetail = useCallback(
+    (id: SongId) => songDetailsMap[id],
+    [songDetailsMap],
+  );
+  const expandedSongDetail =
+    expandedSongId ? getSongDetail(toBrandId<SongId>(expandedSongId)) : undefined;
+
   // Family tree data and loading state - gets the masterId from the expanded song
-  const expandedSongDetail = expandedSongId
-    ? useSongsStore((state) => state.getSongDetail(toBrandId<SongId>(expandedSongId)))
-    : undefined;
   const { tree, isLoading: treeLoading, error: treeError } = useFamilyTree(
     expandedSongDetail?.masterId || toBrandId<SongId>("0"),
     expandedSongId ? toBrandId<SongId>(expandedSongId) : undefined,
@@ -65,7 +72,6 @@ const AlbumDetailPage = () => {
 
   const { setQueue, play } = usePlayerStore();
   const artists = useArtistsStore((state) => state.artists);
-  const getSongDetail = useSongsStore((state) => state.getSongDetail);
   const { unlinkSong } = useUnlinkSongFromAlbum();
   const { linkSongToTrack } = useUpsertAlbumSong();
 
@@ -354,7 +360,7 @@ const AlbumDetailPage = () => {
                                     to={`/songs/${song.id}`}
                                     className="text-sky-500 hover:underline"
                                   >
-                                    {song.title}
+                                    {getSongDetail(toBrandId<SongId>(song.id))?.title || song.title}
                                   </Link>
                                 </div>
                               ) : (
