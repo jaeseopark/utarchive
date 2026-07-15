@@ -275,6 +275,13 @@ function PlaylistDetailPage() {
                           <tr
                             key={item.song.id}
                             onClick={() => toggleSelection(item.song.id, false)}
+                            onDoubleClick={() => {
+                              // Play the song on double-click if playback is enabled
+                              if (item.song.playbackEnabled) {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+                                usePlayerStore().play(item.song as any);
+                              }
+                            }}
                             className={`border-b border-slate-300 last:border-b-0 cursor-pointer transition ${
                               isSelected ? "bg-blue-50" : "hover:bg-slate-50"
                             }`}

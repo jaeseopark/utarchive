@@ -310,6 +310,16 @@ const AlbumDetailPage = () => {
                                 toggleSelection(song.id, false);
                               }
                             }}
+                            onDoubleClick={() => {
+                              // Play the song on double-click if it has audio
+                              if (isRegistered && song?.id) {
+                                const fullSong = getSongDetail(toBrandId<SongId>(song.id));
+                                if (fullSong?.filePath) {
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+                                  play(fullSong as any);
+                                }
+                              }
+                            }}
                             className={`border-b border-slate-300 last:border-b-0 ${
                               song?.id && selectionState.selectedIds.has(song.id)
                                 ? "bg-blue-50 cursor-pointer"

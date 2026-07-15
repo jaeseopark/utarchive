@@ -30,6 +30,17 @@ function SongsPage() {
     }
   }, [songs, setQueue]);
 
+  const handleDoubleClickRow = useCallback(
+    (song: typeof songs[number]) => {
+      // Only play if playback is enabled
+      if (song.playbackEnabled) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
+        play(song as any);
+      }
+    },
+    [play],
+  );
+
   const columns: ColumnDefinition[] = useMemo(
     () => [
       {
@@ -191,7 +202,11 @@ function SongsPage() {
         </div>
       ) : (
         <>
-          <SongTable songs={songs} columns={columns} />
+          <SongTable
+            songs={songs}
+            columns={columns}
+            onDoubleClickRow={handleDoubleClickRow}
+          />
           <SongActionsDropdown
             selectedSongIds={Array.from(selectionState.selectedIds)}
             onClose={clearSelection}
