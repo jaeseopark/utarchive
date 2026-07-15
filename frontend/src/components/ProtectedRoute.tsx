@@ -1,11 +1,11 @@
 import { type PropsWithChildren } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useSession } from "../context/SessionContext";
-import { useAppInitialization } from "../hooks/useAppInitialization";
+import { useInitialization } from "../context/InitializationContext";
 
 export default function ProtectedRoute({ children }: PropsWithChildren) {
   const { user, isLoading: authLoading } = useSession();
-  const { initialized } = useAppInitialization();
+  const { initialized } = useInitialization();
   const location = useLocation();
 
   // Show loading screen while checking auth

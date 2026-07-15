@@ -2,7 +2,6 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import RootLayout from "./layouts/RootLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useWebSocketMessageHandling } from "./hooks/useWebSocketIntegration";
-import { useAppInitialization } from "./hooks/useAppInitialization";
 import { useInitializePlayerWithConfig } from "./hooks/useUserConfig";
 import LoginPage from "./pages/LoginPage";
 import ArtistsPage from "./pages/ArtistsPage";
@@ -17,9 +16,6 @@ import SearchPage from "./pages/SearchPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 
 function App() {
-  // Boot-time initialization: hydrate stores in dependency order
-  useAppInitialization();
-
   // Initialize WebSocket message handlers and cleanup
   useWebSocketMessageHandling();
 
