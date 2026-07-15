@@ -87,16 +87,22 @@ function SongHeaderContent({ song }: SongHeaderProps) {
 }
 
 /**
- * Memoized SongHeader that only re-renders when song ID changes.
- * This prevents unnecessary re-renders from parent updates (e.g., player store updates).
- * Even if the song object reference changes, as long as the ID is the same, we don't re-render.
+ * Memoized SongHeader that re-renders when relevant song properties change.
+ * Compares properties that affect the rendered output to avoid unnecessary re-renders
+ * from external store updates while still responding to actual song data changes.
  */
 const SongHeader = React.memo(
   SongHeaderContent,
   (prevProps, nextProps) => {
     // Return true if props are equal (prevents re-render), false if they differ (causes re-render)
-    // Only compare song ID to avoid re-renders from object reference changes
-    return prevProps.song.id === nextProps.song.id;
+    // Compare all properties that affect rendering
+    return (
+      prevProps.song.id === nextProps.song.id &&
+      prevProps.song.title === nextProps.song.title &&
+      prevProps.song.artistIds === nextProps.song.artistIds &&
+      prevProps.song.filePath === nextProps.song.filePath &&
+      prevProps.song.albumIds === nextProps.song.albumIds
+    );
   },
 );
 
