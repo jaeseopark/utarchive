@@ -1,17 +1,20 @@
 import { create } from "zustand";
 import { z } from "zod";
 import { api } from "../api/client";
-import { AlbumSchema, type Album } from "../api/schemas";
+import { withStoreLoadingSilent } from "../api/middleware";
+import { AlbumListItemSchema, AlbumSchema, type Album, type AlbumListItem } from "../api/schemas";
 import { type AlbumId } from "../types/brands";
 
-const AlbumsResponseSchema = z.object({
-  albums: z.array(AlbumSchema),
+const AlbumsListResponseSchema = z.object({
+  albums: z.array(AlbumListItemSchema),
 });
 
 export interface AlbumsState {
   // Data
   albums: Album[];
   albumsMap: Map<string, Album>;
+  albumDetails: Record<string, Album>;
+  albumDetailsMap: Map<string, Album>;
 
   // Loading/Error
   isLoaded: boolean;
@@ -26,6 +29,7 @@ export interface AlbumsState {
 
   // Actions
   fetchAllAlbums: () => Promise<void>;
+  fetchAlbumDetail: (id: AlbumId) => Promise<void>;
   getAlbum: (id: AlbumId) => Album | undefined;
   addAlbum: (album: Album) => void;
   updateAlbum: (id: AlbumId, updates: Partial<Album>) => void;
@@ -38,6 +42,8 @@ export interface AlbumsState {
 export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   albums: [],
   albumsMap: new Map(),
+  albumDetails: {},
+  albumDetailsMap: new Map(),
   isLoaded: false,
   error: null,
   pagination: {
@@ -56,7 +62,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   fetchAllAlbums: async () => {
     set({ error: null });
     try {
-      const allAlbums: Album[] = [];
+      const allAlbums: AlbumListItem[] = [];
       let offset = 0;
       const limit = 100;
 
@@ -64,7 +70,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       while (true) {
         const { albums: batch } = await api.get(
           `/api/albums?limit=${limit}&offset=${offset}`,
-          AlbumsResponseSchema,
+          AlbumsListResponseSchema,
         );
 
         if (batch.length === 0) break;
@@ -75,8 +81,10 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       }
 
       set({
-        albums: allAlbums,
-        albumsMap: new Map(allAlbums.map((a) => [a.id, a])),
+        // eslint-disable-next-line no-restricted-syntax
+        albums: allAlbums as unknown as Album[],
+        // eslint-disable-next-line no-restricted-syntax
+        albumsMap: new Map(allAlbums.map((a) => [a.id, a as unknown as Album])),
         pagination: {
           page: 0,
           limit: 100,
@@ -91,7 +99,43 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   },
 
   getAlbum: (id: AlbumId) => {
+    // Check details cache first (full album with tracks)
+    const detailedAlbum = get().albumDetailsMap.get(id);
+    if (detailedAlbum) {
+      return detailedAlbum;
+    }
+    // Fall back to list items
     return get().albumsMap.get(id);
+  },
+
+  fetchAlbumDetail: async (id: string) => {
+    const cached = get().albumDetails[id];
+    if (cached) {
+      return;
+    }
+
+    const detail = await withStoreLoadingSilent(
+      { 
+        setError: (err: string | null) => set({ error: err }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent
+      },
+      `/api/albums/${id}`,
+      AlbumSchema,
+    );
+
+    if (detail) {
+      set((state) => {
+        const newDetails = {
+          ...state.albumDetails,
+          [id]: detail,
+        };
+        return {
+          albumDetails: newDetails,
+          albumDetailsMap: new Map(Object.entries(newDetails)),
+        };
+      });
+    }
   },
 
   addAlbum: (album: Album) => {

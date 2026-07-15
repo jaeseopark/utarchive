@@ -283,6 +283,24 @@ export const AlbumTrackSchema = z.object({
   isRegistered: z.boolean(),
 });
 
+export const AlbumListItemSchema = z.object({
+  id: z
+    .string()
+    .uuid()
+    .transform((val) => toBrandId<AlbumId>(val)),
+  title: z.string(),
+  artistIds: z
+    .array(
+      z
+        .string()
+        .uuid()
+        .transform((val) => toBrandId<ArtistId>(val)),
+    )
+    .optional()
+    .default([]),
+  yearReleased: z.number().int().nullable().optional(),
+});
+
 export const AlbumSchema = z.object({
   id: z
     .string()
@@ -359,6 +377,7 @@ export type SongListItem = z.infer<typeof SongListItemSchema>;
 export type SongTreeNode = z.infer<typeof SongTreeNodeSchema>;
 export type SongTree = z.infer<typeof SongTreeSchema>;
 export type Album = z.infer<typeof AlbumSchema>;
+export type AlbumListItem = z.infer<typeof AlbumListItemSchema>;
 export type AlbumCreateInput = z.infer<typeof AlbumCreateSchema>;
 export type AlbumCreateFormInput = z.infer<typeof AlbumCreateFormSchema>;
 export type UserConfig = z.infer<typeof UserConfigSchema>;
