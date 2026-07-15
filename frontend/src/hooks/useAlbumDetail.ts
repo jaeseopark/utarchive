@@ -6,7 +6,7 @@ import { type AlbumId } from "../types/brands";
  * Hook to fetch and manage album detail with caching
  */
 export function useAlbumDetail(albumId: AlbumId | undefined) {
-  const { isLoading, error, fetchAlbumDetail, getAlbumDetail } = useAlbumsStore();
+  const { error, fetchAlbumDetail, getAlbumDetail } = useAlbumsStore();
 
   useEffect(() => {
     if (!albumId) return;
@@ -18,5 +18,5 @@ export function useAlbumDetail(albumId: AlbumId | undefined) {
 
   const album = albumId ? getAlbumDetail(albumId) : undefined;
 
-  return { album, isLoading, error };
+  return { album, isLoading: false, error };
 }

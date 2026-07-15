@@ -72,7 +72,7 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
   const [selectedUrls, setSelectedUrls] = useState<UrlOption[]>([]);
   const { updateSongData } = useSongUpdate();
   const artists = useArtistsStore((state) => state.artists);
-  const isLoading = useArtistsStore((state) => state.isLoading);
+  const isLoaded = useArtistsStore((state) => state.isLoaded);
   const { createArtist } = useCreateArtist();
 
   const {
@@ -266,7 +266,7 @@ function SongAttributesEditorContent({ song, mode, onExitEditMode }: SongAttribu
               <tr className="border-b border-slate-300">
                 <td className="px-4 py-3 font-medium text-slate-600 align-top">Artists</td>
                 <td className="px-4 py-3">
-                  {isLoading ? (
+                  {!isLoaded ? (
                     <p className="text-sm text-slate-500">Loading artists...</p>
                   ) : (
                     <CreatableSelect

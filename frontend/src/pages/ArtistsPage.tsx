@@ -1,14 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useArtists } from "../hooks/useArtists";
-
-const PAGE_SIZE = 50;
+import { useArtistsStore } from "../stores/useArtistsStore";
 
 function ArtistsPage() {
-  const [page, setPage] = useState(0);
-  const { artists, isLoading, error } = useArtists(page);
-
-  const canPrevious = page > 0;
+  const artists = useArtistsStore((state) => state.artists);
+  const isLoaded = useArtistsStore((state) => state.isLoaded);
+  const error = useArtistsStore((state) => state.error);
 
   const rows = useMemo(
     () =>
@@ -28,7 +25,7 @@ function ArtistsPage() {
       </div>
 
       <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-xl shadow-slate-200/20">
-        {isLoading ? (
+        {!isLoaded ? (
           <div className="min-h-[240px] flex items-center justify-center text-slate-600">
             Loading artists…
           </div>
@@ -69,25 +66,7 @@ function ArtistsPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-between text-sm text-slate-700">
-        <button
-          type="button"
-          className="rounded-2xl border border-slate-400 bg-slate-100 px-4 py-2 transition hover:border-slate-500 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={!canPrevious}
-          onClick={() => setPage((current) => Math.max(current - 1, 0))}
-        >
-          Previous
-        </button>
-        <span>Page {page + 1}</span>
-        <button
-          type="button"
-          className="rounded-2xl border border-slate-400 bg-slate-100 px-4 py-2 transition hover:border-slate-500 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={artists.length < PAGE_SIZE}
-          onClick={() => setPage((current) => current + 1)}
-        >
-          Next
-        </button>
-      </div>
+
     </section>
   );
 }

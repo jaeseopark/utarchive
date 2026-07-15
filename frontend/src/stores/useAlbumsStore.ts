@@ -16,68 +16,49 @@ export interface AlbumsState {
   albumDetails: Record<string, AlbumDetail>;
 
   // Loading/Error
-  isLoading: boolean;
+  isLoaded: boolean;
   error: string | null;
 
   // Pagination
   pagination: {
     page: number;
     limit: number;
-    total: number;
+    hasMore: boolean;
   };
 
   // Actions
-  fetchAlbums: (page?: number) => Promise<void>;
   fetchAllAlbums: () => Promise<void>;
   fetchAlbumDetail: (id: AlbumId) => Promise<void>;
   getAlbumDetail: (id: AlbumId) => AlbumDetail | undefined;
   addAlbum: (album: Album) => void;
   updateAlbum: (id: AlbumId, updates: Partial<Album>) => void;
   removeAlbum: (id: AlbumId) => void;
-  setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  // Internal methods (for detail fetches)
+  setLoading: (loading: boolean) => void;
 }
 
 export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   albums: [],
   albumDetailsMap: new Map(),
   albumDetails: {},
-  isLoading: false,
+  isLoaded: false,
   error: null,
   pagination: {
     page: 0,
     limit: 50,
-    total: 0,
+    hasMore: false,
   },
 
-  setLoading: (loading: boolean) => set({ isLoading: loading }),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setLoading: (_loading: boolean) => {
+    // No-op: detail fetches are silent and don't affect isLoaded
+    // isLoaded only reflects the state of fetchAllAlbums
+  },
   setError: (error: string | null) => set({ error }),
 
-  fetchAlbums: async (page = 0) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { albums } = await api.get(
-        `/api/albums?limit=50&offset=${page * 50}`,
-        AlbumsResponseSchema,
-      );
-      set({
-        albums,
-        pagination: {
-          page,
-          limit: 50,
-          total: albums.length,
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch albums";
-      set({ error: message });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
   fetchAllAlbums: async () => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       const allAlbums: Album[] = [];
       let offset = 0;
@@ -102,14 +83,13 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
         pagination: {
           page: 0,
           limit: 100,
-          total: allAlbums.length,
+          hasMore: false,
         },
+        isLoaded: true,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to fetch albums";
       set({ error: message });
-    } finally {
-      set({ isLoading: false });
     }
   },
 
@@ -119,11 +99,15 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       return;
     }
 
-    const store = {
-      setLoading: (val: boolean) => set({ isLoading: val }),
-      setError: (err: string | null) => set({ error: err }),
-    };
-    const detail = await withStoreLoadingSilent(store, `/api/albums/${id}`, AlbumDetailSchema);
+    const detail = await withStoreLoadingSilent(
+      { 
+        setError: (err: string | null) => set({ error: err }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent
+      },
+      `/api/albums/${id}`,
+      AlbumDetailSchema,
+    );
 
     if (detail) {
       set((state) => {
@@ -148,10 +132,6 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       const newAlbums = [album, ...state.albums];
       return {
         albums: newAlbums,
-        pagination: {
-          ...state.pagination,
-          total: state.pagination.total + 1,
-        },
       };
     });
   },
@@ -190,10 +170,6 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
         albums: state.albums.filter((album) => album.id !== id),
         albumDetails: updatedDetails,
         albumDetailsMap: new Map(Object.entries(updatedDetails)),
-        pagination: {
-          ...state.pagination,
-          total: Math.max(0, state.pagination.total - 1),
-        },
       };
     });
   },

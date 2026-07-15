@@ -28,7 +28,7 @@ export function AddAlbumModal() {
   const { isOpen, closeModal } = useAddAlbumModalStore();
   const { createAlbum, isLoading, error: creationError } = useAlbumCreation();
   const artists = useArtistsStore((state) => state.artists);
-  const artistsLoading = useArtistsStore((state) => state.isLoading);
+  const artistsLoaded = useArtistsStore((state) => state.isLoaded);
   const { createArtist } = useCreateArtist();
 
   const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
@@ -243,7 +243,7 @@ export function AddAlbumModal() {
               <label className="block text-sm font-medium text-slate-700">
                 Artists <span className="text-red-500">*</span>
               </label>
-              {artistsLoading ? (
+              {!artistsLoaded ? (
                 <p className="mt-1 text-sm text-slate-500">Loading artists...</p>
               ) : (
                 <div className="mt-1">

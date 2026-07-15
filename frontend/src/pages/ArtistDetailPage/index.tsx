@@ -52,7 +52,7 @@ function ArtistDetailPage() {
       <div className="space-y-6">
         <ArtistHeader artist={artist} />
         <SongsSection
-          songs={songs}
+          songs={songs ?? []}
           onPlaybackEnabledChange={handlePlaybackEnabledChange}
         />
         <AlbumsSection albums={albums} />

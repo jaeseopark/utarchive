@@ -18,7 +18,7 @@ import { NotificationsPage } from "./pages/NotificationsPage";
 
 function App() {
   // Boot-time initialization: hydrate stores in dependency order
-  const { initialized } = useAppInitialization();
+  useAppInitialization();
 
   // Initialize WebSocket message handlers and cleanup
   useWebSocketMessageHandling();
@@ -26,14 +26,10 @@ function App() {
   // Initialize player with user config settings and setup multi-tab sync
   useInitializePlayerWithConfig();
 
-  // do not render protected routes until the app is initialized
-  const getProtectedRoutes = () => {
-    if (!initialized) {
-      return null;
-    }
-
-    return <>
-    <Route
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+     <Route
         path="/"
         element={
           <ProtectedRoute>
@@ -54,13 +50,6 @@ function App() {
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/songs" replace />} />
-      </>
-  }
-
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      {getProtectedRoutes()}
     </Routes>
   );
 }
