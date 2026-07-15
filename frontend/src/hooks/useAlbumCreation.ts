@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { api } from "../api/client";
-import { AlbumDetailSchema, type AlbumCreateInput } from "../api/schemas";
+import { AlbumSchema, type AlbumCreateInput } from "../api/schemas";
 
 /**
  * Hook to create a new album and update the store
@@ -18,7 +18,7 @@ export function useAlbumCreation() {
       setError(null);
 
       try {
-        const response = await api.post("/api/albums", data, AlbumDetailSchema);
+        const response = await api.post("/api/albums", data, AlbumSchema);
 
         // Add album to store for immediate display
         addAlbum(response);

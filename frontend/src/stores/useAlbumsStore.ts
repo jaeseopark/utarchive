@@ -1,8 +1,7 @@
 import { create } from "zustand";
 import { z } from "zod";
 import { api } from "../api/client";
-import { withStoreLoadingSilent } from "../api/middleware";
-import { AlbumSchema, AlbumDetailSchema, type Album, type AlbumDetail } from "../api/schemas";
+import { AlbumSchema, type Album } from "../api/schemas";
 import { type AlbumId } from "../types/brands";
 
 const AlbumsResponseSchema = z.object({
@@ -12,8 +11,7 @@ const AlbumsResponseSchema = z.object({
 export interface AlbumsState {
   // Data
   albums: Album[];
-  albumDetailsMap: Map<string, AlbumDetail>;
-  albumDetails: Record<string, AlbumDetail>;
+  albumsMap: Map<string, Album>;
 
   // Loading/Error
   isLoaded: boolean;
@@ -28,8 +26,7 @@ export interface AlbumsState {
 
   // Actions
   fetchAllAlbums: () => Promise<void>;
-  fetchAlbumDetail: (id: AlbumId) => Promise<void>;
-  getAlbumDetail: (id: AlbumId) => AlbumDetail | undefined;
+  getAlbum: (id: AlbumId) => Album | undefined;
   addAlbum: (album: Album) => void;
   updateAlbum: (id: AlbumId, updates: Partial<Album>) => void;
   removeAlbum: (id: AlbumId) => void;
@@ -40,8 +37,7 @@ export interface AlbumsState {
 
 export const useAlbumsStore = create<AlbumsState>((set, get) => ({
   albums: [],
-  albumDetailsMap: new Map(),
-  albumDetails: {},
+  albumsMap: new Map(),
   isLoaded: false,
   error: null,
   pagination: {
@@ -80,6 +76,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
 
       set({
         albums: allAlbums,
+        albumsMap: new Map(allAlbums.map((a) => [a.id, a])),
         pagination: {
           page: 0,
           limit: 100,
@@ -93,83 +90,49 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     }
   },
 
-  fetchAlbumDetail: async (id: string) => {
-    const cached = get().albumDetails[id];
-    if (cached) {
-      return;
-    }
-
-    const detail = await withStoreLoadingSilent(
-      { 
-        setError: (err: string | null) => set({ error: err }),
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent
-      },
-      `/api/albums/${id}`,
-      AlbumDetailSchema,
-    );
-
-    if (detail) {
-      set((state) => {
-        const newDetails = {
-          ...state.albumDetails,
-          [id]: detail,
-        };
-        return {
-          albumDetails: newDetails,
-          albumDetailsMap: new Map(Object.entries(newDetails)),
-        };
-      });
-    }
-  },
-
-  getAlbumDetail: (id: AlbumId) => {
-    return get().albumDetails[id];
+  getAlbum: (id: AlbumId) => {
+    return get().albumsMap.get(id);
   },
 
   addAlbum: (album: Album) => {
-    set((state) => {
-      const newAlbums = [album, ...state.albums];
-      return {
-        albums: newAlbums,
-      };
-    });
+    set((state) => ({
+      albums: [album, ...state.albums],
+      albumsMap: new Map([...state.albumsMap, [album.id, album]]),
+    }));
   },
 
   updateAlbum: (id: string, updates: Partial<Album>) => {
     set((state) => {
-      // Update album details if cached
-      const updatedDetails = { ...state.albumDetails };
-      if (updatedDetails[id]) {
-        // eslint-disable-next-line no-restricted-syntax
-        updatedDetails[id] = { ...updatedDetails[id], ...updates } as AlbumDetail;
-      }
-
-      // Update album list item if present
+      // Update album in the main array
       const updatedAlbums = state.albums.map((album) => {
         if (album.id === id) {
-          return { ...album, ...updates };
+          // eslint-disable-next-line no-restricted-syntax
+          return { ...album, ...updates } as Album;
         }
         return album;
       });
 
+      // Update the map
+      const updatedAlbum = updatedAlbums.find((a) => a.id === id);
+      const newMap = new Map(state.albumsMap);
+      if (updatedAlbum) {
+        newMap.set(id, updatedAlbum);
+      }
+
       return {
         albums: updatedAlbums,
-        albumDetails: updatedDetails,
-        albumDetailsMap: new Map(Object.entries(updatedDetails)),
+        albumsMap: newMap,
       };
     });
   },
 
   removeAlbum: (id: string) => {
     set((state) => {
-      const updatedDetails = { ...state.albumDetails };
-      delete updatedDetails[id];
-
+      const newMap = new Map(state.albumsMap);
+      newMap.delete(id);
       return {
         albums: state.albums.filter((album) => album.id !== id),
-        albumDetails: updatedDetails,
-        albumDetailsMap: new Map(Object.entries(updatedDetails)),
+        albumsMap: newMap,
       };
     });
   },

@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { api } from "../api/client";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { type AlbumId, type SongId } from "../types/brands";
-import { AlbumDetailSchema } from "../api/schemas";
+import { AlbumSchema } from "../api/schemas";
 
 /**
  * Hook to unlink a song from an album (delete album-song association)
@@ -16,7 +16,7 @@ export function useUnlinkSongFromAlbum() {
       try {
         const response = await api.delete(
           `/api/albums/${albumId}/songs/${songId}`,
-          AlbumDetailSchema,
+          AlbumSchema,
         );
 
         // Update store with the response

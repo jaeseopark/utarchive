@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useArtistDetail } from "../../hooks/useArtistDetail";
+import { useArtistsStore } from "../../stores/useArtistsStore";
 import { useArtistAlbums } from "../../hooks/useArtistAlbums";
 import { useArtistSongs } from "../../hooks/useArtistSongs";
 import { toBrandId, type ArtistId } from "../../types/brands";
@@ -11,11 +11,9 @@ function ArtistDetailPage() {
   const { id } = useParams<"id">();
   const artistId = toBrandId<ArtistId>(id || "");
   
-  const {
-    artist,
-    isLoading: artistLoading,
-    error: artistError,
-  } = useArtistDetail(artistId);
+  const artist = useArtistsStore((state) => state.artistMap.get(artistId));
+  const artistLoading = false;
+  const artistError = null;
 
   const { songs, isLoading: songsLoading, error: songsError, updateSong } = useArtistSongs(artistId);
   const { albums, isLoading: albumsLoading, error: albumsError } = useArtistAlbums(artistId);

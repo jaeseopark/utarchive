@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { api } from "../api/client";
-import { AlbumDetailSchema, type AlbumCreateInput } from "../api/schemas";
+import { AlbumSchema, type AlbumCreateInput } from "../api/schemas";
 import { type AlbumId } from "../types/brands";
 
 /**
@@ -18,7 +18,7 @@ export function useUpdateAlbum() {
       setError(null);
 
       try {
-        const response = await api.patch(`/api/albums/${albumId}`, data, AlbumDetailSchema);
+        const response = await api.patch(`/api/albums/${albumId}`, data, AlbumSchema);
 
         // Update album in store with both ID and updated fields
         updateAlbum(albumId, response);

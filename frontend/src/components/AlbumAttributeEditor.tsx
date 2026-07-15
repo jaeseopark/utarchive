@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import CreatableSelect from "react-select/creatable";
 import { Button } from "./ui/Button";
-import { type AlbumDetail } from "../api/schemas";
+import { type Album } from "../api/schemas";
 import { useUpdateAlbum } from "../hooks/useUpdateAlbum";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getChangedProperties } from "../lib/compareObjects";
@@ -25,7 +25,7 @@ type AlbumUpdateInput = z.infer<typeof AlbumUpdateSchema>;
  * Helper function to convert an Album to form values
  * Used for both defaultValues and reset operations
  */
-function getFormValuesFromAlbum(album: AlbumDetail): AlbumUpdateInput {
+function getFormValuesFromAlbum(album: Album): AlbumUpdateInput {
   return {
     title: album.title,
     yearReleased: album.yearReleased ?? null,
@@ -63,7 +63,7 @@ function isUrlOptionArray(value: unknown): value is UrlOption[] {
 }
 
 interface AlbumAttributesEditorProps {
-  album: AlbumDetail;
+  album: Album;
   mode: "view" | "edit";
   onExitEditMode: () => void;
 }
@@ -293,7 +293,7 @@ interface UseAlbumAttributesEditorReturn {
  * Note: Always call this hook unconditionally, even if album is null.
  * The hook handles null albums internally.
  */
-export function useAlbumAttributeEditor(album: AlbumDetail | null): UseAlbumAttributesEditorReturn {
+export function useAlbumAttributeEditor(album: Album | null): UseAlbumAttributesEditorReturn {
   const [mode, setMode] = useState<"view" | "edit">("view");
 
   const exitEditMode = useCallback(() => setMode("view"), []);
@@ -306,7 +306,7 @@ export function useAlbumAttributeEditor(album: AlbumDetail | null): UseAlbumAttr
   return { Component, enterEditMode, mode };
 }
 
-export function AlbumAttributeEditor({ album }: { album: AlbumDetail }) {
+export function AlbumAttributeEditor({ album }: { album: Album }) {
   const { Component } = useAlbumAttributeEditor(album);
   return <>{Component}</>;
 }

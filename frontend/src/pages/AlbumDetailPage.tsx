@@ -4,7 +4,7 @@ import { Button } from "../components/ui/Button";
 import { EditAlbumModal } from "../components/EditAlbumModal";
 import { useSongSelectorModal } from "../components/SongSelector";
 import { useAlbumAttributeEditor } from "../components/AlbumAttributeEditor";
-import { useAlbumDetail } from "../hooks/useAlbumDetail";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useUnlinkSongFromAlbum } from "../hooks/useUnlinkSongFromAlbum";
 import { useUpsertAlbumSong } from "../hooks/useUpsertAlbumSong";
 import { useSongSelection } from "../hooks/useSongSelection";
@@ -20,7 +20,9 @@ import { toBrandId, type AlbumId, type ArtistId, type SongId } from "../types/br
 
 const AlbumDetailPage = () => {
   const { id } = useParams();
-  const { album, isLoading, error } = useAlbumDetail(toBrandId<AlbumId>(id || ""));
+  const album = useAlbumsStore((state) => state.getAlbum(toBrandId<AlbumId>(id || "")));
+  const isLoading = false;
+  const error = null;
   const { isOpen: isEditModalOpen, openModal: openEditModal, closeModal: closeEditModal } =
     useEditAlbumModalStore();
 
