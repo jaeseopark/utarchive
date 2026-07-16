@@ -155,6 +155,7 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
                       <PlaybackEnabledToggle
                         songId={node.id}
                         isEnabled={node.playbackEnabled}
+                        filePath={getSongDetail(toBrandId<SongId>(node.id))?.filePath}
                         onPlaybackEnabledChange={handlePlaybackEnabledChange}
                       />
                     </div>
