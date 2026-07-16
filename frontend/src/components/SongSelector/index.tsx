@@ -7,12 +7,41 @@ export { SongSelector } from "./SongSelector";
 /**
  * Hook for managing song selector modal state and rendering
  * Returns an object with the modal Component, visibility state, and control functions
+ * Automatically closes the modal when a song is selected (single-select mode)
+ * Can optionally execute additional cleanup via onClose callback
  */
-export function useSongSelectorModal(props: React.ComponentProps<typeof SongSelector>) {
+export function useSongSelectorModal(
+  props: React.ComponentProps<typeof SongSelector> & { onClose?: () => void },
+) {
   const [isOpen, setOpen] = useState(false);
 
   const open = () => setOpen(true);
   const close = () => setOpen(false);
+
+  // Wrap callbacks to close modal after selection
+  const wrappedProps = React.useMemo(() => {
+    const { onClose: additionalOnClose, ...selectorProps } = props;
+
+    if ("onSongSelected" in selectorProps) {
+      const originalCallback = selectorProps.onSongSelected;
+      selectorProps.onSongSelected = (songId: string) => {
+        originalCallback(songId);
+        additionalOnClose?.();
+        close();
+      };
+    }
+
+    if ("onSongsSelected" in selectorProps) {
+      const originalCallback = selectorProps.onSongsSelected;
+      selectorProps.onSongsSelected = (songIds: string[]) => {
+        originalCallback(songIds);
+        additionalOnClose?.();
+        close();
+      };
+    }
+
+    return selectorProps;
+  }, [props]);
 
   const Component = isOpen ? (
     <div
@@ -30,7 +59,7 @@ export function useSongSelectorModal(props: React.ComponentProps<typeof SongSele
         >
           ✕
         </button>
-        <SongSelector {...props} />
+        <SongSelector {...wrappedProps} />
       </div>
     </div>
   ) : null;

@@ -169,7 +169,6 @@ export function AddChildModal({ isOpen, parentSongId, onClose, onChildAdded }: A
 
             <SongSelector
               disabledSongIds={[parentSongId]}
-              onClose={handleBackToMenu}
               onSongSelected={handleExistingSongSelected}
             />
           </div>
