@@ -61,6 +61,7 @@ test("PlaybackEnabledToggle - renders as disabled when filePath is null", () => 
 test("PlaybackEnabledToggle - calls API when clicked with filePath", async () => {
   const user = userEvent.setup();
   const onPlaybackEnabledChange = vi.fn();
+  // eslint-disable-next-line no-restricted-syntax
   vi.mocked(api.patch).mockResolvedValue({} as never);
 
   render(
