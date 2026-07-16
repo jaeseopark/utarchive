@@ -35,7 +35,6 @@ export interface EnrichedSongResult {
 
 type SongSelectorProps = {
   disabledSongIds?: string[];
-  onClose?: () => void;
 } & (
   { onSongSelected: (songId: string) => void } | { onSongsSelected: (songIds: string[]) => void }
 );
