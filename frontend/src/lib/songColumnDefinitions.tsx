@@ -16,6 +16,7 @@ export function createPlaybackEnabledColumn(
         <PlaybackEnabledToggle
           songId={song.id}
           isEnabled={song.playbackEnabled}
+          filePath={song.filePath}
           onPlaybackEnabledChange={onPlaybackEnabledChange}
         />
       </div>
