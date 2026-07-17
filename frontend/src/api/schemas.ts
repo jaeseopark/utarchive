@@ -201,7 +201,7 @@ export const SongCreateSchema = z.object({
         .uuid()
         .transform((val) => toBrandId<ArtistId>(val)),
     )
-    .min(1, "At least one artist is required"),
+    .optional(),
   parentId: optionalSongId,
   releasedAt: optionalDatetime,
   urls: z.array(z.string()).optional(),
@@ -217,7 +217,7 @@ export const SongCreateSchema = z.object({
 // Form schema without transforms - for form data that stays as strings
 export const SongCreateFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less"),
-  artistIds: z.array(z.string().uuid()).min(1, "At least one artist is required"),
+  artistIds: z.array(z.string().uuid()).optional(),
   parentId: optionalUUID,
   releasedAt: optionalDatetime,
   urls: z.array(z.string()).optional(),

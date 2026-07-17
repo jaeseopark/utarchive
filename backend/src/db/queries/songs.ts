@@ -186,7 +186,7 @@ export const selectSongs = async (filters: SongListFilters) => {
 
 export const createSong = async (
   songData: SongCreateInput,
-  artistIds: string[],
+  artistIds?: string[],
 ): Promise<SongWithHierarchy> => {
   const songId = randomUUID();
   let masterId: string | undefined = songData.parentId ? undefined : songId;
@@ -238,7 +238,7 @@ export const createSong = async (
       masterId: masterId ?? songId,
     });
 
-    const artistRows = artistIds.map((artistId, index) => ({
+    const artistRows = (artistIds ?? []).map((artistId, index) => ({
       songId: songId,
       artistId,
       displayOrder: index,
@@ -265,7 +265,7 @@ export const createSong = async (
       createdAt: new Date(),
       parentId: songData.parentId ?? null,
       masterId: masterId ?? songId,
-      artistIds,
+      artistIds: artistIds ?? [],
       albumIds: [],
     };
   });
