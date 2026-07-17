@@ -254,7 +254,7 @@ function CreateNewSongForm({
         // Convert form strings to branded types
         const apiData: SongCreateInput = {
           ...formData,
-          artistIds: formData.artistIds.map((id) => toBrandId<ArtistId>(id)),
+          artistIds: (formData.artistIds ?? []).map((id) => toBrandId<ArtistId>(id)),
           parentId: formData.parentId ? toBrandId<SongId>(formData.parentId) : null,
           coverArtId: formData.coverArtId ? toBrandId<CoverArtId>(formData.coverArtId) : null,
         };
@@ -329,7 +329,7 @@ function CreateNewSongForm({
           {/* Artist Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-700">
-              Artists <span className="text-red-500">*</span>
+              Artists (optional)
             </label>
             {!artistsLoaded ? (
               <p className="mt-1 text-sm text-slate-500">Loading artists...</p>
@@ -348,18 +348,11 @@ function CreateNewSongForm({
                   onCreateOption={handleCreateArtist}
                   formatCreateLabel={(inputValue) => `Create artist "${inputValue}"`}
                   placeholder="Select or create artists..."
-                  className={clsx(
-                    "react-select-container",
-                    selectedArtists.length === 0 && errors.artistIds ? "has-error" : "",
-                  )}
+                  className="react-select-container"
                   classNamePrefix="react-select"
                   styles={{
                     control: (base, state) => ({
                       ...base,
-                      borderColor:
-                        selectedArtists.length === 0 && errors.artistIds
-                          ? "#ef4444"
-                          : base.borderColor,
                       boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
                       borderRadius: "0.5rem",
                       minHeight: "2.5rem",
@@ -376,9 +369,6 @@ function CreateNewSongForm({
                   }}
                 />
               </div>
-            )}
-            {selectedArtists.length === 0 && errors.artistIds && (
-              <p className="mt-1 text-sm text-red-500">{errors.artistIds.message}</p>
             )}
             {selectedArtists.length > 0 && (
               <p className="mt-1 text-sm text-slate-600">
