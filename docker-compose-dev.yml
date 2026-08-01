@@ -18,6 +18,7 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./frontend:/app/frontend
+      - ./tmp/audio:/data/audio
       - /app/node_modules
       - /app/backend/node_modules
       - /app/frontend/node_modules
@@ -30,8 +31,4 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-volumes:
-  postgres-data:
-  audio-uploads:
+      - ./tmp/postgres-data:/var/lib/postgresql/data
