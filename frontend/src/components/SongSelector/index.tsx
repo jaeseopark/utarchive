@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
 import { SongSelector } from "./SongSelector";
 
@@ -9,6 +9,7 @@ export { SongSelector } from "./SongSelector";
  * Returns an object with the modal Component, visibility state, and control functions
  * Automatically closes the modal when a song is selected (single-select mode)
  * Can optionally execute additional cleanup via onClose callback
+ * Closes on Escape key press
  */
 export function useSongSelectorModal(
   props: React.ComponentProps<typeof SongSelector> & { onClose?: () => void },
@@ -17,6 +18,22 @@ export function useSongSelectorModal(
 
   const open = () => setOpen(true);
   const close = () => setOpen(false);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        close();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscapeKey);
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [isOpen]);
 
   // Wrap callbacks to close modal after selection
   const wrappedProps = React.useMemo(() => {
