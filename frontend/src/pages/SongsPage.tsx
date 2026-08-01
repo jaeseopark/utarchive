@@ -206,6 +206,7 @@ function SongsPage() {
             songs={songs}
             columns={columns}
             onDoubleClickRow={handleDoubleClickRow}
+            withFileDrop
           />
           <SongActionsDropdown
             selectedSongIds={Array.from(selectionState.selectedIds)}

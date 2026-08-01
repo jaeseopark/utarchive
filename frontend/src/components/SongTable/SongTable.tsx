@@ -1,10 +1,13 @@
 import type React from "react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useSongSelection } from "../../hooks/useSongSelection";
+import { useSongTableMouseEvents } from "../../hooks/useSongTableMouseEvents";
 import { useDragAndDrop } from "../../hooks/useDragAndDrop";
 import type { Song, SongListItem } from "../../api/schemas";
 import type { SongId } from "../../types/brands";
 import { SongContextMenu } from "./SongContextMenu";
+import { useCreateSongWithAudio } from "../../hooks/useCreateSongWithAudio";
+import { useNotifications } from "../../hooks/useNotifications";
 import clsx from "clsx";
 
 /**
@@ -59,6 +62,8 @@ export interface SongTableProps {
   actions?: RowAction[];
   /** Callback when a row is double-clicked */
   onDoubleClickRow?: (song: Song | SongListItem) => void;
+  /** When true, enables file drop support. Table handles file creation and upload internally */
+  withFileDrop?: boolean;
 }
 
 export interface RowAction {
@@ -124,6 +129,7 @@ export function SongTable({
   columns,
   actions,
   onDoubleClickRow,
+  withFileDrop,
 }: SongTableProps) {
   // Selection management
   const {
@@ -136,8 +142,19 @@ export function SongTable({
   // Drag-and-drop reordering (always called, enabled parameter gates functionality)
   const { handlers: dragHandlers } = useDragAndDrop(songs, onReorder || (() => {}), reorderable);
 
-  // Context menu state
-  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  // Mouse event handlers (selection, context menu)
+  const { handleRowClick, handleContextMenu, handleCloseContextMenu, contextMenuPos } =
+    useSongTableMouseEvents(
+      selectionState,
+      isSelected,
+      toggleSelection,
+      toggleRange,
+    );
+
+  // File drop state and hooks (only used if withFileDrop is true)
+  const [isDragOverTable, setIsDragOverTable] = useState(false);
+  const { createSongWithAudio } = useCreateSongWithAudio(undefined, withFileDrop ?? false);
+  const { notifySuccess, notifyError } = useNotifications();
 
   // Expand column inputs to full definitions, or use default title column
   const displayColumns = columns
@@ -149,52 +166,113 @@ export function SongTable({
         },
       ];
 
-  const handleRowClick = (e: React.MouseEvent, songId: SongId) => {
-    // Prevent selection if clicking on action buttons
-    const target = e.target;
-    if (target instanceof HTMLElement && target.closest("button")) {
-      return;
-    }
+  const handleTableDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      if (!withFileDrop) return;
 
-    const isMulti = e.ctrlKey || e.metaKey;
-    const isRange = e.shiftKey;
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (isRange && selectionState.lastClickedId) {
-      toggleRange(selectionState.lastClickedId, songId);
-    } else {
-      toggleSelection(songId, isMulti);
-    }
-  };
+      // Check if dragged items contain files
+      if (e.dataTransfer.types.includes("Files")) {
+        setIsDragOverTable(true);
+      }
+    },
+    [withFileDrop],
+  );
 
-  const handleContextMenu = (e: React.MouseEvent, songId: SongId) => {
-    e.preventDefault();
+  const handleTableDragOver = useCallback(
+    (e: React.DragEvent) => {
+      if (!withFileDrop) return;
 
-    // Select the song if not already selected
-    if (!isSelected(songId)) {
-      toggleSelection(songId, false);
-    }
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    [withFileDrop],
+  );
 
-    // Show context menu at mouse position with small offset
-    setContextMenuPos({
-      x: e.clientX + 5,
-      y: e.clientY + 5,
-    });
-  };
+  const handleTableDragLeave = useCallback(
+    (e: React.DragEvent) => {
+      if (!withFileDrop) return;
 
-  const handleCloseContextMenu = () => {
-    setContextMenuPos(null);
-  };
+      // Only clear if leaving the table entirely
+      if (e.currentTarget === e.target) {
+        setIsDragOverTable(false);
+      }
+    },
+    [withFileDrop],
+  );
+
+  const handleTableDrop = useCallback(
+    async (e: React.DragEvent) => {
+      if (!withFileDrop) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOverTable(false);
+
+      const files = Array.from(e.dataTransfer.files);
+      const audioFiles = files.filter((file) => {
+        return (
+          file.type.startsWith("audio/") ||
+          /\.(mp3|wav|flac|aac|ogg|m4a|wma)$/i.test(file.name)
+        );
+      });
+
+      if (audioFiles.length === 0) return;
+
+      // Process files asynchronously in the background
+      // Fire-and-forget: no need to block UI or track state
+      (async () => {
+        let successCount = 0;
+        let failureCount = 0;
+
+        for (const file of audioFiles) {
+          const result = await createSongWithAudio(file);
+
+          if (result.success) {
+            successCount += 1;
+          } else {
+            failureCount += 1;
+            notifyError(`Failed to create song from ${file.name}: ${result.error}`);
+          }
+        }
+
+        // Show summary notification
+        if (successCount > 0) {
+          const message =
+            failureCount > 0
+              ? `Created ${successCount} song(s), ${failureCount} failed`
+              : `Created ${successCount} song(s) from dropped files`;
+          notifySuccess(message);
+        } else if (failureCount > 0) {
+          notifyError(`Failed to create all ${failureCount} song(s) from dropped files`);
+        }
+      })();
+    },
+    [withFileDrop, createSongWithAudio, notifySuccess, notifyError],
+  );
 
   return (
-    <div className="overflow-x-auto rounded-3xl border border-slate-300 bg-slate-50/80 p-4 shadow-xl shadow-slate-200/20">
+    <div
+      className={clsx(
+        "overflow-x-auto rounded-3xl border bg-slate-50/80 p-4 shadow-xl shadow-slate-200/20",
+        isDragOverTable && withFileDrop ? "border-emerald-400 bg-emerald-50/50" : "border-slate-300",
+      )}
+      onDragEnter={handleTableDragEnter}
+      onDragOver={handleTableDragOver}
+      onDragLeave={handleTableDragLeave}
+      onDrop={handleTableDrop}
+    >
       {songs.length === 0 ? (
         <div className="min-h-[240px] flex items-center justify-center text-slate-600">
           No songs found.
         </div>
       ) : (
         <>
-          <table className="min-w-full text-left text-xs text-slate-700">
-            <thead className="border-b border-slate-300 text-slate-600 text-xs font-semibold">
+          <div className="relative">
+            <table className="min-w-full text-left text-xs text-slate-700">
+              <thead className="border-b border-slate-300 text-slate-600 text-xs font-semibold">
               <tr>
                 {displayColumns.map((col) => (
                   <th key={col.key} className="px-2 py-1.5" style={{ width: col.width }}>
@@ -284,6 +362,14 @@ export function SongTable({
               ))}
             </tbody>
           </table>
+
+            {/* Drag overlay for file drop feedback */}
+            {isDragOverTable && withFileDrop && (
+              <div className="absolute inset-0 bg-emerald-400/10 rounded-lg flex items-center justify-center pointer-events-none">
+                <span className="text-sm text-emerald-600 font-medium">Drop audio files here to add to library</span>
+              </div>
+            )}
+          </div>
 
           {/* Context Menu */}
           <SongContextMenu
