@@ -1,8 +1,8 @@
-import React, { useMemo, useRef } from "react";
+import React, { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePlayer } from "../hooks/usePlayer";
 import { useAudioElement } from "../hooks/useAudioElement";
 import { usePlayerAnalytics } from "../hooks/usePlayerAnalytics";
-import { getArtistNames } from "../lib/artistNames";
 import { useArtistsStore } from "../stores/useArtistsStore";
 
 /**
@@ -11,6 +11,7 @@ import { useArtistsStore } from "../stores/useArtistsStore";
  * Manages playback, analytics, and queue control
  */
 export function GlobalPlayer() {
+  const navigate = useNavigate();
   const {
     currentSong,
     isPlaying,
@@ -40,11 +41,6 @@ export function GlobalPlayer() {
   // Progress bar ref for seeking
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  const artistNames = useMemo(
-    () => (currentSong ? getArtistNames(currentSong.artistIds ?? [], artists) : []),
-    [currentSong, artists],
-  );
-
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!progressRef.current || !currentSong || !duration) return;
 
@@ -64,14 +60,54 @@ export function GlobalPlayer() {
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  const handleTitleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (currentSong) {
+      navigate(`/songs/${currentSong.id}`);
+    }
+  };
+
+  const handleArtistClick = (artistId: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    navigate(`/artists/${artistId}`);
+  };
+
   return (
     <div className="flex flex-1 items-center gap-4">
       {/* Song Info */}
       <div className="min-w-0 flex-1">
         {currentSong ? (
           <>
-            <p className="truncate text-xs font-medium text-slate-900">{currentSong.title}</p>
-            <p className="truncate text-xs text-slate-500">{artistNames.join(", ")}</p>
+            <button
+              type="button"
+              onClick={handleTitleClick}
+              className="block w-full truncate text-left text-xs font-medium text-slate-900 hover:text-sky-600 hover:underline"
+            >
+              {currentSong.title}
+            </button>
+            <div className="flex flex-wrap gap-1">
+              {currentSong.artistIds && currentSong.artistIds.length > 0 ? (
+                currentSong.artistIds.map((artistId, index) => {
+                  const artistName = artists
+                    .find((a) => a.id === artistId)
+                    ?.name ?? "Unknown Artist";
+                  return (
+                    <div key={artistId} className="flex items-center gap-1">
+                      {index > 0 && <span className="text-xs text-slate-500">,</span>}
+                      <button
+                        type="button"
+                        onClick={(e) => handleArtistClick(artistId, e)}
+                        className="truncate text-xs text-slate-500 hover:text-sky-600 hover:underline"
+                      >
+                        {artistName}
+                      </button>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="truncate text-xs text-slate-500">Unknown Artist</p>
+              )}
+            </div>
           </>
         ) : (
           <p className="truncate text-xs text-slate-400">No song playing</p>
