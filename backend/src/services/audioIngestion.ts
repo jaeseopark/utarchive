@@ -1,8 +1,7 @@
 import { watch, FSWatcher } from "chokidar";
-import { copyFileSync, readFileSync, statSync } from "fs";
-import { basename, join } from "path";
+import { readFileSync, statSync } from "fs";
+import { basename } from "path";
 import { randomUUID } from "crypto";
-import { config } from "../config";
 import { db } from "../db";
 import { songs } from "../db/schema";
 import { eq } from "drizzle-orm";
@@ -12,8 +11,10 @@ import {
   calculateAudioHash,
   ProcessedAudio,
 } from "../lib/audioProcessor";
-import { AuthenticatedWebSocket } from "../types/websocket";
+import { DataChangedMessage } from "../types/websocket";
 import { WebSocketServer } from "ws";
+import { broadcastMessage } from "../ws";
+import { serializeForApiResponse } from "../lib/serialization";
 
 interface IngestionStatus {
   filename: string;
@@ -186,7 +187,7 @@ async function processIncomingFile(
         fileHash: processedAudio.fileHash,
         playbackEnabled: true, // Enable by default for ingested files
       })
-      .returning({ id: songs.id });
+      .returning();
 
     status = {
       filename,
@@ -201,6 +202,19 @@ async function processIncomingFile(
       `[AudioIngestion] Song created: ${filename} (ID: ${newSong.id})`,
     );
     broadcastIngestionStatus(wss, status);
+
+    // Broadcast DATA_CHANGED event so clients know about the new song
+    const dataChangedMessage: DataChangedMessage = {
+      type: "DATA_CHANGED",
+      entity: "song",
+      timestamp: Date.now(),
+      data: {
+        // eslint-disable-next-line no-restricted-syntax
+        created: [serializeForApiResponse(newSong) as Record<string, unknown>],
+      },
+    };
+    broadcastMessage(wss, dataChangedMessage);
+
     return status;
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
