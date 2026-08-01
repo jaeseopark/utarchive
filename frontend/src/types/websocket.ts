@@ -3,7 +3,13 @@ import { z } from "zod";
 export type EntityType = "song" | "album" | "artist" | "playlist" | "coverArt";
 
 export type MessageType =
-  "DATA_CHANGED" | "PING" | "PONG" | "CONNECTED" | "ERROR" | "USER_CONFIG_CHANGED";
+  | "DATA_CHANGED"
+  | "PING"
+  | "PONG"
+  | "CONNECTED"
+  | "ERROR"
+  | "USER_CONFIG_CHANGED"
+  | "AUDIO_INGESTION_STATUS";
 
 export interface WebSocketMessage {
   type: MessageType;
@@ -32,11 +38,32 @@ export interface UserConfigChangedMessage extends WebSocketMessage {
   };
 }
 
+export interface AudioIngestionStatusMessage extends WebSocketMessage {
+  type: "AUDIO_INGESTION_STATUS";
+  data: {
+    filename: string;
+    status: "success" | "skipped" | "error" | "timeout";
+    songId?: string;
+    hash?: string;
+    duration?: number;
+    error?: string;
+    bytes?: number;
+  };
+}
+
 // Zod schemas for runtime validation
 export const WebSocketMessageSchema: z.ZodType<WebSocketMessage> = z.lazy(() =>
   z
     .object({
-      type: z.enum(["DATA_CHANGED", "PING", "PONG", "CONNECTED", "ERROR", "USER_CONFIG_CHANGED"]),
+      type: z.enum([
+        "DATA_CHANGED",
+        "PING",
+        "PONG",
+        "CONNECTED",
+        "ERROR",
+        "USER_CONFIG_CHANGED",
+        "AUDIO_INGESTION_STATUS",
+      ]),
       entity: z.enum(["song", "album", "artist", "playlist", "coverArt"]).optional(),
       timestamp: z.number(),
       data: z.unknown().optional(),
@@ -69,3 +96,20 @@ export const UserConfigChangedMessageSchema: z.ZodType<UserConfigChangedMessage>
     }),
   })
   .strict();
+
+export const AudioIngestionStatusMessageSchema: z.ZodType<AudioIngestionStatusMessage> = z
+  .object({
+    type: z.literal("AUDIO_INGESTION_STATUS"),
+    timestamp: z.number(),
+    data: z.object({
+      filename: z.string(),
+      status: z.enum(["success", "skipped", "error", "timeout"]),
+      songId: z.string().uuid().optional(),
+      hash: z.string().optional(),
+      duration: z.number().optional(),
+      error: z.string().optional(),
+      bytes: z.number().optional(),
+    }),
+  })
+  .strict();
+

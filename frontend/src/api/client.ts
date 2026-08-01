@@ -67,6 +67,49 @@ function formatValidationErrors(errors: Record<string, unknown>): string {
   return `Response validation failed: ${failedFields.join(", ")}`;
 }
 
+/**
+ * Log detailed validation error information for debugging
+ */
+function logValidationError(
+  url: string,
+  payload: unknown,
+  zodErrorFormat: Record<string, unknown>,
+): void {
+  console.group("🔴 API Validation Error Details");
+  console.log("📍 Endpoint:", url);
+  console.log("📦 Actual Response Payload:", payload);
+  console.log("❌ Validation Errors (Zod Format):", zodErrorFormat);
+
+  // Type guard to check if value has _errors array
+  function hasErrors(value: unknown): value is Record<string, unknown> & { _errors: string[] } {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      "_errors" in value &&
+      // eslint-disable-next-line no-restricted-syntax
+      Array.isArray((value as Record<string, unknown>)._errors)
+    );
+  }
+
+  // Log each error path separately for clarity
+  const logErrorPath = (key: string, value: unknown, path: string[] = []): void => {
+    const fieldPath = [...path, key].join(".");
+    if (hasErrors(value)) {
+      console.warn(`  ❌ ${fieldPath}:`, value._errors);
+    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      for (const [nestedKey, nestedValue] of Object.entries(value)) {
+        logErrorPath(nestedKey, nestedValue, [...path, key]);
+      }
+    }
+  };
+
+  for (const [key, value] of Object.entries(zodErrorFormat)) {
+    logErrorPath(key, value);
+  }
+
+  console.groupEnd();
+}
+
 async function request<T>(
   input: RequestInfo,
   init: RequestInit,
@@ -106,8 +149,10 @@ async function request<T>(
 
   const parseResult = schema.safeParse(payload);
   if (!parseResult.success) {
-    const validationErrorMessage = formatValidationErrors(parseResult.error.format());
-    throw new ApiError(response.status, validationErrorMessage, parseResult.error.format());
+    const errorFormat = parseResult.error.format();
+    logValidationError(String(input), payload, errorFormat);
+    const validationErrorMessage = formatValidationErrors(errorFormat);
+    throw new ApiError(response.status, validationErrorMessage, errorFormat);
   }
 
   return parseResult.data;

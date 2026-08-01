@@ -122,7 +122,9 @@ export const selectSongs = async (filters: SongListFilters) => {
     filePath: songs.filePath,
     coverArtId: songs.coverArtId,
     artistIds: sql<string[]>`
-      coalesce(array_agg("song_artists"."artist_id" ORDER BY "song_artists"."display_order"), ARRAY[]::uuid[])
+      (SELECT coalesce(array_agg("artist_id" ORDER BY "display_order"), ARRAY[]::uuid[])
+       FROM song_artists
+       WHERE song_id = ${songs.id})
     `,
   };
 

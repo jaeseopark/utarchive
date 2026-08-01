@@ -8,3 +8,4 @@ build/
 storybook-static/
 coverage/
 postgres-data/
+.DS_Store

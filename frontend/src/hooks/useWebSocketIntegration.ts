@@ -1,7 +1,13 @@
 import { useEffect } from "react";
 import { useWebSocketContext } from "../context/WebSocketContext";
 import { handleDataChanged, handleUserConfigChanged } from "../lib/webSocketHandlers";
-import { DataChangedMessage, UserConfigChangedMessage, WebSocketMessage } from "../types/websocket";
+import {
+  DataChangedMessage,
+  UserConfigChangedMessage,
+  WebSocketMessage,
+  AudioIngestionStatusMessage,
+} from "../types/websocket";
+import { useNotificationStore } from "../stores/useNotificationStore";
 import { startRequestIdCleanup, stopRequestIdCleanup } from "../lib/requestIdDeduplication";
 import {
   logConnection,
@@ -66,11 +72,57 @@ function isUserConfigChangedMessage(
 }
 
 /**
+ * Type guard to check if a WebSocketMessage is an AudioIngestionStatusMessage
+ */
+function isAudioIngestionStatusMessage(
+  message: WebSocketMessage,
+): message is AudioIngestionStatusMessage {
+  return message.type === "AUDIO_INGESTION_STATUS";
+}
+
+/**
  * Helper to safely extract string ID from an item
  */
 function getId(item: Record<string, unknown>): string | undefined {
   const id = item.id;
   return typeof id === "string" ? id : undefined;
+}
+
+/**
+ * Handler for audio ingestion status messages
+ * Displays toast notifications based on ingestion status
+ */
+function handleAudioIngestionStatus(message: AudioIngestionStatusMessage): void {
+  const addNotification = useNotificationStore.getState().addNotification;
+  const { filename, status, error, duration } = message.data;
+
+  switch (status) {
+    case "success": {
+      const durationStr = duration ? ` (${duration.toFixed(1)}s)` : "";
+      addNotification({ type: "success", message: `✅ Added: ${filename}${durationStr}` });
+      break;
+    }
+
+    case "skipped": {
+      addNotification({ type: "info", message: `⏭️ Already in library: ${filename}` });
+      break;
+    }
+
+    case "timeout": {
+      addNotification({ type: "error", message: `⏱️ Transfer timeout: ${filename}` });
+      break;
+    }
+
+    case "error": {
+      const errorMsg = error ? ` — ${error}` : "";
+      addNotification({ type: "error", message: `❌ Failed: ${filename}${errorMsg}` });
+      break;
+    }
+
+    default: {
+      console.warn("[WebSocket] Unknown ingestion status:", status);
+    }
+  }
 }
 
 /**
@@ -133,6 +185,13 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
         break;
       }
 
+      case "AUDIO_INGESTION_STATUS": {
+        if (isAudioIngestionStatusMessage(message)) {
+          handleAudioIngestionStatus(message);
+        }
+        break;
+      }
+
       default: {
         console.warn("[WebSocket] Unknown message type:", message.type);
       }
@@ -142,3 +201,5 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
     logError(err instanceof Error ? err : String(err));
   }
 };
+
+
