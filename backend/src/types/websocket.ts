@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export type EntityType = "song" | "album" | "artist" | "playlist" | "coverArt";
 
-export type MessageType = "DATA_CHANGED" | "PING" | "PONG" | "CONNECTED" | "ERROR";
+export type MessageType = "DATA_CHANGED" | "PING" | "PONG" | "CONNECTED" | "ERROR" | "USER_CONFIG_CHANGED";
 
 export interface WebSocketMessage {
   type: MessageType;
@@ -48,11 +48,18 @@ export interface ErrorMessage extends WebSocketMessage {
   error: string;
 }
 
+export interface UserConfigChangedMessage extends WebSocketMessage {
+  type: "USER_CONFIG_CHANGED";
+  data: {
+    config: Record<string, unknown>;
+  };
+}
+
 // Zod schemas for runtime validation
 export const WebSocketMessageSchema: z.ZodType<WebSocketMessage> = z.lazy(() =>
   z
     .object({
-      type: z.enum(["DATA_CHANGED", "PING", "PONG", "CONNECTED", "ERROR"]),
+      type: z.enum(["DATA_CHANGED", "PING", "PONG", "CONNECTED", "ERROR", "USER_CONFIG_CHANGED"]),
       entity: z.enum(["song", "album", "artist", "playlist", "coverArt"]).optional(),
       timestamp: z.number(),
       data: z.unknown().optional(),
@@ -90,10 +97,27 @@ export const PongMessageSchema: z.ZodType<PongMessage> = z
   })
   .strict();
 
+export const ConnectedMessageSchema: z.ZodType<ConnectedMessage> = z
+  .object({
+    type: z.literal("CONNECTED"),
+    timestamp: z.number(),
+  })
+  .strict();
+
 export const ErrorMessageSchema: z.ZodType<ErrorMessage> = z
   .object({
     type: z.literal("ERROR"),
     timestamp: z.number(),
     error: z.string(),
+  })
+  .strict();
+
+export const UserConfigChangedMessageSchema: z.ZodType<UserConfigChangedMessage> = z
+  .object({
+    type: z.literal("USER_CONFIG_CHANGED"),
+    timestamp: z.number(),
+    data: z.object({
+      config: z.record(z.string(), z.unknown()),
+    }),
   })
   .strict();
