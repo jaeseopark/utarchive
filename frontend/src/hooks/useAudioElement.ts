@@ -14,6 +14,7 @@ interface AudioElementState {
 export function useAudioElement() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [state, setState] = useState<AudioElementState>({ currentTime: 0, duration: 0 });
+  const previousSongIdRef = useRef<string | undefined>(undefined);
 
   const {
     currentSong,
@@ -47,14 +48,23 @@ export function useAudioElement() {
     if (!audioRef.current) return;
 
     if (currentSong?.id) {
+      // Track that we've changed songs
+      const isSongChange = previousSongIdRef.current !== currentSong.id;
+      previousSongIdRef.current = currentSong.id;
+
       // Use song ID to construct the audio endpoint
       const audioUrl = `/api/songs/${currentSong.id}/audio`;
-      console.log("[Audio] Setting src:", { songId: currentSong.id, audioUrl });
+      console.log("[Audio] Setting src:", { songId: currentSong.id, audioUrl, isSongChange });
       audioRef.current.src = audioUrl;
       audioRef.current.currentTime = 0;
+      // Reset local state when song changes to prevent stale seeks
+      if (isSongChange) {
+        setState({ currentTime: 0, duration: 0 });
+      }
     } else {
       console.log("[Audio] No song ID provided, clearing src");
       audioRef.current.src = "";
+      previousSongIdRef.current = undefined;
     }
   }, [currentSong]);
 
@@ -79,9 +89,17 @@ export function useAudioElement() {
   }, [volume]);
 
   // Seek handler - seek to specific time
+  // Skip seeking immediately after song change to prevent reverting to old position
   const handleSeekFromStore = useCallback(() => {
     if (!audioRef.current) return;
     if (!isPlaying) return; // Don't sync during pause to avoid double updates
+
+    // Skip seeking if we just changed songs (audio.currentTime should be close to 0)
+    const hasJustChangedSongs = audioRef.current.currentTime < 0.1;
+    if (hasJustChangedSongs) {
+      console.log("[Audio] Skipping seek after song change");
+      return;
+    }
 
     // Only seek if store time differs significantly from current time (>0.5s)
     if (Math.abs(storeCurrentTime - audioRef.current.currentTime) > 0.5) {
