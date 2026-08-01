@@ -19,6 +19,7 @@ services:
       - ./backend:/app/backend
       - ./frontend:/app/frontend
       - ./tmp/audio:/data/audio
+      - ./tmp/ingestion:/data/ingestion:ro  # Read-only ingestion folder (optional, for audio watcher)
       - /app/node_modules
       - /app/backend/node_modules
       - /app/frontend/node_modules
