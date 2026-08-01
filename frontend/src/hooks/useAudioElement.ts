@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { usePlayerStore } from "../stores/usePlayerStore";
+import { useMediaSession } from "./useMediaSession";
 
 interface AudioElementState {
   currentTime: number;
@@ -10,8 +11,12 @@ interface AudioElementState {
  * Hook to manage HTML5 audio element lifecycle and sync with player store
  * Creates and manages a singleton audio element that handles playback
  * Syncs audio events with the Zustand player store
+ * Also sets up OS-level media controls via MediaSession API
  */
 export function useAudioElement() {
+  // Initialize OS-level media controls
+  useMediaSession();
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [state, setState] = useState<AudioElementState>({ currentTime: 0, duration: 0 });
   const previousSongIdRef = useRef<string | undefined>(undefined);
