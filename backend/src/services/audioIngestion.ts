@@ -58,7 +58,7 @@ async function waitForFileStability(
       lastSize = currentSize;
       await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
       elapsedMs += pollIntervalMs;
-    } catch (err) {
+    } catch {
       // File might not exist yet, retry
       await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
       elapsedMs += pollIntervalMs;
@@ -108,7 +108,6 @@ async function processIncomingFile(
   wss: WebSocketServer,
 ): Promise<IngestionStatus> {
   const filename = basename(filePath);
-  let status: IngestionStatus = { filename, status: "error" };
 
   try {
     console.log(`[AudioIngestion] Detected file: ${filename}`);
@@ -116,7 +115,7 @@ async function processIncomingFile(
     // Step 1: Wait for file stability (2-second window, 30-second timeout)
     const isStable = await waitForFileStability(filePath);
     if (!isStable) {
-      status = { filename, status: "timeout", error: "File transfer timeout" };
+      const status: IngestionStatus = { filename, status: "timeout", error: "File transfer timeout" };
       console.warn(`[AudioIngestion] File timeout: ${filename}`);
       broadcastIngestionStatus(wss, status);
       return status;
@@ -140,15 +139,15 @@ async function processIncomingFile(
 
     if (existingSong.length > 0) {
       // Duplicate detected - skip silently with log
-      status = {
+      const duplicateStatus: IngestionStatus = {
         filename,
         status: "skipped",
         songId: existingSong[0].id,
         hash: fileHash,
       };
       console.log(`[AudioIngestion] Duplicate detected (skipped): ${filename}`);
-      broadcastIngestionStatus(wss, status);
-      return status;
+      broadcastIngestionStatus(wss, duplicateStatus);
+      return duplicateStatus;
     }
 
     // Step 4: Extract metadata from audio file
@@ -189,7 +188,7 @@ async function processIncomingFile(
       })
       .returning();
 
-    status = {
+    const successStatus: IngestionStatus = {
       filename,
       status: "success",
       songId: newSong.id,
@@ -201,7 +200,7 @@ async function processIncomingFile(
     console.log(
       `[AudioIngestion] Song created: ${filename} (ID: ${newSong.id})`,
     );
-    broadcastIngestionStatus(wss, status);
+    broadcastIngestionStatus(wss, successStatus);
 
     // Broadcast DATA_CHANGED event so clients know about the new song
     const dataChangedMessage: DataChangedMessage = {
@@ -215,13 +214,13 @@ async function processIncomingFile(
     };
     broadcastMessage(wss, dataChangedMessage);
 
-    return status;
+    return successStatus;
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    status = { filename, status: "error", error: errorMsg };
+    const errorStatus: IngestionStatus = { filename, status: "error", error: errorMsg };
     console.error(`[AudioIngestion] Error processing ${filename}:`, err);
-    broadcastIngestionStatus(wss, status);
-    return status;
+    broadcastIngestionStatus(wss, errorStatus);
+    return errorStatus;
   }
 }
 
@@ -256,7 +255,7 @@ export class AudioIngestionService {
 
     // Initialize chokidar watcher with debouncing and docker volume support
     this.watcher = watch(incomingDir, {
-      ignored: /(^|[\/\\])\.|\.tmp$/, // Ignore dot files and .tmp files
+      ignored: /(^|[/\\])\.|\.tmp$/, // Ignore dot files and .tmp files
       persistent: true,
       awaitWriteFinish: {
         stabilityThreshold: 100, // Wait 100ms of no changes
