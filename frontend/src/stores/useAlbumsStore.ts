@@ -163,9 +163,17 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
         newMap.set(id, updatedAlbum);
       }
 
+      // Also update album details cache if it exists
+      const updatedDetails = { ...state.albumDetails };
+      if (updatedDetails[id]) {
+        updatedDetails[id] = { ...updatedDetails[id], ...updates };
+      }
+
       return {
         albums: updatedAlbums,
         albumsMap: newMap,
+        albumDetails: updatedDetails,
+        albumDetailsMap: new Map(Object.entries(updatedDetails)),
       };
     });
   },
