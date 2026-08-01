@@ -402,9 +402,11 @@ export function SongSelector(props: SongSelectorProps) {
       </div>
 
       {/* OK Button (multi-select mode only) */}
-      <div className="flex justify-end gap-3 pt-6 border-t border-slate-200 mt-6">
-        <Button onClick={handleConfirm}>OK</Button>
-      </div>
+      {isMultiSelect && (
+        <div className="flex justify-end gap-3 pt-6 border-t border-slate-200 mt-6">
+          <Button onClick={handleConfirm}>OK</Button>
+        </div>
+      )}
     </>
   );
 }
