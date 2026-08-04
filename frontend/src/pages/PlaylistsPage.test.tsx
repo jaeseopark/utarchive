@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import PlaylistsPage from "./PlaylistsPage";
 import { api } from "../api/client";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
+import { toBrandId, type PlaylistId } from "../types/brands";
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual<typeof import("../api/client")>("../api/client");
@@ -60,8 +61,14 @@ describe("PlaylistsPage", () => {
 
     act(() => {
       usePlaylistsStore.setState({
-        playlists: [{ id: "1", name: "Favorites", createdAt: new Date().toISOString() }],
-        songCounts: { "1": 0 },
+        playlists: [
+          {
+            id: toBrandId<PlaylistId>("11111111-1111-1111-1111-111111111111"),
+            name: "Favorites",
+            createdAt: new Date().toISOString(),
+          },
+        ],
+        songCounts: { "11111111-1111-1111-1111-111111111111": 0 },
         isLoading: false,
         error: null,
       });
