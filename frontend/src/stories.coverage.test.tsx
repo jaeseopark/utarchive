@@ -1,4 +1,5 @@
 import "./pages/SearchPage.stories";
+import "./pages/SettingsPage.stories";
 import "./pages/PlaylistsPage.stories";
 import "./pages/PlaylistDetailPage.stories";
 import "./pages/LoginPage.stories";
