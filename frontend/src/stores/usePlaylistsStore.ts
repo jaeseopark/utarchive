@@ -261,18 +261,35 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
 
   // Add song to playlist
   addSongToPlaylist: async (playlistId: PlaylistId, songId: SongId) => {
-    const detail = get().playlistDetails[playlistId];
-    if (!detail) {
-      set({ error: "Playlist not found" });
-      return;
-    }
-
     try {
       await api.post(`/api/playlists/${playlistId}/songs`, { songId }, z.any());
 
-      // Optimistic: refetch detail to get new position
-      // TODO below line is not necessary.
-      await get().fetchPlaylistDetail(playlistId);
+      set((state) => ({
+        songCounts: {
+          ...state.songCounts,
+          [playlistId]: (state.songCounts[playlistId] ?? 0) + 1,
+        },
+      }));
+
+      // Keep cached playlist detail synchronized when it is already present.
+      if (get().playlistDetails[playlistId]) {
+        const updatedDetail = await api.get(`/api/playlists/${playlistId}`, PlaylistDetailSchema);
+        set((state) => {
+          const newDetails = {
+            ...state.playlistDetails,
+            [playlistId]: updatedDetail,
+          };
+
+          return {
+            playlistDetails: newDetails,
+            playlistDetailsMap: new Map(Object.entries(newDetails)),
+            songCounts: {
+              ...state.songCounts,
+              [playlistId]: updatedDetail.songs.length,
+            },
+          };
+        });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to add song to playlist";
       set({ error: message });

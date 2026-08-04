@@ -206,6 +206,7 @@ function SongsPage() {
             songs={songs}
             columns={columns}
             onDoubleClickRow={handleDoubleClickRow}
+            draggableToPlaylist
             withFileDrop
           />
           <SongActionsDropdown

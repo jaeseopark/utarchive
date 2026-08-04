@@ -1,10 +1,17 @@
+import { useCallback, useState, type DragEvent } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import clsx from "clsx";
 import { Button } from "../components/ui/Button";
 import { CollapsibleGroup } from "../components/ui/CollapsibleGroup";
 import { NotificationCenter } from "../components/NotificationCenter";
 import { GlobalPlayer } from "../components/GlobalPlayer";
 import { useSession } from "../context/SessionContext";
 import { usePlaylists } from "../hooks/usePlaylists";
+import { useNotifications } from "../hooks/useNotifications";
+import { SONG_IDS_DRAG_MIME, parseDraggedSongIds } from "../lib/songDragPayload";
+import { useDraggedSongsStore } from "../stores/useDraggedSongsStore";
+import { usePlaylistsStore } from "../stores/usePlaylistsStore";
+import { type PlaylistId } from "../types/brands";
 
 const navItems = [
   { to: "/artists", label: "Artists" },
@@ -31,8 +38,69 @@ const subNavLinkClassName = ({ isActive }: { isActive: boolean }) =>
 function RootLayout() {
   const { logout } = useSession();
   const { playlists, isLoading, error } = usePlaylists();
+  const draggedSongIds = useDraggedSongsStore((state) => state.draggedSongIds);
+  const clearDraggedSongIds = useDraggedSongsStore((state) => state.clearDraggedSongIds);
+  const addSongToPlaylist = usePlaylistsStore((state) => state.addSongToPlaylist);
+  const { notifySuccess, notifyError } = useNotifications();
+  const [hoveredPlaylistId, setHoveredPlaylistId] = useState<PlaylistId | undefined>(undefined);
 
   const sortedPlaylists = playlists.slice().sort((a, b) => a.name.localeCompare(b.name));
+
+  const handlePlaylistDragOver = useCallback(
+    (event: DragEvent<HTMLElement>, playlistId: PlaylistId) => {
+      if (draggedSongIds.length === 0 && !event.dataTransfer.types.includes(SONG_IDS_DRAG_MIME)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      setHoveredPlaylistId(playlistId);
+    },
+    [draggedSongIds.length],
+  );
+
+  const handlePlaylistDragLeave = useCallback((event: DragEvent<HTMLElement>) => {
+    if (event.currentTarget === event.target) {
+      setHoveredPlaylistId(undefined);
+    }
+  }, []);
+
+  const handlePlaylistDrop = useCallback(
+    async (event: DragEvent<HTMLElement>, playlistId: PlaylistId, playlistName: string) => {
+      event.preventDefault();
+      setHoveredPlaylistId(undefined);
+
+      const payload = event.dataTransfer.getData(SONG_IDS_DRAG_MIME);
+      const parsedSongIds = payload ? parseDraggedSongIds(payload) : [];
+      const songIdsToAdd = parsedSongIds.length > 0 ? parsedSongIds : draggedSongIds;
+
+      if (songIdsToAdd.length === 0) {
+        clearDraggedSongIds();
+        return;
+      }
+
+      let successCount = 0;
+      for (const songId of songIdsToAdd) {
+        try {
+          await addSongToPlaylist(playlistId, songId);
+          successCount += 1;
+        } catch {
+          // Keep adding remaining songs and summarize failures below.
+        }
+      }
+
+      const failedCount = songIdsToAdd.length - successCount;
+      if (successCount > 0) {
+        const suffix = failedCount > 0 ? `, ${failedCount} failed` : "";
+        notifySuccess(`Added ${successCount} song(s) to ${playlistName}${suffix}`);
+      } else {
+        notifyError(`Failed to add songs to ${playlistName}`);
+      }
+
+      clearDraggedSongIds();
+    },
+    [addSongToPlaylist, clearDraggedSongIds, draggedSongIds, notifyError, notifySuccess],
+  );
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -86,7 +154,16 @@ function RootLayout() {
                     <NavLink
                       key={playlist.id}
                       to={`/playlists/${playlist.id}`}
-                      className={subNavLinkClassName}
+                      className={(props) =>
+                        clsx(
+                          subNavLinkClassName(props),
+                          hoveredPlaylistId === playlist.id &&
+                            "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300",
+                        )
+                      }
+                      onDragOver={(event) => handlePlaylistDragOver(event, playlist.id)}
+                      onDragLeave={handlePlaylistDragLeave}
+                      onDrop={(event) => handlePlaylistDrop(event, playlist.id, playlist.name)}
                     >
                       {playlist.name}
                     </NavLink>
