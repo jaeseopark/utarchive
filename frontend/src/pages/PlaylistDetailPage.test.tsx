@@ -12,6 +12,7 @@ vi.mock("../api/client", async () => {
       ...actual.api,
       get: vi.fn(),
       put: vi.fn(),
+      patch: vi.fn(),
       delete: vi.fn(),
       post: vi.fn(),
     },
@@ -26,6 +27,7 @@ vi.mock("../hooks/usePlaylistDetail", () => ({
 const mockedApi = api as unknown as {
   get: ReturnType<typeof vi.fn>;
   put: ReturnType<typeof vi.fn>;
+  patch: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
   post: ReturnType<typeof vi.fn>;
 };
@@ -65,6 +67,225 @@ describe("PlaylistDetailPage", () => {
     expect(screen.getByRole("textbox")).toBeInTheDocument();
   });
 
+  it("preview-reorders songs while dragging before the drop", async () => {
+    const playlist = {
+      id: "1",
+      name: "Favorites",
+      createdAt: new Date().toISOString(),
+      songs: [
+        {
+          position: 0,
+          song: {
+            id: "11111111-1111-1111-1111-111111111111",
+            title: "First Song",
+            playbackEnabled: true,
+          },
+        },
+        {
+          position: 1,
+          song: {
+            id: "22222222-2222-2222-2222-222222222222",
+            title: "Second Song",
+            playbackEnabled: true,
+          },
+        },
+      ],
+    };
+
+    mockedUsePlaylistDetail.mockReturnValue({
+      playlist,
+      isLoading: false,
+      error: null,
+      updatePlaylist: vi.fn(),
+      deletePlaylist: vi.fn(),
+      addSong: vi.fn(),
+      removeSong: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/playlists/1"]}>
+        <Routes>
+          <Route path="/playlists/:id" element={<PlaylistDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByText("First Song")).toBeInTheDocument());
+
+    const firstRow = screen.getByText("First Song").closest("tr");
+    const secondRow = screen.getByText("Second Song").closest("tr");
+
+    const dataTransfer = {
+      effectAllowed: "",
+      dropEffect: "",
+      setData: vi.fn(),
+      getData: vi.fn(),
+      types: ["text/plain"],
+    };
+
+    fireEvent.dragStart(firstRow!, { dataTransfer });
+    fireEvent.dragOver(secondRow!, { dataTransfer });
+
+    const visibleRows = screen
+      .getAllByRole("row")
+      .filter((row) => row.textContent?.includes("First Song") || row.textContent?.includes("Second Song"));
+
+    expect(visibleRows[0]).toHaveTextContent("Second Song");
+    expect(visibleRows[1]).toHaveTextContent("First Song");
+  });
+
+  it("sends the reorder request when the mouse is released", async () => {
+    const playlist = {
+      id: "1",
+      name: "Favorites",
+      createdAt: new Date().toISOString(),
+      songs: [
+        {
+          position: 0,
+          song: {
+            id: "11111111-1111-1111-1111-111111111111",
+            title: "First Song",
+            playbackEnabled: true,
+          },
+        },
+        {
+          position: 1,
+          song: {
+            id: "22222222-2222-2222-2222-222222222222",
+            title: "Second Song",
+            playbackEnabled: true,
+          },
+        },
+      ],
+    };
+
+    mockedUsePlaylistDetail.mockReturnValue({
+      playlist,
+      isLoading: false,
+      error: null,
+      updatePlaylist: vi.fn(),
+      deletePlaylist: vi.fn(),
+      addSong: vi.fn(),
+      removeSong: vi.fn(),
+    });
+
+    mockedApi.patch.mockResolvedValueOnce({ playlistId: "1", songIds: [] });
+
+    render(
+      <MemoryRouter initialEntries={["/playlists/1"]}>
+        <Routes>
+          <Route path="/playlists/:id" element={<PlaylistDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByText("First Song")).toBeInTheDocument());
+
+    const firstRow = screen.getByText("First Song").closest("tr");
+    const secondRow = screen.getByText("Second Song").closest("tr");
+
+    const dataTransfer = {
+      effectAllowed: "",
+      dropEffect: "",
+      setData: vi.fn(),
+      getData: vi.fn(),
+      types: ["text/plain"],
+    };
+
+    fireEvent.dragStart(firstRow!, { dataTransfer });
+    fireEvent.dragOver(secondRow!, { dataTransfer });
+
+    expect(mockedApi.patch).not.toHaveBeenCalled();
+
+    fireEvent.mouseUp(secondRow!, { dataTransfer });
+
+    await waitFor(() => {
+      expect(mockedApi.patch).toHaveBeenCalledWith(
+        "/api/playlists/1/songs",
+        {
+          songIds: ["11111111-1111-1111-1111-111111111111"],
+          position: 1,
+        },
+        expect.anything(),
+      );
+    });
+  });
+
+  it("commits the reorder when the mouse is released globally", async () => {
+    const playlist = {
+      id: "1",
+      name: "Favorites",
+      createdAt: new Date().toISOString(),
+      songs: [
+        {
+          position: 0,
+          song: {
+            id: "11111111-1111-1111-1111-111111111111",
+            title: "First Song",
+            playbackEnabled: true,
+          },
+        },
+        {
+          position: 1,
+          song: {
+            id: "22222222-2222-2222-2222-222222222222",
+            title: "Second Song",
+            playbackEnabled: true,
+          },
+        },
+      ],
+    };
+
+    mockedUsePlaylistDetail.mockReturnValue({
+      playlist,
+      isLoading: false,
+      error: null,
+      updatePlaylist: vi.fn(),
+      deletePlaylist: vi.fn(),
+      addSong: vi.fn(),
+      removeSong: vi.fn(),
+    });
+
+    mockedApi.patch.mockResolvedValueOnce({ playlistId: "1", songIds: [] });
+
+    render(
+      <MemoryRouter initialEntries={["/playlists/1"]}>
+        <Routes>
+          <Route path="/playlists/:id" element={<PlaylistDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByText("First Song")).toBeInTheDocument());
+
+    const firstRow = screen.getByText("First Song").closest("tr");
+    const secondRow = screen.getByText("Second Song").closest("tr");
+
+    const dataTransfer = {
+      effectAllowed: "",
+      dropEffect: "",
+      setData: vi.fn(),
+      getData: vi.fn(),
+      types: ["text/plain"],
+    };
+
+    fireEvent.dragStart(firstRow!, { dataTransfer });
+    fireEvent.dragOver(secondRow!, { dataTransfer });
+
+    window.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+
+    await waitFor(() => {
+      expect(mockedApi.patch).toHaveBeenCalledWith(
+        "/api/playlists/1/songs",
+        {
+          songIds: ["11111111-1111-1111-1111-111111111111"],
+          position: 1,
+        },
+        expect.anything(),
+      );
+    });
+  });
+
   it("reorders songs via drag and drop", async () => {
     const playlist = {
       id: "1",
@@ -100,7 +321,7 @@ describe("PlaylistDetailPage", () => {
       removeSong: vi.fn(),
     });
 
-    mockedApi.put.mockResolvedValueOnce({ playlistId: "1", songIds: [] });
+    mockedApi.patch.mockResolvedValueOnce({ playlistId: "1", songIds: [] });
 
     render(
       <MemoryRouter initialEntries={["/playlists/1"]}>
@@ -130,13 +351,11 @@ describe("PlaylistDetailPage", () => {
     fireEvent.drop(secondRow!, { dataTransfer });
 
     await waitFor(() => {
-      expect(mockedApi.put).toHaveBeenCalledWith(
+      expect(mockedApi.patch).toHaveBeenCalledWith(
         "/api/playlists/1/songs",
         {
-          songIds: [
-            "22222222-2222-2222-2222-222222222222",
-            "11111111-1111-1111-1111-111111111111",
-          ],
+          songIds: ["11111111-1111-1111-1111-111111111111"],
+          position: 1,
         },
         expect.anything(),
       );

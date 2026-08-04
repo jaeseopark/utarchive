@@ -1,4 +1,4 @@
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../../db";
 import { playlists, playlistSongs, songs } from "../../db/schema";
 
@@ -11,6 +11,7 @@ export const selectPlaylists = (limit: number, offset: number) =>
     .offset(offset);
 
 export const selectPlaylistById = async (playlistId: string) => {
+  // This query is denormalized, but makes no meaningful difference in performance for the expected use case of a single playlist with a small number of songs.
   const rows = await db
     .select({
       id: playlists.id,
@@ -75,65 +76,6 @@ export const deletePlaylistById = async (playlistId: string) =>
     return (result.rowCount ?? 0) > 0;
   });
 
-export const addSongToPlaylist = async (playlistId: string, songId: string, position?: number) =>
-  db.transaction(async (tx) => {
-    const [playlist] = await tx
-      .select()
-      .from(playlists)
-      .where(eq(playlists.id, playlistId))
-      .limit(1);
-
-    if (!playlist) {
-      throw new Error("PLAYLIST_NOT_FOUND");
-    }
-
-    const [song] = await tx.select().from(songs).where(eq(songs.id, songId)).limit(1);
-
-    if (!song) {
-      throw new Error("SONG_NOT_FOUND");
-    }
-
-    // Check if song already exists in playlist
-    const [existingEntry] = await tx
-      .select()
-      .from(playlistSongs)
-      .where(and(eq(playlistSongs.playlistId, playlistId), eq(playlistSongs.songId, songId)))
-      .limit(1);
-
-    if (existingEntry) {
-      throw new Error("SONG_ALREADY_IN_PLAYLIST");
-    }
-
-    const countRows = await tx
-      .select({ count: sql`count(*)` })
-      .from(playlistSongs)
-      .where(eq(playlistSongs.playlistId, playlistId))
-      .limit(1);
-
-    const currentCount = Number(countRows[0]?.count ?? 0);
-    const insertPosition = position === undefined ? currentCount : position;
-
-    if (insertPosition < 0 || insertPosition > currentCount) {
-      throw new Error("INVALID_POSITION");
-    }
-
-    if (insertPosition < currentCount) {
-      await tx
-        .update(playlistSongs)
-        .set({ position: sql`${playlistSongs.position} + 1` })
-        .where(
-          and(
-            eq(playlistSongs.playlistId, playlistId),
-            gte(playlistSongs.position, insertPosition),
-          ),
-        );
-    }
-
-    await tx.insert(playlistSongs).values({ playlistId, songId, position: insertPosition });
-
-    return { playlistId, songId, position: insertPosition };
-  });
-
 export const removeSongFromPlaylist = async (playlistId: string, songId: string) =>
   db.transaction(async (tx) => {
     const existingRows = await tx
@@ -169,29 +111,28 @@ export const removeSongFromPlaylist = async (playlistId: string, songId: string)
     return true;
   });
 
-const arrayMultisetEquals = (a: string[], b: string[]) => {
-  if (a.length !== b.length) {
-    return false;
-  }
+export const reorderPlaylistSongIds = (existingSongIds: string[], requestedSongIds: string[], position: number) => {
+  const uniqueRequestedSongIds = requestedSongIds.filter(
+    (songId, index) => requestedSongIds.indexOf(songId) === index,
+  );
 
-  const counts = new Map<string, number>();
+  const existingSongIdSet = new Set(existingSongIds);
+  const requestedExistingSongIds = uniqueRequestedSongIds.filter((songId) => existingSongIdSet.has(songId));
+  const requestedMissingSongIds = uniqueRequestedSongIds.filter((songId) => !existingSongIdSet.has(songId));
 
-  for (const item of a) {
-    counts.set(item, (counts.get(item) ?? 0) + 1);
-  }
+  const currentSongIds = existingSongIds.filter((songId) => !requestedExistingSongIds.includes(songId));
+  const reorderedSongIds = [...currentSongIds];
 
-  for (const item of b) {
-    const current = counts.get(item);
-    if (!current) {
-      return false;
-    }
-    counts.set(item, current - 1);
-  }
+  const targetPosition = Math.min(Math.max(position, 0), reorderedSongIds.length);
+  reorderedSongIds.splice(targetPosition, 0, ...requestedExistingSongIds, ...requestedMissingSongIds);
 
-  return Array.from(counts.values()).every((value) => value === 0);
+  return reorderedSongIds;
 };
 
-export const replacePlaylistSongs = async (playlistId: string, songIds: string[]) =>
+export const buildPlaylistSongRows = (playlistId: string, songIds: string[]) =>
+  songIds.map((songId, position) => ({ playlistId, songId, position }));
+
+export const upsertPlaylistSongs = async (playlistId: string, songIds: string[], position: number) =>
   db.transaction(async (tx) => {
     const [playlist] = await tx
       .select()
@@ -211,20 +152,21 @@ export const replacePlaylistSongs = async (playlistId: string, songIds: string[]
 
     const existingSongIds = existingRows.map((row) => row.songId);
 
-    if (!arrayMultisetEquals(existingSongIds, songIds)) {
+    const requestedSongIds = songIds.filter((songId, index) => songIds.indexOf(songId) === index);
+
+    if (requestedSongIds.length === 0) {
       throw new Error("INVALID_PLAYLIST_SONG_IDS");
     }
 
+    const nextSongIds = reorderPlaylistSongIds(existingSongIds, requestedSongIds, position);
+
     await tx.delete(playlistSongs).where(eq(playlistSongs.playlistId, playlistId));
 
-    if (songIds.length > 0) {
-      const rows = songIds.map((songId, index) => ({
-        playlistId,
-        songId,
-        position: index,
-      }));
+    if (nextSongIds.length > 0) {
+      const rows = buildPlaylistSongRows(playlistId, nextSongIds);
       await tx.insert(playlistSongs).values(rows);
     }
 
-    return { playlistId, songIds };
+    return { playlistId, songIds: nextSongIds };
   });
+

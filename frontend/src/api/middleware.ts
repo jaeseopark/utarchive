@@ -13,7 +13,7 @@ export const withStoreLoading = async <T>(
   store: StoreWithLoadingAndError,
   endpoint: string,
   schema: ZodSchema<T>,
-  method: "get" | "post" | "put" | "delete" = "get",
+  method: "get" | "post" | "put" | "patch" | "delete" = "get",
   body?: unknown,
 ): Promise<T> => {
   store.setLoading(true);
@@ -57,7 +57,7 @@ export const withStoreLoadingSilent = async <T>(
   store: StoreWithLoadingAndError,
   endpoint: string,
   schema: ZodSchema<T>,
-  method: "get" | "post" | "put" | "delete" = "get",
+  method: "get" | "post" | "put" | "patch" | "delete" = "get",
   body?: unknown,
 ): Promise<T | null> => {
   store.setLoading(true);
@@ -71,6 +71,9 @@ export const withStoreLoadingSilent = async <T>(
         break;
       case "put":
         result = await api.put(endpoint, body, schema);
+        break;
+      case "patch":
+        result = await api.patch(endpoint, body, schema);
         break;
       case "delete":
         result = await api.delete(endpoint, schema);

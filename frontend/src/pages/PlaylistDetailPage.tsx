@@ -27,6 +27,7 @@ function PlaylistDetailPage() {
   const [draftName, setDraftName] = useState("");
   const [orderedSongs, setOrderedSongs] = useState<PlaylistSong[]>([]);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [isPlayLoading, setIsPlayLoading] = useState(false);
@@ -103,20 +104,35 @@ function PlaylistDetailPage() {
     }
   };
 
-  const handleReorder = async (reorderedRows: PlaylistSongRow[]) => {
-    if (!playlist || !id) {
+  const handlePreviewReorder = useCallback(
+    (reorderedRows: PlaylistSongRow[]) => {
+      setOrderedSongs(reorderedRows.map((row) => row.item));
+    },
+    [],
+  );
+
+  const handleReorder = async (
+    reorderedRows: PlaylistSongRow[],
+    draggedItemId: string | null,
+  ) => {
+    if (!playlist || !id || isReordering) {
       return;
     }
 
     const nextSongs = reorderedRows.map((row) => row.item);
     setOrderedSongs(nextSongs);
 
-    const songIds = nextSongs.map((item) => item.song.id);
+    if (!draggedItemId) {
+      return;
+    }
+
+    const targetPosition = nextSongs.findIndex((item) => item.song.id === draggedItemId);
+    setIsReordering(true);
 
     try {
-      await api.put(
+      await api.patch(
         `/api/playlists/${id}/songs`,
-        { songIds },
+        { songIds: [draggedItemId], position: Math.max(targetPosition, 0) },
         z.object({
           playlistId: z.string().uuid(),
           songIds: z.array(z.string().uuid()),
@@ -124,6 +140,8 @@ function PlaylistDetailPage() {
       );
     } catch {
       setOrderedSongs(playlist.songs);
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -131,6 +149,7 @@ function PlaylistDetailPage() {
     orderedSongs.map((item) => ({ id: item.song.id, item })),
     (row) => row.id,
     handleReorder,
+    handlePreviewReorder,
     Boolean(playlist),
   );
 
@@ -284,7 +303,7 @@ function PlaylistDetailPage() {
                         <th className="px-4 py-3">Actions</th>
                       </tr>
                     </thead>
-                    <tbody onDragOver={dragHandlers.onDragOver}>
+                    <tbody>
                       {playlistSongs.map((item, index) => {
                         const isSelected = selectionState.selectedIds.has(item.song.id);
                         return (
@@ -294,10 +313,15 @@ function PlaylistDetailPage() {
                             onDragStart={(event) => {
                               dragHandlers.onDragStart(event, item.song.id);
                             }}
+                            onDragOver={(event) => {
+                              dragHandlers.onDragOver(event, item.song.id);
+                            }}
                             onDragLeave={dragHandlers.onDragLeave}
                             onDrop={(event) => {
                               dragHandlers.onDrop(event, item.song.id);
                             }}
+                            onDragEnd={dragHandlers.onDragEnd}
+                            onMouseUp={dragHandlers.onMouseUp}
                             onClick={() => toggleSelection(item.song.id, false)}
                             onDoubleClick={() => {
                               // Play the song on double-click if playback is enabled
