@@ -28,10 +28,10 @@ function isConflictError(body: unknown): boolean {
   if (typeof body !== "object" || body === null) {
     return false;
   }
-  
+
   const songIds = getNestedProperty(body, ["error", "data", "songIds"]);
   const albumIds = getNestedProperty(body, ["error", "data", "albumIds"]);
-  
+
   return Array.isArray(songIds) && Array.isArray(albumIds);
 }
 
@@ -131,7 +131,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
     }
 
     const detail = await withStoreLoadingSilent(
-      { 
+      {
         setError: (err: string | null) => set({ error: err }),
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent
@@ -210,12 +210,12 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       // Store update will happen via WebSocket DATA_CHANGED message
     } catch (error) {
       let message = "Failed to delete artist";
-      
+
       if (error instanceof ApiError) {
         if (error.status === 409 && isConflictError(error.body)) {
           const songIds = getNestedProperty(error.body, ["error", "data", "songIds"]);
           const albumIds = getNestedProperty(error.body, ["error", "data", "albumIds"]);
-          
+
           const parts: string[] = [];
           if (Array.isArray(songIds) && songIds.length > 0) {
             parts.push(`${songIds.length} associated song(s)`);
@@ -223,7 +223,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
           if (Array.isArray(albumIds) && albumIds.length > 0) {
             parts.push(`${albumIds.length} associated album(s)`);
           }
-          
+
           message = `Cannot delete artist: ${parts.join(" and ")}`;
         } else {
           message = error.message;

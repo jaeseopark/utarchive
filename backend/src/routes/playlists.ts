@@ -2,12 +2,13 @@ import { Router } from "express";
 import { z } from "zod";
 import { validateRequest } from "../middleware/validateRequest";
 import { requireAuth } from "../middleware/requireAuth";
+import { DataChangedMessage } from "../types/websocket";
+import { broadcastMessage } from "../ws";
 import {
-  addSongToPlaylist,
   deletePlaylistById,
   insertPlaylist,
   removeSongFromPlaylist,
-  replacePlaylistSongs,
+  upsertPlaylistSongs,
   selectPlaylistById,
   selectPlaylists,
   updatePlaylistById,
@@ -38,13 +39,8 @@ const playlistUpdateSchema = z.object({
   name: z.string().min(1).max(255),
 });
 
-const playlistSongCreateSchema = z.object({
-  songId: z.string().uuid(),
-  position: z.number().int().min(0).optional(),
-});
-
-const playlistReplaceSongsSchema = z.object({
-  songIds: z.array(z.string().uuid()),
+const playlistUpsertSongsSchema = z.object({
+  songIds: z.array(z.string().uuid()).min(1),
 });
 
 router.use(requireAuth);
@@ -96,30 +92,6 @@ router.delete("/:id", async (req, res) => {
   return res.status(200).json({ ok: true });
 });
 
-router.post("/:id/songs", validateRequest(playlistSongCreateSchema), async (req, res) => {
-  const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const { songId, position } = playlistSongCreateSchema.parse(req.body);
-
-  try {
-    const result = await addSongToPlaylist(playlistId, songId, position);
-    return res.status(200).json(result);
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "PLAYLIST_NOT_FOUND") {
-        return res.status(404).json({ error: "Playlist not found" });
-      }
-      if (error.message === "SONG_NOT_FOUND") {
-        return res.status(404).json({ error: "Song not found" });
-      }
-      if (error.message === "INVALID_POSITION") {
-        return res.status(400).json({ error: "Invalid position" });
-      }
-    }
-
-    throw error;
-  }
-});
-
 router.delete("/:id/songs/:songId", async (req, res) => {
   const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const songId = Array.isArray(req.params.songId) ? req.params.songId[0] : req.params.songId;
@@ -133,31 +105,48 @@ router.delete("/:id/songs/:songId", async (req, res) => {
   return res.status(200).json({ ok: true });
 });
 
-router.put(
-  "/playlists/:id/songs",
-  validateRequest(playlistReplaceSongsSchema),
-  async (req, res) => {
-    const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const { songIds } = playlistReplaceSongsSchema.parse(req.body);
+/**
+ * Upserts playlist songs as a membership set.
+ */
+router.patch("/:id/songs", validateRequest(playlistUpsertSongsSchema), async (req, res) => {
+  const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const { songIds } = playlistUpsertSongsSchema.parse(req.body);
+  const requestId = req.requestId;
 
-    try {
-      const result = await replacePlaylistSongs(playlistId, songIds);
-      return res.status(200).json(result);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message === "PLAYLIST_NOT_FOUND") {
-          return res.status(404).json({ error: "Playlist not found" });
-        }
-        if (error.message === "INVALID_PLAYLIST_SONG_IDS") {
-          return res
-            .status(400)
-            .json({ error: "songIds must contain the same songs currently in the playlist" });
-        }
-      }
+  try {
+    const result = await upsertPlaylistSongs(playlistId, songIds);
 
-      throw error;
+    const updatedPlaylist = await selectPlaylistById(playlistId);
+    const wss = req.app.locals.wss;
+
+    if (wss && updatedPlaylist) {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
+        entity: "playlist",
+        timestamp: Date.now(),
+        data: {
+          updated: [updatedPlaylist],
+        },
+        requestId,
+      };
+      broadcastMessage(wss, message);
     }
-  },
-);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "PLAYLIST_NOT_FOUND") {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+      if (error.message === "INVALID_PLAYLIST_SONG_IDS") {
+        return res
+          .status(400)
+          .json({ error: "songIds must contain existing songs from the playlist" });
+      }
+    }
+
+    throw error;
+  }
+});
 
 export default router;

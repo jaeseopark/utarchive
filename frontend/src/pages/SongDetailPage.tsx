@@ -64,9 +64,7 @@ function SongHeaderContent({ song }: SongHeaderProps) {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {song.filePath && (
-            <PlayButton song={song} />
-          )}
+          {song.filePath && <PlayButton song={song} />}
           <Button
             variant="secondary"
             onClick={songEditorState.enterEditMode}
@@ -91,20 +89,17 @@ function SongHeaderContent({ song }: SongHeaderProps) {
  * Compares properties that affect the rendered output to avoid unnecessary re-renders
  * from external store updates while still responding to actual song data changes.
  */
-const SongHeader = React.memo(
-  SongHeaderContent,
-  (prevProps, nextProps) => {
-    // Return true if props are equal (prevents re-render), false if they differ (causes re-render)
-    // Compare all properties that affect rendering
-    return (
-      prevProps.song.id === nextProps.song.id &&
-      prevProps.song.title === nextProps.song.title &&
-      prevProps.song.artistIds === nextProps.song.artistIds &&
-      prevProps.song.filePath === nextProps.song.filePath &&
-      prevProps.song.albumIds === nextProps.song.albumIds
-    );
-  },
-);
+const SongHeader = React.memo(SongHeaderContent, (prevProps, nextProps) => {
+  // Return true if props are equal (prevents re-render), false if they differ (causes re-render)
+  // Compare all properties that affect rendering
+  return (
+    prevProps.song.id === nextProps.song.id &&
+    prevProps.song.title === nextProps.song.title &&
+    prevProps.song.artistIds === nextProps.song.artistIds &&
+    prevProps.song.filePath === nextProps.song.filePath &&
+    prevProps.song.albumIds === nextProps.song.albumIds
+  );
+});
 
 function SongDetailPage() {
   const { id } = useParams<"id">();

@@ -78,7 +78,6 @@ export const CoverArtSchema = z.object({
   createdAt: z.string(),
 });
 
-
 export const SongSchema = z.object({
   id: z
     .string()

@@ -57,11 +57,7 @@ export function ArtistHeader({ artist }: ArtistHeaderProps) {
             >
               Edit
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteClick}
-              disabled={isDeleting}
-            >
+            <Button variant="destructive" onClick={handleDeleteClick} disabled={isDeleting}>
               {isDeleting ? "Deleting…" : "Delete"}
             </Button>
           </div>

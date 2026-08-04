@@ -18,19 +18,19 @@ interface MediaImage {
   type?: string;
 }
 
-type MediaSessionPlaybackState = 'none' | 'paused' | 'playing';
+type MediaSessionPlaybackState = "none" | "paused" | "playing";
 
 type MediaSessionAction =
-  | 'play'
-  | 'pause'
-  | 'seekbackward'
-  | 'seekforward'
-  | 'previoustrack'
-  | 'nexttrack'
-  | 'skipad'
-  | 'seek'
-  | 'seekto'
-  | 'togglecaptions';
+  | "play"
+  | "pause"
+  | "seekbackward"
+  | "seekforward"
+  | "previoustrack"
+  | "nexttrack"
+  | "skipad"
+  | "seek"
+  | "seekto"
+  | "togglecaptions";
 
 interface MediaSessionActionDetails {
   action: MediaSessionAction;
@@ -55,10 +55,7 @@ declare global {
   interface MediaSession {
     metadata: MediaMetadata | null;
     playbackState: MediaSessionPlaybackState;
-    setActionHandler(
-      action: MediaSessionAction,
-      handler: MediaSessionActionHandler | null,
-    ): void;
+    setActionHandler(action: MediaSessionAction, handler: MediaSessionActionHandler | null): void;
   }
 }
 

@@ -40,7 +40,7 @@ function RootLayout() {
   const { playlists, isLoading, error } = usePlaylists();
   const draggedSongIds = useDraggedSongsStore((state) => state.draggedSongIds);
   const clearDraggedSongIds = useDraggedSongsStore((state) => state.clearDraggedSongIds);
-  const addSongToPlaylist = usePlaylistsStore((state) => state.addSongToPlaylist);
+  const addSongsToPlaylist = usePlaylistsStore((state) => state.addSongsToPlaylist);
   const { notifySuccess, notifyError } = useNotifications();
   const [hoveredPlaylistId, setHoveredPlaylistId] = useState<PlaylistId | undefined>(undefined);
 
@@ -80,13 +80,11 @@ function RootLayout() {
       }
 
       let successCount = 0;
-      for (const songId of songIdsToAdd) {
-        try {
-          await addSongToPlaylist(playlistId, songId);
-          successCount += 1;
-        } catch {
-          // Keep adding remaining songs and summarize failures below.
-        }
+      try {
+        await addSongsToPlaylist(playlistId, songIdsToAdd);
+        successCount = songIdsToAdd.length;
+      } catch {
+        // The bulk upsert failed; report the attempt as unsuccessful.
       }
 
       const failedCount = songIdsToAdd.length - successCount;
@@ -99,7 +97,7 @@ function RootLayout() {
 
       clearDraggedSongIds();
     },
-    [addSongToPlaylist, clearDraggedSongIds, draggedSongIds, notifyError, notifySuccess],
+    [addSongsToPlaylist, clearDraggedSongIds, draggedSongIds, notifyError, notifySuccess],
   );
 
   return (

@@ -201,5 +201,3 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
     logError(err instanceof Error ? err : String(err));
   }
 };
-
-

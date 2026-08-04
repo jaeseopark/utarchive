@@ -12,7 +12,7 @@ import type { ColumnDefinition } from "../components/SongTable";
 import { useSongsStore } from "../stores/useSongsStore";
 
 function SongsPage() {
-    const { songs, isLoaded, error } = useSongsStore();
+  const { songs, isLoaded, error } = useSongsStore();
   const artists = useArtistsStore((state) => state.artists);
   const { play, setQueue } = usePlayerStore();
   const { openModal } = useAddSongModalStore();
@@ -31,7 +31,7 @@ function SongsPage() {
   }, [songs, setQueue]);
 
   const handleDoubleClickRow = useCallback(
-    (song: typeof songs[number]) => {
+    (song: (typeof songs)[number]) => {
       // Only play if playback is enabled
       if (song.playbackEnabled) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax

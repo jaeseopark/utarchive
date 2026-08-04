@@ -6,7 +6,9 @@ function SettingsPage() {
     <section className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold">Settings</h2>
-        <p className="mt-2 text-slate-600">Configure global preferences and application behavior.</p>
+        <p className="mt-2 text-slate-600">
+          Configure global preferences and application behavior.
+        </p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">

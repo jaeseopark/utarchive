@@ -8,10 +8,7 @@ interface SongsSectionProps {
   onPlaybackEnabledChange: (songId: string, enabled: boolean) => void; // TODO: this should not need to drill.
 }
 
-export function SongsSection({
-  songs,
-  onPlaybackEnabledChange,
-}: SongsSectionProps) {
+export function SongsSection({ songs, onPlaybackEnabledChange }: SongsSectionProps) {
   if (songs.length === 0) {
     return (
       <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">

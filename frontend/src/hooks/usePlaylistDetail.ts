@@ -13,7 +13,7 @@ export function usePlaylistDetail(playlistId: PlaylistId) {
     getPlaylistDetail,
     updatePlaylist,
     deletePlaylist,
-    addSongToPlaylist,
+    addSongsToPlaylist,
     removeSongFromPlaylist,
   } = usePlaylistsStore();
 
@@ -21,7 +21,7 @@ export function usePlaylistDetail(playlistId: PlaylistId) {
     if (!playlistId) return;
     const cached = getPlaylistDetail(playlistId);
     if (!cached) {
-      fetchPlaylistDetail(playlistId);
+      void fetchPlaylistDetail(playlistId);
     }
   }, [playlistId, fetchPlaylistDetail, getPlaylistDetail]);
 
@@ -33,7 +33,8 @@ export function usePlaylistDetail(playlistId: PlaylistId) {
     error,
     updatePlaylist: (name: string) => updatePlaylist(playlistId, name),
     deletePlaylist: () => deletePlaylist(playlistId),
-    addSong: (songId: SongId) => addSongToPlaylist(playlistId, songId),
-    removeSong: (position: number) => removeSongFromPlaylist(playlistId, position),
+    addSongs: (songIds: SongId[]) => addSongsToPlaylist(playlistId, songIds),
+    addSong: (songId: SongId) => addSongsToPlaylist(playlistId, [songId]),
+    removeSong: (songId: SongId) => removeSongFromPlaylist(playlistId, songId),
   };
 }

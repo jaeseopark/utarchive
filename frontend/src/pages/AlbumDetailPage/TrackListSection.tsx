@@ -21,7 +21,9 @@ interface TrackListSectionProps {
   onTrackOperationChange: (
     operations:
       | Map<number, { type: "linking" | "unlinking"; error?: string }>
-      | ((prev: Map<number, { type: "linking" | "unlinking"; error?: string }>) => Map<number, { type: "linking" | "unlinking"; error?: string }>),
+      | ((
+          prev: Map<number, { type: "linking" | "unlinking"; error?: string }>,
+        ) => Map<number, { type: "linking" | "unlinking"; error?: string }>),
   ) => void;
   trackNumberForSongSelect: number | null;
   onTrackNumberForSongSelectChange: (trackNumber: number | null) => void;
@@ -88,7 +90,10 @@ const TrackListSection = ({
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to link song";
         onTrackOperationChange(
-          new Map(trackOperations).set(trackNumberForSongSelect, { type: "linking", error: message }),
+          new Map(trackOperations).set(trackNumberForSongSelect, {
+            type: "linking",
+            error: message,
+          }),
         );
         console.error("Link error:", message);
       }
@@ -119,9 +124,7 @@ const TrackListSection = ({
 
   const handleUnlinkSong = useCallback(
     async (albumId: AlbumId, songId: SongId, trackNumber: number) => {
-      onTrackOperationChange(
-        new Map(trackOperations).set(trackNumber, { type: "unlinking" }),
-      );
+      onTrackOperationChange(new Map(trackOperations).set(trackNumber, { type: "unlinking" }));
       try {
         await unlinkSong(albumId, songId);
         onTrackOperationChange((prev) => {
@@ -235,7 +238,9 @@ const TrackListSection = ({
                           }
                         }
                       }}
-                      isSelected={track.song?.id ? selectionState.selectedIds.has(track.song.id) : false}
+                      isSelected={
+                        track.song?.id ? selectionState.selectedIds.has(track.song.id) : false
+                      }
                     />
                   );
                 })}
@@ -245,8 +250,10 @@ const TrackListSection = ({
         )}
         {Array.from(trackOperations.values()).some((op) => op.type === "linking" && op.error) && (
           <div className="mt-4 rounded-lg border border-rose-400 bg-rose-100/30 p-3 text-sm text-rose-700">
-            {Array.from(trackOperations.values()).find((op) => op.type === "linking" && op.error)
-              ?.error}
+            {
+              Array.from(trackOperations.values()).find((op) => op.type === "linking" && op.error)
+                ?.error
+            }
           </div>
         )}
         {albumSongs.length > 0 && (

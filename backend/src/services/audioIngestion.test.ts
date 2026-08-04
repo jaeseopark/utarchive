@@ -13,10 +13,7 @@ import { tmpdir } from "os";
  * for 2 consecutive 500ms checks (2-second window).
  * Timeout after 30 seconds with warning log.
  */
-async function waitForFileStability(
-  filePath: string,
-  maxWaitMs: number = 30000,
-): Promise<boolean> {
+async function waitForFileStability(filePath: string, maxWaitMs: number = 30000): Promise<boolean> {
   const pollIntervalMs = 500;
   const stableCheckCount = 4; // 4 × 500ms = 2 seconds
   let stableCount = 0;

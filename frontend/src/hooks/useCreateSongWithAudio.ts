@@ -11,18 +11,20 @@ interface CreateSongWithAudioResult {
  * Upload progress for a single file, using discriminated union pattern.
  * Percentage is only present when status is "uploading".
  */
-export type UploadProgress = {
-  filename: string;
-  fileSize: number; // in bytes
-  fileContentHash?: string; // computed in-browser if possible
-  status: "pending" | "complete" | "failed" | "skipped";
-} | {
-  filename: string;
-  fileSize: number; // in bytes
-  fileContentHash?: string; // computed in-browser if possible
-  status: "uploading";
-  percentage: number;
-};
+export type UploadProgress =
+  | {
+      filename: string;
+      fileSize: number; // in bytes
+      fileContentHash?: string; // computed in-browser if possible
+      status: "pending" | "complete" | "failed" | "skipped";
+    }
+  | {
+      filename: string;
+      fileSize: number; // in bytes
+      fileContentHash?: string; // computed in-browser if possible
+      status: "uploading";
+      percentage: number;
+    };
 
 /**
  * Hook for creating songs with audio files in a single operation
@@ -88,8 +90,7 @@ export function useCreateSongWithAudio(
         // Step 1: Extract title from filename (remove extension)
         const filename = audioFile.name;
         const lastDotIndex = filename.lastIndexOf(".");
-        const title =
-          lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+        const title = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
 
         // Step 2: Create the song via API
         const createResponse = await fetch("/api/songs", {

@@ -60,10 +60,7 @@ describe("Backend Song Schemas - Empty Artist IDs", () => {
     it("should accept request body with multiple artists", () => {
       const payload = {
         title: "Test Song",
-        artistIds: [
-          "550e8400-e29b-41d4-a716-446655440000",
-          "660e8400-e29b-41d4-a716-446655440001",
-        ],
+        artistIds: ["550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440001"],
       };
 
       const result = songCreateSchema.safeParse(payload);

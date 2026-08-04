@@ -1,8 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api } from "../api/client";
 import { Button } from "../components/ui/Button";
-import { z } from "zod";
 import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useSongSelectorModal } from "../components/SongSelector";
@@ -14,7 +12,7 @@ import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
 function PlaylistDetailPage() {
   const { id } = useParams<"id">();
   const navigate = useNavigate();
-  const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSong, removeSong } =
+  const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSongs, removeSong } =
     usePlaylistDetail(toBrandId<PlaylistId>(id || ""));
 
   const [draftName, setDraftName] = useState("");
@@ -27,19 +25,15 @@ function PlaylistDetailPage() {
 
   const handleAddSongs = useCallback(
     (songIds: string[]) => {
-      // Add songs sequentially to avoid race conditions
-      // Send them one at a time so the position counter increments properly
-      (async () => {
-        for (const songId of songIds) {
-          try {
-            await addSong(toBrandId<SongId>(songId));
-          } catch {
-            // Error is already in store, continue with next song
-          }
+      void (async () => {
+        try {
+          await addSongs(songIds.map((songId) => toBrandId<SongId>(songId)));
+        } catch {
+          // Error is already in store.
         }
       })();
     },
-    [addSong],
+    [addSongs],
   );
 
   const songSelectorModal = useSongSelectorModal({
@@ -86,36 +80,11 @@ function PlaylistDetailPage() {
     }
   };
 
-  const handleRemoveSong = async (position: number) => {
+  const handleRemoveSong = async (songId: SongId) => {
     try {
-      await removeSong(position);
+      await removeSong(songId);
     } catch {
       // Error is already in store
-    }
-  };
-
-  const handleReorder = async (currentIndex: number, nextIndex: number) => {
-    if (!playlist || !id) {
-      return;
-    }
-
-    const nextSongs = [...playlist.songs];
-    const [moved] = nextSongs.splice(currentIndex, 1);
-    nextSongs.splice(nextIndex, 0, moved);
-
-    const songIds = nextSongs.map((item) => item.song.id);
-
-    try {
-      await api.put(
-        `/api/playlists/${id}/songs`,
-        { songIds },
-        z.object({
-          playlistId: z.string().uuid(),
-          songIds: z.array(z.string().uuid()),
-        }),
-      );
-    } catch {
-      // Handle error
     }
   };
 
@@ -161,7 +130,7 @@ function PlaylistDetailPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Playlist detail</h2>
-          <p className="mt-2 text-slate-600">Manage playlist details, song order, and additions.</p>
+          <p className="mt-2 text-slate-600">Manage playlist details and additions.</p>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -316,23 +285,7 @@ function PlaylistDetailPage() {
                               <Button
                                 type="button"
                                 variant="secondary"
-                                disabled={index === 0}
-                                onClick={() => handleReorder(index, index - 1)}
-                              >
-                                Up
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                disabled={index === playlistSongs.length - 1}
-                                onClick={() => handleReorder(index, index + 1)}
-                              >
-                                Down
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={() => handleRemoveSong(item.position)}
+                                onClick={() => handleRemoveSong(item.song.id)}
                               >
                                 Remove
                               </Button>

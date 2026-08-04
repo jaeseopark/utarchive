@@ -10,12 +10,17 @@ import { AlbumsSection } from "./AlbumsSection";
 function ArtistDetailPage() {
   const { id } = useParams<"id">();
   const artistId = toBrandId<ArtistId>(id || "");
-  
+
   const artist = useArtistsStore((state) => state.artistMap.get(artistId));
   const artistLoading = false;
   const artistError = null;
 
-  const { songs, isLoading: songsLoading, error: songsError, updateSong } = useArtistSongs(artistId);
+  const {
+    songs,
+    isLoading: songsLoading,
+    error: songsError,
+    updateSong,
+  } = useArtistSongs(artistId);
   const { albums, isLoading: albumsLoading, error: albumsError } = useArtistAlbums(artistId);
 
   const handlePlaybackEnabledChange = (songId: string, newPlaybackEnabled: boolean) => {
@@ -49,10 +54,7 @@ function ArtistDetailPage() {
     return (
       <div className="space-y-6">
         <ArtistHeader artist={artist} />
-        <SongsSection
-          songs={songs ?? []}
-          onPlaybackEnabledChange={handlePlaybackEnabledChange}
-        />
+        <SongsSection songs={songs ?? []} onPlaybackEnabledChange={handlePlaybackEnabledChange} />
         <AlbumsSection albums={albums} />
       </div>
     );

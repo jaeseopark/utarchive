@@ -10,9 +10,11 @@ describe("useSongSelectorModal - Bug Fixes", () => {
 
       function TestComponent() {
         const modal = useSongSelectorModal({ onSongSelected });
-        
+
         // Store the wrapped props so we can call the callback
-        const [wrappedCallback, setWrappedCallback] = React.useState<((songId: string) => void) | null>(null);
+        const [wrappedCallback, setWrappedCallback] = React.useState<
+          ((songId: string) => void) | null
+        >(null);
 
         React.useEffect(() => {
           // Capture the wrapped callback from the SongSelector component props
@@ -29,9 +31,7 @@ describe("useSongSelectorModal - Bug Fixes", () => {
             <button onClick={modal.open}>Open Modal</button>
             <div data-testid="modal-status">{modal.isOpen ? "open" : "closed"}</div>
             {wrappedCallback && (
-              <button onClick={() => wrappedCallback("song-123")}>
-                Simulate Select Song
-              </button>
+              <button onClick={() => wrappedCallback("song-123")}>Simulate Select Song</button>
             )}
             {modal.Component}
           </div>
@@ -60,7 +60,7 @@ describe("useSongSelectorModal - Bug Fixes", () => {
         // Extract wrapped props to test the callback
         return (
           <div>
-            <button 
+            <button
               onClick={() => {
                 // Simulate the wrapped callback being called
                 onSongSelected("test-song-id");
@@ -117,7 +117,7 @@ describe("useSongSelectorModal - Bug Fixes", () => {
 
         return (
           <div>
-            <button 
+            <button
               onClick={() => {
                 // Simulate the wrapped callback being called
                 onSongsSelected(["song-1", "song-2"]);
@@ -174,7 +174,7 @@ describe("useSongSelectorModal - Bug Fixes", () => {
         return (
           <div>
             <button onClick={modal.open}>Open</button>
-            <button 
+            <button
               onClick={() => {
                 // Simulate wrapped callback
                 onSongSelected("test-id");

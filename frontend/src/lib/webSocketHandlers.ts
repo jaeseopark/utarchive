@@ -97,10 +97,11 @@ export const handleDataChanged = (message: DataChangedMessage): void => {
     updateStoreByAction(entity, "deleted", data.deleted);
   }
 
-  // Skip own requests for updates and creations to avoid double-updates
-  // (since these are updated both from HTTP response and WebSocket)
+  // Process updates and creations from WebSocket even for our own requests,
+  // since the store now relies on WebSocket-driven state changes instead of
+  // mutating directly from HTTP responses.
   if (isOwnRequest(message.requestId)) {
-    return;
+    // Keep the request ID cleanup behavior, but do not skip the update.
   }
 
   // Process updates second

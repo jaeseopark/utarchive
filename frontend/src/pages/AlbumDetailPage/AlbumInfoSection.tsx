@@ -23,11 +23,7 @@ const AlbumInfoSection = ({ album, onEditClick }: AlbumInfoSectionProps) => {
           <div className="mt-4">{albumEditorState.Component}</div>
         </div>
         {albumEditorState.mode === "view" && (
-          <Button
-            variant="secondary"
-            onClick={onEditClick}
-            className="ml-4 mt-1 flex-shrink-0"
-          >
+          <Button variant="secondary" onClick={onEditClick} className="ml-4 mt-1 flex-shrink-0">
             ✎ Edit
           </Button>
         )}

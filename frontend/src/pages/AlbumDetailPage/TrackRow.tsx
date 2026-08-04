@@ -42,7 +42,11 @@ const TrackRow = ({
   isSelected,
 }: TrackRowProps) => {
   // Always call the hook unconditionally
-  const { tree, isLoading: treeLoading, error: treeError } = useFamilyTree(
+  const {
+    tree,
+    isLoading: treeLoading,
+    error: treeError,
+  } = useFamilyTree(
     songDetail?.masterId || toBrandId<SongId>("0"),
     track.song?.id ? toBrandId<SongId>(track.song.id) : undefined,
   );
@@ -57,11 +61,7 @@ const TrackRow = ({
 
   return (
     <Fragment key={`${track.trackNumber}-${track.song?.id ?? "unreg"}`}>
-      <tr
-        onClick={onRowClick}
-        onDoubleClick={onRowDoubleClick}
-        className={rowClassname}
-      >
+      <tr onClick={onRowClick} onDoubleClick={onRowDoubleClick} className={rowClassname}>
         <td className="px-4 py-4 text-slate-700">{track.trackNumber}</td>
         <td className="px-4 py-4 text-slate-900 min-w-48">
           <TrackSongCell track={track} songDetail={songDetail} onPlaySong={onPlaySong} />

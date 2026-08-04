@@ -27,8 +27,11 @@ const AlbumDetailPage = () => {
   const artists = useArtistsStore((state) => state.artists);
 
   // Modal and player state
-  const { isOpen: isEditModalOpen, openModal: openEditModal, closeModal: closeEditModal } =
-    useEditAlbumModalStore();
+  const {
+    isOpen: isEditModalOpen,
+    openModal: openEditModal,
+    closeModal: closeEditModal,
+  } = useEditAlbumModalStore();
   const { setQueue, play } = usePlayerStore();
 
   // Local loading state
@@ -102,9 +105,7 @@ const AlbumDetailPage = () => {
           artists={artists}
           songDetailsMap={songDetailsMap}
           expandedSongId={expandedSongId}
-          onToggleTree={(songId) =>
-            setExpandedSongId(expandedSongId === songId ? null : songId)
-          }
+          onToggleTree={(songId) => setExpandedSongId(expandedSongId === songId ? null : songId)}
           trackOperations={trackOperations}
           onTrackOperationChange={setTrackOperations}
           trackNumberForSongSelect={trackNumberForSongSelect}

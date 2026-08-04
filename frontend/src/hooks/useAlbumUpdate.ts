@@ -21,11 +21,7 @@ export function useAlbumUpdate() {
         );
 
         // Make the API call
-        const updatedAlbum = await api.patch(
-          `/api/albums/${albumId}`,
-          fieldsToUpdate,
-          AlbumSchema,
-        );
+        const updatedAlbum = await api.patch(`/api/albums/${albumId}`, fieldsToUpdate, AlbumSchema);
 
         // Update local store
         updateAlbum(albumId, updatedAlbum);

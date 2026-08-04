@@ -115,7 +115,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     }
 
     const detail = await withStoreLoadingSilent(
-      { 
+      {
         setError: (err: string | null) => set({ error: err }),
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent

@@ -25,7 +25,7 @@ export function useBulkOperations(selectedSongIds: SongId[]): UseBulkOperationsR
   const [error, setError] = useState<string | null>(null);
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
 
-  const addSongToPlaylist = usePlaylistsStore((state) => state.addSongToPlaylist);
+  const addSongsToPlaylist = usePlaylistsStore((state) => state.addSongsToPlaylist);
 
   const canExecute = selectedSongIds.length > 0;
 
@@ -47,9 +47,8 @@ export function useBulkOperations(selectedSongIds: SongId[]): UseBulkOperationsR
       setError(null);
 
       try {
-        // Add all selected songs to the playlist
-        // Use Promise.all to add all songs in parallel
-        await Promise.all(selectedSongIds.map((songId) => addSongToPlaylist(playlistId, songId)));
+        // Add all selected songs to the playlist in a single bulk upsert request.
+        await addSongsToPlaylist(playlistId, selectedSongIds);
 
         // Success - close modal
         setShowPlaylistPicker(false);
@@ -60,7 +59,7 @@ export function useBulkOperations(selectedSongIds: SongId[]): UseBulkOperationsR
         setIsLoading(false);
       }
     },
-    [selectedSongIds, canExecute, addSongToPlaylist],
+    [selectedSongIds, canExecute, addSongsToPlaylist],
   );
 
   const cancelOperation = useCallback(() => {
