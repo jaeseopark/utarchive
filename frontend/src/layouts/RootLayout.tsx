@@ -137,7 +137,7 @@ function RootLayout() {
                 contentClassName="space-y-1"
                 accessory={sortedPlaylists.length}
               >
-                <NavLink to="/playlists" className={subNavLinkClassName}>
+                <NavLink to="/playlists" end className={subNavLinkClassName}>
                   All Playlists
                 </NavLink>
 
