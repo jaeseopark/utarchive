@@ -4,10 +4,36 @@ import { api } from "../api/client";
 import { withStoreLoadingSilent } from "../api/middleware";
 import { ArtistSchema, type Artist } from "../api/schemas";
 import { type ArtistId } from "../types/brands";
+import { ApiError } from "../api/client";
 
 const ArtistsResponseSchema = z.object({
   artists: z.array(ArtistSchema),
 });
+
+// Helper to safely get nested object properties
+function getNestedProperty(obj: unknown, path: string[]): unknown {
+  let current = obj;
+  for (const key of path) {
+    if (typeof current !== "object" || current === null || !(key in current)) {
+      return undefined;
+    }
+    // eslint-disable-next-line no-restricted-syntax
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+}
+
+// Type guard for conflict error response
+function isConflictError(body: unknown): boolean {
+  if (typeof body !== "object" || body === null) {
+    return false;
+  }
+  
+  const songIds = getNestedProperty(body, ["error", "data", "songIds"]);
+  const albumIds = getNestedProperty(body, ["error", "data", "albumIds"]);
+  
+  return Array.isArray(songIds) && Array.isArray(albumIds);
+}
 
 export type ArtistDetail = Artist;
 
@@ -35,6 +61,7 @@ export interface ArtistsState {
   addArtist: (artist: Artist) => void;
   updateArtist: (id: ArtistId, updates: Partial<Artist>) => void;
   removeArtist: (id: ArtistId) => void;
+  deleteArtist: (id: ArtistId) => Promise<void>;
   incrementArtistSongCount: (artistId: ArtistId) => void;
   setError: (error: string | null) => void;
   // Internal methods (for detail fetches)
@@ -174,6 +201,38 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
         artistDetails: updatedDetails,
       };
     });
+  },
+
+  deleteArtist: async (id: ArtistId) => {
+    try {
+      const emptyResponseSchema = z.object({ ok: z.boolean() });
+      await api.delete(`/api/artists/${id}`, emptyResponseSchema);
+      // Store update will happen via WebSocket DATA_CHANGED message
+    } catch (error) {
+      let message = "Failed to delete artist";
+      
+      if (error instanceof ApiError) {
+        if (error.status === 409 && isConflictError(error.body)) {
+          const songIds = getNestedProperty(error.body, ["error", "data", "songIds"]);
+          const albumIds = getNestedProperty(error.body, ["error", "data", "albumIds"]);
+          
+          const parts: string[] = [];
+          if (Array.isArray(songIds) && songIds.length > 0) {
+            parts.push(`${songIds.length} associated song(s)`);
+          }
+          if (Array.isArray(albumIds) && albumIds.length > 0) {
+            parts.push(`${albumIds.length} associated album(s)`);
+          }
+          
+          message = `Cannot delete artist: ${parts.join(" and ")}`;
+        } else {
+          message = error.message;
+        }
+      }
+
+      set({ error: message });
+      throw error;
+    }
   },
 
   incrementArtistSongCount: (artistId: string) => {
