@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import PlaylistsPage from "./PlaylistsPage";
 import { api } from "../api/client";
+import { usePlaylistsStore } from "../stores/usePlaylistsStore";
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual<typeof import("../api/client")>("../api/client");
@@ -22,15 +23,29 @@ const mockedApi = api as unknown as {
 };
 
 describe("PlaylistsPage", () => {
-  it("shows loading and then renders playlist table", async () => {
-    mockedApi.get.mockResolvedValueOnce({
-      playlists: [{ id: "1", name: "Favorites", createdAt: new Date().toISOString() }],
+  const resetPlaylistsStore = () => {
+    act(() => {
+      usePlaylistsStore.setState({
+        playlists: [],
+        songCounts: {},
+        isLoading: false,
+        error: null,
+      });
     });
-    mockedApi.get.mockResolvedValueOnce({
-      id: "1",
-      name: "Favorites",
-      createdAt: new Date().toISOString(),
-      songs: [],
+  };
+
+  beforeEach(() => {
+    resetPlaylistsStore();
+  });
+
+  it("shows loading and then renders playlist table", async () => {
+    act(() => {
+      usePlaylistsStore.setState({
+        playlists: [],
+        songCounts: {},
+        isLoading: true,
+        error: null,
+      });
     });
 
     render(
@@ -42,12 +57,27 @@ describe("PlaylistsPage", () => {
     );
 
     expect(screen.getByText(/loading playlists/i)).toBeInTheDocument();
+
+    act(() => {
+      usePlaylistsStore.setState({
+        playlists: [{ id: "1", name: "Favorites", createdAt: new Date().toISOString() }],
+        songCounts: { "1": 0 },
+        isLoading: false,
+        error: null,
+      });
+    });
+
     await waitFor(() => expect(screen.getByText(/favorites/i)).toBeInTheDocument());
   });
 
   it("opens modal and creates a new playlist", async () => {
-    mockedApi.get.mockResolvedValueOnce({
-      playlists: [],
+    act(() => {
+      usePlaylistsStore.setState({
+        playlists: [],
+        songCounts: {},
+        isLoading: false,
+        error: null,
+      });
     });
     mockedApi.post.mockResolvedValueOnce({
       id: "2",
