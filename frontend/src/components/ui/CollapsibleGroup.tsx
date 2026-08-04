@@ -37,7 +37,11 @@ function CollapsibleGroup({
       >
         <span className="truncate">{title}</span>
         <span className="flex items-center gap-2 text-slate-400">
-          {accessory ? <span className="text-[0.7rem] font-medium uppercase tracking-[0.16em]">{accessory}</span> : null}
+          {accessory ? (
+            <span className="text-[0.7rem] font-medium uppercase tracking-[0.16em]">
+              {accessory}
+            </span>
+          ) : null}
           <svg
             className={clsx("h-4 w-4 transition-transform", isOpen ? "rotate-180" : "rotate-0")}
             viewBox="0 0 24 24"

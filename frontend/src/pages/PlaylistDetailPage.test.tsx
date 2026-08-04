@@ -10,7 +10,11 @@ vi.mock("../hooks/usePlaylistDetail", () => ({
 }));
 
 vi.mock("../components/SongSelector", () => ({
-  useSongSelectorModal: ({ onSongsSelected }: { onSongsSelected: (songIds: string[]) => void }) => ({
+  useSongSelectorModal: ({
+    onSongsSelected,
+  }: {
+    onSongsSelected: (songIds: string[]) => void;
+  }) => ({
     open: () => onSongsSelected(["song-1", "song-2"]),
     Component: null,
   }),
@@ -37,6 +41,7 @@ describe("PlaylistDetailPage", () => {
       error: null,
       updatePlaylist: vi.fn(),
       deletePlaylist: vi.fn(),
+      addSongs: vi.fn(),
       addSong: vi.fn(),
       removeSong: vi.fn(),
     });

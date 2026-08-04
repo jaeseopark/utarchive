@@ -48,6 +48,6 @@ export function useAppInitialization() {
   }, [user, artistsStore, playlistsStore, songsStore, albumsStore]);
 
   return {
-    initialized
-  }
+    initialized,
+  };
 }

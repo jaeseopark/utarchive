@@ -190,9 +190,7 @@ export function AddSongModal() {
 
           {/* Artist Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Artists (optional)
-            </label>
+            <label className="block text-sm font-medium text-slate-700">Artists (optional)</label>
             {!artistsLoaded ? (
               <p className="mt-1 text-sm text-slate-500">Loading artists...</p>
             ) : (

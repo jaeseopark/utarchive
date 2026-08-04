@@ -88,9 +88,8 @@ export function GlobalPlayer() {
             <div className="flex flex-wrap gap-1">
               {currentSong.artistIds && currentSong.artistIds.length > 0 ? (
                 currentSong.artistIds.map((artistId, index) => {
-                  const artistName = artists
-                    .find((a) => a.id === artistId)
-                    ?.name ?? "Unknown Artist";
+                  const artistName =
+                    artists.find((a) => a.id === artistId)?.name ?? "Unknown Artist";
                   return (
                     <div key={artistId} className="flex items-center gap-1">
                       {index > 0 && <span className="text-xs text-slate-500">,</span>}

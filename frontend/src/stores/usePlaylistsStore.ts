@@ -63,7 +63,10 @@ export interface PlaylistsState {
 
   // Actions - Remote Updates (WebSocket)
   addPlaylist: (playlist: Playlist) => void;
-  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist> & Partial<PlaylistDetail>) => void;
+  updatePlaylistFromRemote: (
+    id: PlaylistId,
+    updates: Partial<Playlist> & Partial<PlaylistDetail>,
+  ) => void;
   removePlaylistFromRemote: (id: PlaylistId) => void;
 
   // Actions - State
@@ -259,7 +262,10 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }));
   },
 
-  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist> & Partial<PlaylistDetail>) => {
+  updatePlaylistFromRemote: (
+    id: PlaylistId,
+    updates: Partial<Playlist> & Partial<PlaylistDetail>,
+  ) => {
     set((state) => {
       const newDetails = {
         ...state.playlistDetails,

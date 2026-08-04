@@ -31,10 +31,7 @@ interface IngestionStatus {
  * for 2 consecutive 500ms checks (2-second window).
  * Timeout after 30 seconds with warning log.
  */
-async function waitForFileStability(
-  filePath: string,
-  maxWaitMs: number = 30000,
-): Promise<boolean> {
+async function waitForFileStability(filePath: string, maxWaitMs: number = 30000): Promise<boolean> {
   const pollIntervalMs = 500;
   const stableCheckCount = 4; // 4 × 500ms = 2 seconds
   let stableCount = 0;
@@ -65,9 +62,7 @@ async function waitForFileStability(
     }
   }
 
-  console.warn(
-    `[AudioIngestion] File stability check timeout after ${maxWaitMs}ms: ${filePath}`,
-  );
+  console.warn(`[AudioIngestion] File stability check timeout after ${maxWaitMs}ms: ${filePath}`);
   return false; // Timeout
 }
 
@@ -82,7 +77,8 @@ function broadcastIngestionStatus(wss: WebSocketServer, status: IngestionStatus)
   };
 
   wss.clients.forEach((client) => {
-    if (client.readyState === 1) { // WebSocket.OPEN
+    if (client.readyState === 1) {
+      // WebSocket.OPEN
       try {
         client.send(JSON.stringify(message));
       } catch (err) {
@@ -115,7 +111,11 @@ async function processIncomingFile(
     // Step 1: Wait for file stability (2-second window, 30-second timeout)
     const isStable = await waitForFileStability(filePath);
     if (!isStable) {
-      const status: IngestionStatus = { filename, status: "timeout", error: "File transfer timeout" };
+      const status: IngestionStatus = {
+        filename,
+        status: "timeout",
+        error: "File transfer timeout",
+      };
       console.warn(`[AudioIngestion] File timeout: ${filename}`);
       broadcastIngestionStatus(wss, status);
       return status;
@@ -197,9 +197,7 @@ async function processIncomingFile(
       bytes,
     };
 
-    console.log(
-      `[AudioIngestion] Song created: ${filename} (ID: ${newSong.id})`,
-    );
+    console.log(`[AudioIngestion] Song created: ${filename} (ID: ${newSong.id})`);
     broadcastIngestionStatus(wss, successStatus);
 
     // Broadcast DATA_CHANGED event so clients know about the new song

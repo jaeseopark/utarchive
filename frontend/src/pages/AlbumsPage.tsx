@@ -90,8 +90,6 @@ function AlbumsPage() {
         )}
       </div>
 
-
-
       <AddAlbumModal />
     </section>
   );

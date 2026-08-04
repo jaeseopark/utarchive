@@ -139,12 +139,7 @@ export function SongTable({
 
   // Mouse event handlers (selection, context menu)
   const { handleRowClick, handleContextMenu, handleCloseContextMenu, contextMenuPos } =
-    useSongTableMouseEvents(
-      selectionState,
-      isSelected,
-      toggleSelection,
-      toggleRange,
-    );
+    useSongTableMouseEvents(selectionState, isSelected, toggleSelection, toggleRange);
 
   // File drop state and hooks (only used if withFileDrop is true)
   const [isDragOverTable, setIsDragOverTable] = useState(false);
@@ -210,8 +205,7 @@ export function SongTable({
       const files = Array.from(e.dataTransfer.files);
       const audioFiles = files.filter((file) => {
         return (
-          file.type.startsWith("audio/") ||
-          /\.(mp3|wav|flac|aac|ogg|m4a|wma)$/i.test(file.name)
+          file.type.startsWith("audio/") || /\.(mp3|wav|flac|aac|ogg|m4a|wma)$/i.test(file.name)
         );
       });
 
@@ -277,7 +271,9 @@ export function SongTable({
     <div
       className={clsx(
         "overflow-x-auto rounded-3xl border bg-slate-50/80 p-4 shadow-xl shadow-slate-200/20",
-        isDragOverTable && withFileDrop ? "border-emerald-400 bg-emerald-50/50" : "border-slate-300",
+        isDragOverTable && withFileDrop
+          ? "border-emerald-400 bg-emerald-50/50"
+          : "border-slate-300",
       )}
       onDragEnter={handleTableDragEnter}
       onDragOver={handleTableDragOver}
@@ -293,92 +289,95 @@ export function SongTable({
           <div className="relative">
             <table className="min-w-full text-left text-xs text-slate-700">
               <thead className="border-b border-slate-300 text-slate-600 text-xs font-semibold">
-              <tr>
-                {displayColumns.map((col) => (
-                  <th key={col.key} className="px-2 py-1.5" style={{ width: col.width }}>
-                    {col.label}
-                  </th>
-                ))}
-                {actions && actions.length > 0 && (
-                  <th className="px-2 py-1.5 w-20 text-right">Actions</th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {songs.map((song, index) => (
-                <tr
-                  key={song.id}
-                  draggable={draggableToPlaylist}
-                  onDragStart={(e) => handleSongRowDragStart(e, song.id)}
-                  onDragEnd={handleSongRowDragEnd}
-                  onClick={(e) => {
-                    // eslint-disable-next-line no-restricted-syntax
-                    handleRowClick(e, song.id as SongId);
-                  }}
-                  onDoubleClick={() => {
-                    if (onDoubleClickRow) {
-                      onDoubleClickRow(song);
-                    }
-                  }}
-                  onContextMenu={(e) => {
-                    // eslint-disable-next-line no-restricted-syntax
-                    handleContextMenu(e, song.id as SongId);
-                  }}
-                  className={clsx(
-                    "border-b border-slate-300 last:border-b-0 transition",
-                    "cursor-pointer select-none",
-                    // eslint-disable-next-line no-restricted-syntax
-                    isSelected(song.id as SongId)
-                      ? "bg-blue-100 hover:bg-blue-200"
-                      : "hover:bg-slate-100",
-                  )}
-                >
+                <tr>
                   {displayColumns.map((col) => (
-                    <td
-                      key={`${song.id}-${col.key}`}
-                      className="px-2 py-1.5"
-                      style={{ width: col.width }}
-                    >
-                      {col.render
-                        ? col.render(song)
-                        : typeof song === "object" && col.key in song
-                          ? // eslint-disable-next-line no-restricted-syntax
-                            String((song as Record<string, unknown>)[col.key])
-                          : ""}
-                    </td>
+                    <th key={col.key} className="px-2 py-1.5" style={{ width: col.width }}>
+                      {col.label}
+                    </th>
                   ))}
                   {actions && actions.length > 0 && (
-                    <td className="px-2 py-1.5 text-right">
-                      <div className="flex justify-end gap-1">
-                        {actions.map((action) => (
-                          <button
-                            key={action.label}
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // eslint-disable-next-line no-restricted-syntax
-                              action.onClick(song.id as SongId);
-                            }}
-                            className={clsx(
-                              "px-2 py-1 text-xs font-medium rounded transition",
-                              action.className || "bg-slate-200 text-slate-700 hover:bg-slate-300",
-                            )}
-                          >
-                            {action.label}
-                          </button>
-                        ))}
-                      </div>
-                    </td>
+                    <th className="px-2 py-1.5 w-20 text-right">Actions</th>
                   )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {songs.map((song) => (
+                  <tr
+                    key={song.id}
+                    draggable={draggableToPlaylist}
+                    onDragStart={(e) => handleSongRowDragStart(e, song.id)}
+                    onDragEnd={handleSongRowDragEnd}
+                    onClick={(e) => {
+                      // eslint-disable-next-line no-restricted-syntax
+                      handleRowClick(e, song.id as SongId);
+                    }}
+                    onDoubleClick={() => {
+                      if (onDoubleClickRow) {
+                        onDoubleClickRow(song);
+                      }
+                    }}
+                    onContextMenu={(e) => {
+                      // eslint-disable-next-line no-restricted-syntax
+                      handleContextMenu(e, song.id as SongId);
+                    }}
+                    className={clsx(
+                      "border-b border-slate-300 last:border-b-0 transition",
+                      "cursor-pointer select-none",
+                      // eslint-disable-next-line no-restricted-syntax
+                      isSelected(song.id as SongId)
+                        ? "bg-blue-100 hover:bg-blue-200"
+                        : "hover:bg-slate-100",
+                    )}
+                  >
+                    {displayColumns.map((col) => (
+                      <td
+                        key={`${song.id}-${col.key}`}
+                        className="px-2 py-1.5"
+                        style={{ width: col.width }}
+                      >
+                        {col.render
+                          ? col.render(song)
+                          : typeof song === "object" && col.key in song
+                            ? // eslint-disable-next-line no-restricted-syntax
+                              String((song as Record<string, unknown>)[col.key])
+                            : ""}
+                      </td>
+                    ))}
+                    {actions && actions.length > 0 && (
+                      <td className="px-2 py-1.5 text-right">
+                        <div className="flex justify-end gap-1">
+                          {actions.map((action) => (
+                            <button
+                              key={action.label}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // eslint-disable-next-line no-restricted-syntax
+                                action.onClick(song.id as SongId);
+                              }}
+                              className={clsx(
+                                "px-2 py-1 text-xs font-medium rounded transition",
+                                action.className ||
+                                  "bg-slate-200 text-slate-700 hover:bg-slate-300",
+                              )}
+                            >
+                              {action.label}
+                            </button>
+                          ))}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
             {/* Drag overlay for file drop feedback */}
             {isDragOverTable && withFileDrop && (
               <div className="absolute inset-0 bg-emerald-400/10 rounded-lg flex items-center justify-center pointer-events-none">
-                <span className="text-sm text-emerald-600 font-medium">Drop audio files here to add to library</span>
+                <span className="text-sm text-emerald-600 font-medium">
+                  Drop audio files here to add to library
+                </span>
               </div>
             )}
           </div>

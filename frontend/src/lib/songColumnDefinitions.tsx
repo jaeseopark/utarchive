@@ -6,7 +6,7 @@ import type { ColumnDefinition } from "../components/SongTable";
  * Used across all song lists (artist, album, playlist, etc.)
  */
 export function createPlaybackEnabledColumn(
-  onPlaybackEnabledChange: (songId: string, enabled: boolean) => void
+  onPlaybackEnabledChange: (songId: string, enabled: boolean) => void,
 ): ColumnDefinition {
   return {
     key: "playback",

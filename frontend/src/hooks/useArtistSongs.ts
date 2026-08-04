@@ -22,7 +22,7 @@ export function useArtistSongs(artistId: ArtistId) {
     (songId: string, updates: Partial<SongListItem>) => {
       updateArtistSong(artistId, songId, updates);
     },
-    [artistId, updateArtistSong]
+    [artistId, updateArtistSong],
   );
 
   return { songs, isLoading, error, updateSong };

@@ -35,9 +35,7 @@ export function AlbumsSection({ albums }: AlbumsSectionProps) {
                 />
               </div>
             )}
-            <h4 className="font-semibold text-slate-900 group-hover:text-sky-600">
-              {album.title}
-            </h4>
+            <h4 className="font-semibold text-slate-900 group-hover:text-sky-600">{album.title}</h4>
             {album.yearReleased && (
               <p className="mt-1 text-sm text-slate-600">{album.yearReleased}</p>
             )}

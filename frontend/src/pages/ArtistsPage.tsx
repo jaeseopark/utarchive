@@ -65,8 +65,6 @@ function ArtistsPage() {
           </table>
         )}
       </div>
-
-
     </section>
   );
 }

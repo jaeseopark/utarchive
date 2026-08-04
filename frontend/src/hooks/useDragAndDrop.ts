@@ -130,7 +130,8 @@ export function useDragAndDrop<T extends { id: string }>(
   const commitPendingReorder = useCallback(
     (activeDraggedItemId: string | null, dropAfterItemId: string | null = null) => {
       const resolvedDropAfterItemId = dropAfterItemId ?? activeDropTargetIdRef.current;
-      const reordered = pendingReorderedItemsRef.current ??
+      const reordered =
+        pendingReorderedItemsRef.current ??
         (activeDraggedItemId ? reorderItems(activeDraggedItemId, resolvedDropAfterItemId) : null);
 
       pendingReorderedItemsRef.current = null;

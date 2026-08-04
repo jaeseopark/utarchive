@@ -64,7 +64,7 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
       const songsStore = useSongsStore.getState();
       if (!songsStore.isLoaded) {
         console.warn(
-          `Songs store not loaded when fetching artist ${artistId} songs. Waiting for songs to load...`
+          `Songs store not loaded when fetching artist ${artistId} songs. Waiting for songs to load...`,
         );
         // In production, we should wait for the store to be ready or fetch the details ourselves
         // For now, return empty array if songs aren't loaded yet
@@ -109,7 +109,7 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
     const songs = songIds
       .map((id) => songsStore.songs.find((song) => song.id === id))
       .filter(isSongDefined);
-    
+
     return songs;
   },
 

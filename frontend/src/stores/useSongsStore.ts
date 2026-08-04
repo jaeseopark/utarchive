@@ -104,7 +104,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     }
 
     const detail = await withStoreLoadingSilent(
-      { 
+      {
         setError: (err: string | null) => set({ error: err }),
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent
@@ -130,7 +130,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
   fetchSongTree: async (id: string) => {
     // Fetch tree without caching - always returns fresh data
     const tree = await withStoreLoadingSilent(
-      { 
+      {
         setError: (err: string | null) => set({ error: err }),
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         setLoading: (_loading: boolean) => {}, // No-op: detail fetches are silent

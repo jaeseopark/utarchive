@@ -104,10 +104,7 @@ describe("Frontend Song Form Validation - Empty Artist IDs", () => {
     it("should validate form with multiple artists", () => {
       const formData: SongCreateFormInput = {
         title: "Song with Multiple Artists",
-        artistIds: [
-          "550e8400-e29b-41d4-a716-446655440000",
-          "660e8400-e29b-41d4-a716-446655440001",
-        ],
+        artistIds: ["550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440001"],
         parentId: null,
         releasedAt: null,
         urls: [],

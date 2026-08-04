@@ -108,47 +108,45 @@ router.delete("/:id/songs/:songId", async (req, res) => {
 /**
  * Upserts playlist songs as a membership set.
  */
-router.patch(
-  "/:id/songs",
-  validateRequest(playlistUpsertSongsSchema),
-  async (req, res) => {
-    const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const { songIds } = playlistUpsertSongsSchema.parse(req.body);
-    const requestId = req.requestId;
+router.patch("/:id/songs", validateRequest(playlistUpsertSongsSchema), async (req, res) => {
+  const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const { songIds } = playlistUpsertSongsSchema.parse(req.body);
+  const requestId = req.requestId;
 
-    try {
-      const result = await upsertPlaylistSongs(playlistId, songIds);
+  try {
+    const result = await upsertPlaylistSongs(playlistId, songIds);
 
-      const updatedPlaylist = await selectPlaylistById(playlistId);
-      const wss = req.app.locals.wss;
+    const updatedPlaylist = await selectPlaylistById(playlistId);
+    const wss = req.app.locals.wss;
 
-      if (wss && updatedPlaylist) {
-        const message: DataChangedMessage = {
-          type: "DATA_CHANGED",
-          entity: "playlist",
-          timestamp: Date.now(),
-          data: {
-            updated: [updatedPlaylist],
-          },
-          requestId,
-        };
-        broadcastMessage(wss, message);
-      }
-
-      return res.status(200).json(result);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message === "PLAYLIST_NOT_FOUND") {
-          return res.status(404).json({ error: "Playlist not found" });
-        }
-        if (error.message === "INVALID_PLAYLIST_SONG_IDS") {
-          return res.status(400).json({ error: "songIds must contain existing songs from the playlist" });
-        }
-      }
-
-      throw error;
+    if (wss && updatedPlaylist) {
+      const message: DataChangedMessage = {
+        type: "DATA_CHANGED",
+        entity: "playlist",
+        timestamp: Date.now(),
+        data: {
+          updated: [updatedPlaylist],
+        },
+        requestId,
+      };
+      broadcastMessage(wss, message);
     }
-  },
-);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "PLAYLIST_NOT_FOUND") {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+      if (error.message === "INVALID_PLAYLIST_SONG_IDS") {
+        return res
+          .status(400)
+          .json({ error: "songIds must contain existing songs from the playlist" });
+      }
+    }
+
+    throw error;
+  }
+});
 
 export default router;

@@ -14,10 +14,7 @@ export function useUnlinkSongFromAlbum() {
   const unlinkSong = useCallback(
     async (albumId: AlbumId, songId: SongId): Promise<void> => {
       try {
-        const response = await api.delete(
-          `/api/albums/${albumId}/songs/${songId}`,
-          AlbumSchema,
-        );
+        const response = await api.delete(`/api/albums/${albumId}/songs/${songId}`, AlbumSchema);
 
         // Update store with the response
         updateAlbum(albumId, response);
