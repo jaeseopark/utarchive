@@ -8,6 +8,7 @@ import {
   selectArtists,
   selectSongsByArtistId,
   updateArtistById,
+  deleteArtistById,
 } from "../db/queries/artists";
 import { selectAlbumsByArtistId } from "../db/queries/albums";
 import { broadcastMessage } from "../ws";
@@ -115,6 +116,46 @@ router.patch("/:id", validateRequest(artistUpdateSchema), async (req, res) => {
   }
 
   return res.status(200).json(serializeForApiResponse(updatedRows[0]));
+});
+
+router.delete("/:id", async (req, res) => {
+  const artistId = String(req.params.id);
+  const requestId = req.requestId;
+
+  const result = await deleteArtistById(artistId);
+
+  if (result.type === "conflict") {
+    return res.status(409).json({
+      error: {
+        message: "Cannot delete artist with associated songs and/or albums",
+        data: {
+          songIds: result.songIds,
+          albumIds: result.albumIds,
+        },
+      },
+    });
+  }
+
+  if (result.type === "notFound") {
+    return res.status(404).json({ error: "Artist not found" });
+  }
+
+  // Broadcast to all connected clients
+  const wss = req.app.locals.wss;
+  if (wss) {
+    const message: DataChangedMessage = {
+      type: "DATA_CHANGED",
+      entity: "artist",
+      timestamp: Date.now(),
+      data: {
+        deleted: [{ id: artistId }],
+      },
+      requestId,
+    };
+    broadcastMessage(wss, message);
+  }
+
+  return res.status(200).json({ ok: true });
 });
 
 router.get("/:id/songs", async (req, res) => {

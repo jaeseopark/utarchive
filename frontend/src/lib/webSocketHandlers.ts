@@ -86,18 +86,21 @@ const updateStoreByAction = (
 /**
  * Handles data change messages (consolidated handler for all entity changes)
  * Processes: deleted → updated → created (to avoid conflicts)
+ * Note: Deletions are always processed even if they're from own requests,
+ * since store updates happen only via WebSocket, not HTTP response
  */
 export const handleDataChanged = (message: DataChangedMessage): void => {
-  // Skip if this client initiated the change
-  if (isOwnRequest(message.requestId)) {
-    return;
-  }
-
   const { entity, data } = message;
 
-  // Process deletions first
+  // Process deletions first - always process (store update only from WebSocket)
   if (data.deleted && data.deleted.length > 0) {
     updateStoreByAction(entity, "deleted", data.deleted);
+  }
+
+  // Skip own requests for updates and creations to avoid double-updates
+  // (since these are updated both from HTTP response and WebSocket)
+  if (isOwnRequest(message.requestId)) {
+    return;
   }
 
   // Process updates second

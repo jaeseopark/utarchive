@@ -1,6 +1,6 @@
 import { eq, sql, desc } from "drizzle-orm";
 import { db } from "../../db";
-import { artists, songArtists, songs } from "../../db/schema";
+import { artists, songArtists, songs, albumArtists } from "../../db/schema";
 
 export type ArtistCreateInput = {
   name: string;
@@ -10,6 +10,11 @@ export type ArtistCreateInput = {
 };
 
 export type ArtistUpdateInput = Partial<ArtistCreateInput>;
+
+export type DeleteArtistResult =
+  | { type: "deleted" }
+  | { type: "conflict"; songIds: string[]; albumIds: string[] }
+  | { type: "notFound" };
 
 export const selectArtists = (limit: number, offset: number) =>
   db
@@ -81,3 +86,35 @@ export const selectSongsByArtistId = (artistId: string) =>
     .innerJoin(songArtists, eq(songArtists.songId, songs.id))
     .where(eq(songArtists.artistId, artistId))
     .orderBy(desc(songs.releasedAt), songs.title);
+
+export const deleteArtistById = async (artistId: string): Promise<DeleteArtistResult> =>
+  db.transaction(async (tx) => {
+    // Get associated songs
+    const associatedSongs = await tx
+      .select({ songId: songArtists.songId })
+      .from(songArtists)
+      .where(eq(songArtists.artistId, artistId));
+
+    const songIds = associatedSongs.map((row) => row.songId);
+
+    // Get associated albums
+    const associatedAlbums = await tx
+      .select({ albumId: albumArtists.albumId })
+      .from(albumArtists)
+      .where(eq(albumArtists.artistId, artistId));
+
+    const albumIds = associatedAlbums.map((row) => row.albumId);
+
+    // If there are conflicts, return them without deleting
+    if (songIds.length > 0 || albumIds.length > 0) {
+      return { type: "conflict", songIds, albumIds };
+    }
+
+    // Delete the artist
+    const result = await tx.delete(artists).where(eq(artists.id, artistId));
+    if ((result.rowCount ?? 0) > 0) {
+      return { type: "deleted" };
+    }
+
+    return { type: "notFound" };
+  });

@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import clsx from "clsx";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "destructive";
 }
 
 const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
@@ -10,6 +10,8 @@ const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
     "bg-sky-500 text-white hover:bg-sky-400 focus-visible:ring-sky-400 disabled:bg-slate-400 disabled:hover:bg-slate-400",
   secondary:
     "border border-slate-400 bg-slate-200 text-slate-900 hover:border-slate-500 hover:bg-slate-300 focus-visible:ring-slate-400 disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-500 disabled:hover:bg-slate-100 disabled:hover:border-slate-300",
+  destructive:
+    "bg-rose-500 text-white hover:bg-rose-600 focus-visible:ring-rose-400 disabled:bg-slate-400 disabled:hover:bg-slate-400",
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
