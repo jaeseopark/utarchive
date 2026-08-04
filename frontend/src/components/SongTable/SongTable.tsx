@@ -6,6 +6,8 @@ import { useDragAndDrop } from "../../hooks/useDragAndDrop";
 import type { Song, SongListItem } from "../../api/schemas";
 import type { SongId } from "../../types/brands";
 import { SongContextMenu } from "./SongContextMenu";
+import { useDraggedSongsStore } from "../../stores/useDraggedSongsStore";
+import { SONG_IDS_DRAG_MIME, serializeDraggedSongIds } from "../../lib/songDragPayload";
 import { useCreateSongWithAudio } from "../../hooks/useCreateSongWithAudio";
 import { useNotifications } from "../../hooks/useNotifications";
 import clsx from "clsx";
@@ -57,6 +59,7 @@ export interface SongTableProps {
   songs: (Song | SongListItem)[];
   reorderable?: boolean;
   onReorder?: (reorderedSongs: (Song | SongListItem)[]) => void;
+  draggableToPlaylist?: boolean;
   /** Column definitions. Can use predefined keys ("title", "released") or custom definitions */
   columns?: ColumnInput[];
   actions?: RowAction[];
@@ -126,6 +129,7 @@ export function SongTable({
   songs,
   reorderable = false,
   onReorder,
+  draggableToPlaylist = false,
   columns,
   actions,
   onDoubleClickRow,
@@ -155,6 +159,7 @@ export function SongTable({
   const [isDragOverTable, setIsDragOverTable] = useState(false);
   const { createSongWithAudio } = useCreateSongWithAudio(undefined, withFileDrop ?? false);
   const { notifySuccess, notifyError } = useNotifications();
+  const { setDraggedSongIds, clearDraggedSongIds } = useDraggedSongsStore();
 
   // Expand column inputs to full definitions, or use default title column
   const displayColumns = columns
@@ -253,6 +258,35 @@ export function SongTable({
     [withFileDrop, createSongWithAudio, notifySuccess, notifyError],
   );
 
+  const handleSongRowDragStart = useCallback(
+    (e: React.DragEvent<HTMLElement>, songId: SongId) => {
+      if (reorderable) {
+        dragHandlers.onDragStart(e, songId);
+        return;
+      }
+
+      if (!draggableToPlaylist) {
+        e.preventDefault();
+        return;
+      }
+
+      const selectedSongIds = selectionState.selectedIds.has(songId)
+        ? Array.from(selectionState.selectedIds)
+        : [songId];
+
+      setDraggedSongIds(selectedSongIds);
+      e.dataTransfer.effectAllowed = "copy";
+      e.dataTransfer.setData(SONG_IDS_DRAG_MIME, serializeDraggedSongIds(selectedSongIds));
+    },
+    [reorderable, draggableToPlaylist, selectionState.selectedIds, setDraggedSongIds, dragHandlers],
+  );
+
+  const handleSongRowDragEnd = useCallback(() => {
+    if (!reorderable && draggableToPlaylist) {
+      clearDraggedSongIds();
+    }
+  }, [clearDraggedSongIds, draggableToPlaylist, reorderable]);
+
   return (
     <div
       className={clsx(
@@ -288,11 +322,9 @@ export function SongTable({
               {songs.map((song, index) => (
                 <tr
                   key={song.id}
-                  draggable={reorderable}
-                  onDragStart={(e) => {
-                    // eslint-disable-next-line no-restricted-syntax
-                    dragHandlers.onDragStart(e, song.id as SongId);
-                  }}
+                  draggable={reorderable || draggableToPlaylist}
+                  onDragStart={(e) => handleSongRowDragStart(e, song.id)}
+                  onDragEnd={handleSongRowDragEnd}
                   onDragLeave={dragHandlers.onDragLeave}
                   onDrop={(e) => {
                     // eslint-disable-next-line no-restricted-syntax
