@@ -174,7 +174,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     return get().playlistDetails[id];
   },
 
-  // Create playlist with optimistic update
   createPlaylist: async (name: string) => {
     const trimmedName = name.trim();
     if (!trimmedName) {

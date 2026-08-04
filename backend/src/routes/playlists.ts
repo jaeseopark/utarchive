@@ -54,6 +54,23 @@ router.get("/", validateRequest(listQuerySchema, "query"), async (req, res) => {
 router.post("/", validateRequest(playlistCreateSchema), async (req, res) => {
   const { name } = playlistCreateSchema.parse(req.body);
   const playlist = await insertPlaylist(name);
+  const requestId = req.requestId;
+
+  // Broadcast to all connected clients
+  const wss = req.app.locals.wss;
+  if (wss) {
+    const message: DataChangedMessage = {
+      type: "DATA_CHANGED",
+      entity: "playlist",
+      timestamp: Date.now(),
+      data: {
+        created: [playlist],
+      },
+      requestId,
+    };
+    broadcastMessage(wss, message);
+  }
+
   return res.status(201).json(playlist);
 });
 
