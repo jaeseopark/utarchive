@@ -1,11 +1,13 @@
 import { useMemo, useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import { usePlaylists } from "../hooks/usePlaylists";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
 
 function PlaylistsPage() {
-  const { playlists, songCounts, isLoading, error } = usePlaylists();
+  const playlists = usePlaylistsStore((state) => state.playlists);
+  const songCounts = usePlaylistsStore((state) => state.songCounts);
+  const isLoading = usePlaylistsStore((state) => state.isLoading);
+  const error = usePlaylistsStore((state) => state.error);
   const { createPlaylist } = usePlaylistsStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [playlistName, setPlaylistName] = useState("");
