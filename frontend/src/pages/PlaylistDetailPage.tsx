@@ -1,33 +1,22 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api } from "../api/client";
 import { Button } from "../components/ui/Button";
-import { z } from "zod";
 import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
-import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useSongSelectorModal } from "../components/SongSelector";
 import { useSongSelection } from "../hooks/useSongSelection";
 import { SongActionsDropdown } from "../components/SongTable";
 import { buildPlaylistQueue } from "../lib/queueBuilder";
 import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
-import { type PlaylistSong } from "../stores/usePlaylistsStore";
-
-type PlaylistSongRow = {
-  id: SongId;
-  item: PlaylistSong;
-};
 
 function PlaylistDetailPage() {
   const { id } = useParams<"id">();
   const navigate = useNavigate();
-  const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSong, removeSong } =
+  const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSongs, removeSong } =
     usePlaylistDetail(toBrandId<PlaylistId>(id || ""));
 
   const [draftName, setDraftName] = useState("");
-  const [orderedSongs, setOrderedSongs] = useState<PlaylistSong[]>([]);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [isReordering, setIsReordering] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [isPlayLoading, setIsPlayLoading] = useState(false);
@@ -36,19 +25,15 @@ function PlaylistDetailPage() {
 
   const handleAddSongs = useCallback(
     (songIds: string[]) => {
-      // Add songs sequentially to avoid race conditions
-      // Send them one at a time so the position counter increments properly
-      (async () => {
-        for (const songId of songIds) {
-          try {
-            await addSong(toBrandId<SongId>(songId));
-          } catch {
-            // Error is already in store, continue with next song
-          }
+      void (async () => {
+        try {
+          await addSongs(songIds.map((songId) => toBrandId<SongId>(songId)));
+        } catch {
+          // Error is already in store.
         }
       })();
     },
-    [addSong],
+    [addSongs],
   );
 
   const songSelectorModal = useSongSelectorModal({
@@ -58,7 +43,6 @@ function PlaylistDetailPage() {
   useEffect(() => {
     if (playlist) {
       setDraftName(playlist.name);
-      setOrderedSongs(playlist.songs);
     }
   }, [playlist]);
 
@@ -96,62 +80,13 @@ function PlaylistDetailPage() {
     }
   };
 
-  const handleRemoveSong = async (position: number) => {
+  const handleRemoveSong = async (songId: SongId) => {
     try {
-      await removeSong(position);
+      await removeSong(songId);
     } catch {
       // Error is already in store
     }
   };
-
-  const handlePreviewReorder = useCallback(
-    (reorderedRows: PlaylistSongRow[]) => {
-      setOrderedSongs(reorderedRows.map((row) => row.item));
-    },
-    [],
-  );
-
-  const handleReorder = async (
-    reorderedRows: PlaylistSongRow[],
-    draggedItemId: string | null,
-  ) => {
-    if (!playlist || !id || isReordering) {
-      return;
-    }
-
-    const nextSongs = reorderedRows.map((row) => row.item);
-    setOrderedSongs(nextSongs);
-
-    if (!draggedItemId) {
-      return;
-    }
-
-    const targetPosition = nextSongs.findIndex((item) => item.song.id === draggedItemId);
-    setIsReordering(true);
-
-    try {
-      await api.patch(
-        `/api/playlists/${id}/songs`,
-        { songIds: [draggedItemId], position: Math.max(targetPosition, 0) },
-        z.object({
-          playlistId: z.string().uuid(),
-          songIds: z.array(z.string().uuid()),
-        }),
-      );
-    } catch {
-      setOrderedSongs(playlist.songs);
-    } finally {
-      setIsReordering(false);
-    }
-  };
-
-  const { handlers: dragHandlers } = useDragAndDrop(
-    orderedSongs.map((item) => ({ id: item.song.id, item })),
-    (row) => row.id,
-    handleReorder,
-    handlePreviewReorder,
-    Boolean(playlist),
-  );
 
   const handlePlayPlaylist = async () => {
     if (!playlist || !playlist.songs.length) {
@@ -175,7 +110,7 @@ function PlaylistDetailPage() {
     }
   };
 
-  const playlistSongs = orderedSongs;
+  const playlistSongs = playlist?.songs ?? [];
 
   // Selection and bulk operations - convert to minimal song-like objects for selection
   const {
@@ -195,7 +130,7 @@ function PlaylistDetailPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Playlist detail</h2>
-          <p className="mt-2 text-slate-600">Manage playlist details, song order, and additions.</p>
+          <p className="mt-2 text-slate-600">Manage playlist details and additions.</p>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -297,7 +232,6 @@ function PlaylistDetailPage() {
                     <thead className="border-b border-slate-300 text-slate-600">
                       <tr>
                         <th className="px-4 py-3">#</th>
-                        <th className="px-2 py-3 text-slate-400">⋮⋮</th>
                         <th className="px-4 py-3">Title</th>
                         <th className="px-4 py-3">Playback Enabled</th>
                         <th className="px-4 py-3">Actions</th>
@@ -309,19 +243,6 @@ function PlaylistDetailPage() {
                         return (
                           <tr
                             key={item.song.id}
-                            draggable
-                            onDragStart={(event) => {
-                              dragHandlers.onDragStart(event, item.song.id);
-                            }}
-                            onDragOver={(event) => {
-                              dragHandlers.onDragOver(event, item.song.id);
-                            }}
-                            onDragLeave={dragHandlers.onDragLeave}
-                            onDrop={(event) => {
-                              dragHandlers.onDrop(event, item.song.id);
-                            }}
-                            onDragEnd={dragHandlers.onDragEnd}
-                            onMouseUp={dragHandlers.onMouseUp}
                             onClick={() => toggleSelection(item.song.id, false)}
                             onDoubleClick={() => {
                               // Play the song on double-click if playback is enabled
@@ -335,7 +256,6 @@ function PlaylistDetailPage() {
                             }`}
                           >
                             <td className="px-4 py-4 text-slate-700">{index + 1}</td>
-                            <td className="px-2 py-4 text-slate-400">⋮⋮</td>
                             <td className="px-4 py-4">
                               <Link
                                 to={`/songs/${item.song.id}`}
@@ -365,7 +285,7 @@ function PlaylistDetailPage() {
                               <Button
                                 type="button"
                                 variant="secondary"
-                                onClick={() => handleRemoveSong(item.position)}
+                                onClick={() => handleRemoveSong(item.song.id)}
                               >
                                 Remove
                               </Button>

@@ -19,11 +19,9 @@ const playlistDetail = {
   createdAt: new Date().toISOString(),
   songs: [
     {
-      position: 0,
       song: { id: "song-1", title: "Space Anthem", playbackEnabled: true, filePath: null },
     },
     {
-      position: 1,
       song: { id: "song-2", title: "Moonlight Drive", playbackEnabled: false, filePath: null },
     },
   ],

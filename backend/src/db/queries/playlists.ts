@@ -2,6 +2,14 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../../db";
 import { playlists, playlistSongs, songs } from "../../db/schema";
 
+export const mergePlaylistSongIds = (existingSongIds: string[], requestedSongIds: string[]) => {
+  const uniqueRequestedSongIds = requestedSongIds.filter(
+    (songId, index) => requestedSongIds.indexOf(songId) === index,
+  );
+
+  return [...new Set([...existingSongIds, ...uniqueRequestedSongIds])];
+};
+
 export const selectPlaylists = (limit: number, offset: number) =>
   db
     .select({ id: playlists.id, name: playlists.name, createdAt: playlists.createdAt })
@@ -17,7 +25,6 @@ export const selectPlaylistById = async (playlistId: string) => {
       id: playlists.id,
       name: playlists.name,
       createdAt: playlists.createdAt,
-      position: playlistSongs.position,
       songId: songs.id,
       title: songs.title,
       playbackEnabled: songs.playbackEnabled,
@@ -26,8 +33,7 @@ export const selectPlaylistById = async (playlistId: string) => {
     .from(playlists)
     .leftJoin(playlistSongs, eq(playlistSongs.playlistId, playlists.id))
     .leftJoin(songs, eq(playlistSongs.songId, songs.id))
-    .where(eq(playlists.id, playlistId))
-    .orderBy(playlistSongs.position);
+    .where(eq(playlists.id, playlistId));
 
   if (rows.length === 0) {
     return null;
@@ -42,7 +48,6 @@ export const selectPlaylistById = async (playlistId: string) => {
     songs: rows
       .filter((row) => row.songId !== null)
       .map((row) => ({
-        position: row.position,
         song: {
           id: row.songId,
           title: row.title,
@@ -81,58 +86,20 @@ export const removeSongFromPlaylist = async (playlistId: string, songId: string)
     const existingRows = await tx
       .select({ songId: playlistSongs.songId })
       .from(playlistSongs)
-      .where(and(eq(playlistSongs.playlistId, playlistId), eq(playlistSongs.songId, songId)))
-      .orderBy(playlistSongs.position);
+      .where(and(eq(playlistSongs.playlistId, playlistId), eq(playlistSongs.songId, songId)));
 
     if (existingRows.length === 0) {
       return false;
     }
 
-    const remainingRows = await tx
-      .select({ songId: playlistSongs.songId })
-      .from(playlistSongs)
-      .where(eq(playlistSongs.playlistId, playlistId))
-      .orderBy(playlistSongs.position);
-
-    await tx.delete(playlistSongs).where(eq(playlistSongs.playlistId, playlistId));
-
-    const reordered = remainingRows
-      .filter((row) => row.songId !== songId)
-      .map((row, index) => ({
-        playlistId,
-        songId: row.songId,
-        position: index,
-      }));
-
-    if (reordered.length > 0) {
-      await tx.insert(playlistSongs).values(reordered);
-    }
+    await tx
+      .delete(playlistSongs)
+      .where(and(eq(playlistSongs.playlistId, playlistId), eq(playlistSongs.songId, songId)));
 
     return true;
   });
 
-export const reorderPlaylistSongIds = (existingSongIds: string[], requestedSongIds: string[], position: number) => {
-  const uniqueRequestedSongIds = requestedSongIds.filter(
-    (songId, index) => requestedSongIds.indexOf(songId) === index,
-  );
-
-  const existingSongIdSet = new Set(existingSongIds);
-  const requestedExistingSongIds = uniqueRequestedSongIds.filter((songId) => existingSongIdSet.has(songId));
-  const requestedMissingSongIds = uniqueRequestedSongIds.filter((songId) => !existingSongIdSet.has(songId));
-
-  const currentSongIds = existingSongIds.filter((songId) => !requestedExistingSongIds.includes(songId));
-  const reorderedSongIds = [...currentSongIds];
-
-  const targetPosition = Math.min(Math.max(position, 0), reorderedSongIds.length);
-  reorderedSongIds.splice(targetPosition, 0, ...requestedExistingSongIds, ...requestedMissingSongIds);
-
-  return reorderedSongIds;
-};
-
-export const buildPlaylistSongRows = (playlistId: string, songIds: string[]) =>
-  songIds.map((songId, position) => ({ playlistId, songId, position }));
-
-export const upsertPlaylistSongs = async (playlistId: string, songIds: string[], position: number) =>
+export const upsertPlaylistSongs = async (playlistId: string, songIds: string[]) =>
   db.transaction(async (tx) => {
     const [playlist] = await tx
       .select()
@@ -147,23 +114,20 @@ export const upsertPlaylistSongs = async (playlistId: string, songIds: string[],
     const existingRows = await tx
       .select({ songId: playlistSongs.songId })
       .from(playlistSongs)
-      .where(eq(playlistSongs.playlistId, playlistId))
-      .orderBy(playlistSongs.position);
+      .where(eq(playlistSongs.playlistId, playlistId));
 
     const existingSongIds = existingRows.map((row) => row.songId);
 
-    const requestedSongIds = songIds.filter((songId, index) => songIds.indexOf(songId) === index);
-
-    if (requestedSongIds.length === 0) {
+    if (songIds.length === 0) {
       throw new Error("INVALID_PLAYLIST_SONG_IDS");
     }
 
-    const nextSongIds = reorderPlaylistSongIds(existingSongIds, requestedSongIds, position);
+    const nextSongIds = mergePlaylistSongIds(existingSongIds, songIds);
 
     await tx.delete(playlistSongs).where(eq(playlistSongs.playlistId, playlistId));
 
     if (nextSongIds.length > 0) {
-      const rows = buildPlaylistSongRows(playlistId, nextSongIds);
+      const rows = nextSongIds.map((songId) => ({ playlistId, songId }));
       await tx.insert(playlistSongs).values(rows);
     }
 

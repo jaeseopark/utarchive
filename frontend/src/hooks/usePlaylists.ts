@@ -8,7 +8,7 @@ export function usePlaylists() {
   const { playlists, songCounts, isLoading, error, fetchPlaylists } = usePlaylistsStore();
 
   useEffect(() => {
-    fetchPlaylists();
+    void fetchPlaylists();
   }, [fetchPlaylists]);
 
   return { playlists, songCounts, isLoading, error, refetch: fetchPlaylists };

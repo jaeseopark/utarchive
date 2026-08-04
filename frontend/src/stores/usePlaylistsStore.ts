@@ -15,7 +15,6 @@ export const PlaylistSchema = z.object({
 });
 
 export const PlaylistSongSchema = z.object({
-  position: z.number().int(),
   song: z.object({
     id: z
       .string()
@@ -59,12 +58,12 @@ export interface PlaylistsState {
   createPlaylist: (name: string) => Promise<PlaylistId | null>;
   updatePlaylist: (id: PlaylistId, name: string) => Promise<void>;
   deletePlaylist: (id: PlaylistId) => Promise<void>;
-  addSongToPlaylist: (playlistId: PlaylistId, songId: SongId) => Promise<void>;
-  removeSongFromPlaylist: (playlistId: PlaylistId, position: number) => Promise<void>;
+  addSongsToPlaylist: (playlistId: PlaylistId, songIds: SongId[]) => Promise<void>;
+  removeSongFromPlaylist: (playlistId: PlaylistId, songId: SongId) => Promise<void>;
 
   // Actions - Remote Updates (WebSocket)
   addPlaylist: (playlist: Playlist) => void;
-  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist>) => void;
+  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist> & Partial<PlaylistDetail>) => void;
   removePlaylistFromRemote: (id: PlaylistId) => void;
 
   // Actions - State
@@ -182,16 +181,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
 
     try {
       const newPlaylist = await api.post("/api/playlists", { name: trimmedName }, PlaylistSchema);
-
-      // Optimistic update
-      set((state) => ({
-        playlists: [...state.playlists, newPlaylist],
-        songCounts: {
-          ...state.songCounts,
-          [newPlaylist.id]: 0,
-        },
-      }));
-
       return newPlaylist.id;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create playlist";
@@ -210,21 +199,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
 
     try {
       await api.patch(`/api/playlists/${id}`, { name: trimmedName }, PlaylistSchema);
-
-      // Update both list and detail
-      set((state) => {
-        const newDetails = {
-          ...state.playlistDetails,
-          ...(state.playlistDetails[id] && {
-            [id]: { ...state.playlistDetails[id], name: trimmedName },
-          }),
-        };
-        return {
-          playlists: state.playlists.map((p) => (p.id === id ? { ...p, name: trimmedName } : p)),
-          playlistDetails: newDetails,
-          playlistDetailsMap: new Map(Object.entries(newDetails)),
-        };
-      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update playlist";
       set({ error: message });
@@ -236,22 +210,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   deletePlaylist: async (id: PlaylistId) => {
     try {
       await api.delete(`/api/playlists/${id}`, PlaylistSchema);
-
-      // Remove from state
-      set((state) => {
-        const playlistDetailsRest = Object.fromEntries(
-          Object.entries(state.playlistDetails).filter(([key]) => key !== id),
-        );
-        const songCountsRest = Object.fromEntries(
-          Object.entries(state.songCounts).filter(([key]) => key !== id),
-        );
-        return {
-          playlists: state.playlists.filter((p) => p.id !== id),
-          playlistDetails: playlistDetailsRest,
-          playlistDetailsMap: new Map(Object.entries(playlistDetailsRest)),
-          songCounts: songCountsRest,
-        };
-      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete playlist";
       set({ error: message });
@@ -259,37 +217,21 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }
   },
 
-  // Add song to playlist
-  addSongToPlaylist: async (playlistId: PlaylistId, songId: SongId) => {
+  // Add one or more songs to a playlist via the bulk PATCH upsert endpoint.
+  addSongsToPlaylist: async (playlistId: PlaylistId, songIds: SongId[]) => {
+    if (songIds.length === 0) {
+      return;
+    }
+
     try {
-      await api.post(`/api/playlists/${playlistId}/songs`, { songId }, z.any());
-
-      set((state) => ({
-        songCounts: {
-          ...state.songCounts,
-          [playlistId]: (state.songCounts[playlistId] ?? 0) + 1,
-        },
-      }));
-
-      // Keep cached playlist detail synchronized when it is already present.
-      if (get().playlistDetails[playlistId]) {
-        const updatedDetail = await api.get(`/api/playlists/${playlistId}`, PlaylistDetailSchema);
-        set((state) => {
-          const newDetails = {
-            ...state.playlistDetails,
-            [playlistId]: updatedDetail,
-          };
-
-          return {
-            playlistDetails: newDetails,
-            playlistDetailsMap: new Map(Object.entries(newDetails)),
-            songCounts: {
-              ...state.songCounts,
-              [playlistId]: updatedDetail.songs.length,
-            },
-          };
-        });
-      }
+      await api.patch(
+        `/api/playlists/${playlistId}/songs`,
+        { songIds },
+        z.object({
+          playlistId: z.string().uuid(),
+          songIds: z.array(z.string().uuid()),
+        }),
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to add song to playlist";
       set({ error: message });
@@ -297,38 +239,13 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }
   },
 
-  // Remove song from playlist
-  removeSongFromPlaylist: async (playlistId: PlaylistId, position: number) => {
-    try {
-      await api.delete(
-        `/api/playlists/${playlistId}/songs/${position}`,
-        z.object({ ok: z.literal(true) }),
-      );
-
-      // Update detail
-      set((state) => ({
-        playlistDetails: {
-          ...state.playlistDetails,
-          ...(state.playlistDetails[playlistId] && {
-            [playlistId]: {
-              ...state.playlistDetails[playlistId],
-              songs: state.playlistDetails[playlistId]!.songs.filter(
-                (s) => s.position !== position,
-              ),
-            },
-          }),
-        },
-        songCounts: {
-          ...state.songCounts,
-          [playlistId]: (state.songCounts[playlistId] ?? 0) - 1,
-        },
-      }));
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to remove song from playlist";
-      set({ error: message });
-      throw error;
-    }
+  // Remove song from playlist.
+  // The local detail cache is updated from the WebSocket DATA_CHANGED payload.
+  removeSongFromPlaylist: async (playlistId: PlaylistId, songId: SongId) => {
+    void api.delete(
+      `/api/playlists/${playlistId}/songs/${songId}`,
+      z.object({ ok: z.literal(true) }),
+    );
   },
 
   // Remote update handlers (for WebSocket)
@@ -342,7 +259,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     }));
   },
 
-  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist>) => {
+  updatePlaylistFromRemote: (id: PlaylistId, updates: Partial<Playlist> & Partial<PlaylistDetail>) => {
     set((state) => {
       const newDetails = {
         ...state.playlistDetails,

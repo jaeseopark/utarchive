@@ -41,7 +41,6 @@ const playlistUpdateSchema = z.object({
 
 const playlistUpsertSongsSchema = z.object({
   songIds: z.array(z.string().uuid()).min(1),
-  position: z.number().int().min(0).optional().default(100000),
 });
 
 router.use(requireAuth);
@@ -107,18 +106,18 @@ router.delete("/:id/songs/:songId", async (req, res) => {
 });
 
 /**
- * Upserts playlist song positions in the requested order.
+ * Upserts playlist songs as a membership set.
  */
 router.patch(
   "/:id/songs",
   validateRequest(playlistUpsertSongsSchema),
   async (req, res) => {
     const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const { songIds, position } = playlistUpsertSongsSchema.parse(req.body);
+    const { songIds } = playlistUpsertSongsSchema.parse(req.body);
     const requestId = req.requestId;
 
     try {
-      const result = await upsertPlaylistSongs(playlistId, songIds, position);
+      const result = await upsertPlaylistSongs(playlistId, songIds);
 
       const updatedPlaylist = await selectPlaylistById(playlistId);
       const wss = req.app.locals.wss;

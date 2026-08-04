@@ -2,7 +2,6 @@ import type React from "react";
 import { useState, useCallback } from "react";
 import { useSongSelection } from "../../hooks/useSongSelection";
 import { useSongTableMouseEvents } from "../../hooks/useSongTableMouseEvents";
-import { useDragAndDrop } from "../../hooks/useDragAndDrop";
 import type { Song, SongListItem } from "../../api/schemas";
 import type { SongId } from "../../types/brands";
 import { SongContextMenu } from "./SongContextMenu";
@@ -57,8 +56,6 @@ export type ColumnInput = PredefinedColumnKey | ColumnDefinition;
 
 export interface SongTableProps {
   songs: (Song | SongListItem)[];
-  reorderable?: boolean;
-  onReorder?: (reorderedSongs: (Song | SongListItem)[]) => void;
   draggableToPlaylist?: boolean;
   /** Column definitions. Can use predefined keys ("title", "released") or custom definitions */
   columns?: ColumnInput[];
@@ -121,14 +118,11 @@ function expandColumns(columnInputs: ColumnInput[]): ColumnDefinition[] {
  * - Click to select/deselect
  * - Shift+click for range selection
  * - Ctrl/Cmd+click to toggle individual selection
- * - Drag-and-drop reordering (if reorderable={true})
  * - Always compact display (tight spacing)
  * - Keyboard shortcuts (Ctrl+A/Cmd+A, Ctrl+D/Cmd+D)
  */
 export function SongTable({
   songs,
-  reorderable = false,
-  onReorder,
   draggableToPlaylist = false,
   columns,
   actions,
@@ -142,14 +136,6 @@ export function SongTable({
     toggleSelection,
     toggleRange,
   } = useSongSelection(songs);
-
-  // Drag-and-drop reordering (always called, enabled parameter gates functionality)
-  const { handlers: dragHandlers } = useDragAndDrop(
-    songs,
-    (song) => song.id,
-    onReorder || (() => {}),
-    reorderable,
-  );
 
   // Mouse event handlers (selection, context menu)
   const { handleRowClick, handleContextMenu, handleCloseContextMenu, contextMenuPos } =
@@ -265,11 +251,6 @@ export function SongTable({
 
   const handleSongRowDragStart = useCallback(
     (e: React.DragEvent<HTMLElement>, songId: SongId) => {
-      if (reorderable) {
-        dragHandlers.onDragStart(e, songId);
-        return;
-      }
-
       if (!draggableToPlaylist) {
         e.preventDefault();
         return;
@@ -283,14 +264,14 @@ export function SongTable({
       e.dataTransfer.effectAllowed = "copy";
       e.dataTransfer.setData(SONG_IDS_DRAG_MIME, serializeDraggedSongIds(selectedSongIds));
     },
-    [reorderable, draggableToPlaylist, selectionState.selectedIds, setDraggedSongIds, dragHandlers],
+    [draggableToPlaylist, selectionState.selectedIds, setDraggedSongIds],
   );
 
   const handleSongRowDragEnd = useCallback(() => {
-    if (!reorderable && draggableToPlaylist) {
+    if (draggableToPlaylist) {
       clearDraggedSongIds();
     }
-  }, [clearDraggedSongIds, draggableToPlaylist, reorderable]);
+  }, [clearDraggedSongIds, draggableToPlaylist]);
 
   return (
     <div
@@ -323,19 +304,13 @@ export function SongTable({
                 )}
               </tr>
             </thead>
-            <tbody {...dragHandlers.onDragOver}>
+            <tbody>
               {songs.map((song, index) => (
                 <tr
                   key={song.id}
-                  draggable={reorderable || draggableToPlaylist}
+                  draggable={draggableToPlaylist}
                   onDragStart={(e) => handleSongRowDragStart(e, song.id)}
                   onDragEnd={handleSongRowDragEnd}
-                  onDragLeave={dragHandlers.onDragLeave}
-                  onDrop={(e) => {
-                    // eslint-disable-next-line no-restricted-syntax
-                    const prevId = index === 0 ? null : (songs[index - 1]!.id as SongId);
-                    dragHandlers.onDrop(e, prevId);
-                  }}
                   onClick={(e) => {
                     // eslint-disable-next-line no-restricted-syntax
                     handleRowClick(e, song.id as SongId);

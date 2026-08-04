@@ -7,7 +7,7 @@ export interface DragDropHandlers {
   onDragLeave: (e: React.DragEvent<HTMLElement>) => void;
   onDrop: (e: React.DragEvent<HTMLElement>, dropAfterItemId: string | null) => void;
   onDragEnd: (e: React.DragEvent<HTMLElement>) => void;
-  onMouseUp: (e: React.MouseEvent<HTMLElement>) => void;
+  onMouseUp: (e: React.MouseEvent<HTMLElement>, dropAfterItemId: string | null) => void;
 }
 
 export interface UseDragAndDropReturn {
@@ -38,6 +38,7 @@ export function useDragAndDrop<T extends { id: string }>(
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const draggedItemIdRef = useRef<string | null>(null);
   const pendingReorderedItemsRef = useRef<T[] | null>(null);
+  const activeDropTargetIdRef = useRef<string | null>(null);
 
   const onDragStart = useCallback(
     (e: React.DragEvent<HTMLElement>, itemId: string) => {
@@ -48,6 +49,7 @@ export function useDragAndDrop<T extends { id: string }>(
 
       draggedItemIdRef.current = itemId;
       pendingReorderedItemsRef.current = null;
+      activeDropTargetIdRef.current = null;
       setDraggedItemId(itemId);
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", itemId);
@@ -101,6 +103,7 @@ export function useDragAndDrop<T extends { id: string }>(
         return;
       }
 
+      activeDropTargetIdRef.current = dropAfterItemId;
       const reordered = reorderItems(activeDraggedItemId, dropAfterItemId);
       pendingReorderedItemsRef.current = reordered;
       if (reordered && onPreviewReorder) {
@@ -124,19 +127,27 @@ export function useDragAndDrop<T extends { id: string }>(
     [enabled],
   );
 
-  const commitPendingReorder = useCallback((activeDraggedItemId: string | null) => {
-    const reordered = pendingReorderedItemsRef.current;
-    pendingReorderedItemsRef.current = null;
+  const commitPendingReorder = useCallback(
+    (activeDraggedItemId: string | null, dropAfterItemId: string | null = null) => {
+      const resolvedDropAfterItemId = dropAfterItemId ?? activeDropTargetIdRef.current;
+      const reordered = pendingReorderedItemsRef.current ??
+        (activeDraggedItemId ? reorderItems(activeDraggedItemId, resolvedDropAfterItemId) : null);
 
-    if (!reordered) {
-      return;
-    }
+      pendingReorderedItemsRef.current = null;
+      activeDropTargetIdRef.current = null;
 
-    onReorder(reordered, activeDraggedItemId, null);
-  }, [onReorder]);
+      if (!reordered) {
+        return;
+      }
+
+      onReorder(reordered, activeDraggedItemId, resolvedDropAfterItemId);
+    },
+    [onReorder, reorderItems],
+  );
 
   const clearDragState = useCallback(() => {
     draggedItemIdRef.current = null;
+    activeDropTargetIdRef.current = null;
     setDraggedItemId(null);
   }, []);
 
@@ -162,7 +173,7 @@ export function useDragAndDrop<T extends { id: string }>(
         return;
       }
 
-      commitPendingReorder(activeDraggedItemId);
+      commitPendingReorder(activeDraggedItemId, dropAfterItemId);
     },
     [clearDragState, commitPendingReorder, enabled, reorderItems],
   );
@@ -176,7 +187,7 @@ export function useDragAndDrop<T extends { id: string }>(
       e.preventDefault();
       const activeDraggedItemId = draggedItemIdRef.current;
       clearDragState();
-      commitPendingReorder(activeDraggedItemId);
+      commitPendingReorder(activeDraggedItemId, null);
     },
     [clearDragState, commitPendingReorder, enabled],
   );
@@ -186,16 +197,21 @@ export function useDragAndDrop<T extends { id: string }>(
       return;
     }
 
-    const handleWindowMouseUp = () => {
+    const handleGlobalMouseUp = (e: MouseEvent) => {
+      const target = e.target;
+      const dropAfterItemId =
+        (target instanceof HTMLElement
+          ? target.closest("[data-drag-item-id]")?.getAttribute("data-drag-item-id")
+          : null) ?? activeDropTargetIdRef.current;
       const activeDraggedItemId = draggedItemIdRef.current;
       clearDragState();
-      commitPendingReorder(activeDraggedItemId);
+      commitPendingReorder(activeDraggedItemId, dropAfterItemId);
     };
 
-    window.addEventListener("mouseup", handleWindowMouseUp);
+    window.addEventListener("mouseup", handleGlobalMouseUp);
 
     return () => {
-      window.removeEventListener("mouseup", handleWindowMouseUp);
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
     };
   }, [clearDragState, commitPendingReorder, enabled]);
 
@@ -207,8 +223,10 @@ export function useDragAndDrop<T extends { id: string }>(
 
       e.preventDefault();
       const activeDraggedItemId = draggedItemIdRef.current;
+      const dropAfterItemId =
+        e.currentTarget.getAttribute("data-drag-item-id") ?? activeDropTargetIdRef.current;
       clearDragState();
-      commitPendingReorder(activeDraggedItemId);
+      commitPendingReorder(activeDraggedItemId, dropAfterItemId);
     },
     [clearDragState, commitPendingReorder, enabled],
   );

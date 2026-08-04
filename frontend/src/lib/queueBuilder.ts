@@ -31,13 +31,13 @@ export async function buildAlbumQueue(
 
 /**
  * Build a queue from a playlist, filtering by playbackEnabled
- * Returns songs in playlist order
+ * Preserves the current membership order returned by the playlist detail API.
  */
 export async function buildPlaylistQueue(playlistId: string): Promise<Song[]> {
   try {
     const playlist = await api.get(`/api/playlists/${playlistId}`, PlaylistDetailSchema);
 
-    // Filter by playbackEnabled, preserve playlist order
+    // Filter by playbackEnabled while preserving the API's current ordering.
     const playableSongs = (playlist.songs || [])
       // eslint-disable-next-line no-restricted-syntax
       .map((item) => item.song as Song)

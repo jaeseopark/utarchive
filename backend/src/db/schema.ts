@@ -178,10 +178,9 @@ export const playlistSongs = pgTable(
     songId: uuid("song_id")
       .notNull()
       .references(() => songs.id),
-    position: integer("position").notNull(),
   },
   (table) => ({
-    pk: primaryKey(table.playlistId, table.position),
+    pk: primaryKey(table.playlistId, table.songId),
   }),
 );
 
