@@ -1,17 +1,15 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type React from "react";
-import type { Song, SongListItem } from "../api/schemas";
-import type { SongId } from "../types/brands";
 
 export interface DragDropHandlers {
-  onDragStart: (e: React.DragEvent<HTMLElement>, songId: SongId) => void;
+  onDragStart: (e: React.DragEvent<HTMLElement>, itemId: string) => void;
   onDragOver: (e: React.DragEvent<HTMLElement>) => void;
   onDragLeave: (e: React.DragEvent<HTMLElement>) => void;
-  onDrop: (e: React.DragEvent<HTMLElement>, dropAfterSongId: SongId | null) => void;
+  onDrop: (e: React.DragEvent<HTMLElement>, dropAfterItemId: string | null) => void;
 }
 
 export interface UseDragAndDropReturn {
-  draggedItemId: SongId | null;
+  draggedItemId: string | null;
   handlers: DragDropHandlers;
 }
 
@@ -24,23 +22,26 @@ export interface UseDragAndDropReturn {
  * @param onReorder - Callback when items are reordered
  * @param enabled - Whether drag-and-drop is enabled (default: true)
  */
-export function useDragAndDrop(
-  items: (Song | SongListItem)[],
-  onReorder: (reorderedItems: (Song | SongListItem)[]) => void,
+export function useDragAndDrop<T extends { id: string }>(
+  items: T[],
+  getItemId: (item: T) => string,
+  onReorder: (reorderedItems: T[]) => void,
   enabled: boolean = true,
 ): UseDragAndDropReturn {
-  const [draggedItemId, setDraggedItemId] = useState<SongId | null>(null);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const draggedItemIdRef = useRef<string | null>(null);
 
   const onDragStart = useCallback(
-    (e: React.DragEvent<HTMLElement>, songId: SongId) => {
+    (e: React.DragEvent<HTMLElement>, itemId: string) => {
       if (!enabled) {
         e.preventDefault();
         return;
       }
 
-      setDraggedItemId(songId);
+      draggedItemIdRef.current = itemId;
+      setDraggedItemId(itemId);
       e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", songId);
+      e.dataTransfer.setData("text/plain", itemId);
     },
     [enabled],
   );
@@ -72,25 +73,32 @@ export function useDragAndDrop(
   );
 
   const onDrop = useCallback(
-    (e: React.DragEvent<HTMLElement>, dropAfterSongId: SongId | null) => {
+    (e: React.DragEvent<HTMLElement>, dropAfterItemId: string | null) => {
       if (!enabled) {
         e.preventDefault();
         return;
       }
 
       e.preventDefault();
+
+      const activeDraggedItemId = draggedItemIdRef.current;
+      draggedItemIdRef.current = null;
       setDraggedItemId(null);
 
+      if (!activeDraggedItemId) {
+        return;
+      }
+
       // Find indices
-      const draggedIndex = items.findIndex((item) => item.id === draggedItemId);
-      let dropIndex = items.findIndex((item) => item.id === dropAfterSongId);
+      const draggedIndex = items.findIndex((item) => getItemId(item) === activeDraggedItemId);
+      let dropIndex = items.findIndex((item) => getItemId(item) === dropAfterItemId);
 
       if (draggedIndex < 0) {
         return;
       }
 
-      // dropAfterSongId is null means drop at the beginning
-      if (dropAfterSongId === null) {
+      // dropAfterItemId is null means drop at the beginning
+      if (dropAfterItemId === null) {
         dropIndex = -1;
       } else if (dropIndex < 0) {
         return;
@@ -111,7 +119,7 @@ export function useDragAndDrop(
 
       onReorder(reordered);
     },
-    [enabled, items, draggedItemId, onReorder],
+    [enabled, items, draggedItemId, getItemId, onReorder],
   );
 
   return {

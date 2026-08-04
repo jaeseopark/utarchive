@@ -4,12 +4,19 @@ import { api } from "../api/client";
 import { Button } from "../components/ui/Button";
 import { z } from "zod";
 import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
+import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useSongSelectorModal } from "../components/SongSelector";
 import { useSongSelection } from "../hooks/useSongSelection";
 import { SongActionsDropdown } from "../components/SongTable";
 import { buildPlaylistQueue } from "../lib/queueBuilder";
 import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
+import { type PlaylistSong } from "../stores/usePlaylistsStore";
+
+type PlaylistSongRow = {
+  id: SongId;
+  item: PlaylistSong;
+};
 
 function PlaylistDetailPage() {
   const { id } = useParams<"id">();
@@ -18,6 +25,7 @@ function PlaylistDetailPage() {
     usePlaylistDetail(toBrandId<PlaylistId>(id || ""));
 
   const [draftName, setDraftName] = useState("");
+  const [orderedSongs, setOrderedSongs] = useState<PlaylistSong[]>([]);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
@@ -49,6 +57,7 @@ function PlaylistDetailPage() {
   useEffect(() => {
     if (playlist) {
       setDraftName(playlist.name);
+      setOrderedSongs(playlist.songs);
     }
   }, [playlist]);
 
@@ -94,14 +103,13 @@ function PlaylistDetailPage() {
     }
   };
 
-  const handleReorder = async (currentIndex: number, nextIndex: number) => {
+  const handleReorder = async (reorderedRows: PlaylistSongRow[]) => {
     if (!playlist || !id) {
       return;
     }
 
-    const nextSongs = [...playlist.songs];
-    const [moved] = nextSongs.splice(currentIndex, 1);
-    nextSongs.splice(nextIndex, 0, moved);
+    const nextSongs = reorderedRows.map((row) => row.item);
+    setOrderedSongs(nextSongs);
 
     const songIds = nextSongs.map((item) => item.song.id);
 
@@ -115,9 +123,16 @@ function PlaylistDetailPage() {
         }),
       );
     } catch {
-      // Handle error
+      setOrderedSongs(playlist.songs);
     }
   };
+
+  const { handlers: dragHandlers } = useDragAndDrop(
+    orderedSongs.map((item) => ({ id: item.song.id, item })),
+    (row) => row.id,
+    handleReorder,
+    Boolean(playlist),
+  );
 
   const handlePlayPlaylist = async () => {
     if (!playlist || !playlist.songs.length) {
@@ -141,7 +156,7 @@ function PlaylistDetailPage() {
     }
   };
 
-  const playlistSongs = playlist?.songs ?? [];
+  const playlistSongs = orderedSongs;
 
   // Selection and bulk operations - convert to minimal song-like objects for selection
   const {
@@ -263,17 +278,26 @@ function PlaylistDetailPage() {
                     <thead className="border-b border-slate-300 text-slate-600">
                       <tr>
                         <th className="px-4 py-3">#</th>
+                        <th className="px-2 py-3 text-slate-400">⋮⋮</th>
                         <th className="px-4 py-3">Title</th>
                         <th className="px-4 py-3">Playback Enabled</th>
                         <th className="px-4 py-3">Actions</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody onDragOver={dragHandlers.onDragOver}>
                       {playlistSongs.map((item, index) => {
                         const isSelected = selectionState.selectedIds.has(item.song.id);
                         return (
                           <tr
                             key={item.song.id}
+                            draggable
+                            onDragStart={(event) => {
+                              dragHandlers.onDragStart(event, item.song.id);
+                            }}
+                            onDragLeave={dragHandlers.onDragLeave}
+                            onDrop={(event) => {
+                              dragHandlers.onDrop(event, item.song.id);
+                            }}
                             onClick={() => toggleSelection(item.song.id, false)}
                             onDoubleClick={() => {
                               // Play the song on double-click if playback is enabled
@@ -287,6 +311,7 @@ function PlaylistDetailPage() {
                             }`}
                           >
                             <td className="px-4 py-4 text-slate-700">{index + 1}</td>
+                            <td className="px-2 py-4 text-slate-400">⋮⋮</td>
                             <td className="px-4 py-4">
                               <Link
                                 to={`/songs/${item.song.id}`}
@@ -313,22 +338,6 @@ function PlaylistDetailPage() {
                                   ▶ Play
                                 </Button>
                               )}
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                disabled={index === 0}
-                                onClick={() => handleReorder(index, index - 1)}
-                              >
-                                Up
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                disabled={index === playlistSongs.length - 1}
-                                onClick={() => handleReorder(index, index + 1)}
-                              >
-                                Down
-                              </Button>
                               <Button
                                 type="button"
                                 variant="secondary"

@@ -144,7 +144,12 @@ export function SongTable({
   } = useSongSelection(songs);
 
   // Drag-and-drop reordering (always called, enabled parameter gates functionality)
-  const { handlers: dragHandlers } = useDragAndDrop(songs, onReorder || (() => {}), reorderable);
+  const { handlers: dragHandlers } = useDragAndDrop(
+    songs,
+    (song) => song.id,
+    onReorder || (() => {}),
+    reorderable,
+  );
 
   // Mouse event handlers (selection, context menu)
   const { handleRowClick, handleContextMenu, handleCloseContextMenu, contextMenuPos } =
