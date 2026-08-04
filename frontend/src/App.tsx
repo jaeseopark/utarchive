@@ -14,6 +14,8 @@ import PlaylistsPage from "./pages/PlaylistsPage";
 import PlaylistDetailPage from "./pages/PlaylistDetailPage";
 import SearchPage from "./pages/SearchPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import SettingsPage from "./pages/SettingsPage";
+import { SETTINGS_DEFAULT_ROUTE_PATH, SETTINGS_ROUTES } from "./pages/settings/routes";
 
 function App() {
   // Initialize WebSocket message handlers and cleanup
@@ -44,6 +46,13 @@ function App() {
         <Route path="playlists/:id" element={<PlaylistDetailPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="settings/*" element={<SettingsPage />}>
+          <Route index element={<Navigate to={SETTINGS_DEFAULT_ROUTE_PATH} replace />} />
+          {SETTINGS_ROUTES.map(({ path, Component }) => (
+            <Route key={path} path={path} element={<Component />} />
+          ))}
+          <Route path="*" element={<Navigate to={SETTINGS_DEFAULT_ROUTE_PATH} replace />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/songs" replace />} />
     </Routes>

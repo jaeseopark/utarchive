@@ -10,6 +10,7 @@ const navItems = [
   { to: "/playlists", label: "Playlists" },
   { to: "/songs", label: "Songs" },
   { to: "/search", label: "Search" },
+  { to: "/settings", label: "Settings" },
 ];
 
 function RootLayout() {
