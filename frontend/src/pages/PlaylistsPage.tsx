@@ -1,7 +1,7 @@
 import { useMemo, useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import { usePlaylistsStore } from "../stores/usePlaylistsStore";
+import { usePlaylistsStore, usePlaylistsStoreSetup } from "../stores/usePlaylistsStore";
 
 function PlaylistsPage() {
   const playlists = usePlaylistsStore((state) => state.playlists);
@@ -15,13 +15,21 @@ function PlaylistsPage() {
 
   const hasPlaylists = playlists.length > 0;
 
-  const handleCreatePlaylist = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const id = await createPlaylist(playlistName);
-    if (id) {
+  // Set up callback for when a playlist is created on this tab
+  usePlaylistsStoreSetup({
+    onPlaylistCreated: (id) => {
       setPlaylistName("");
       setIsModalOpen(false);
       navigate(`/playlists/${id}`);
+    },
+  });
+
+  const handleCreatePlaylist = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    try {
+      await createPlaylist(playlistName);
+    } catch {
+      // Error is already set in store
     }
   };
 

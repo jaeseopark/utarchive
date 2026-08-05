@@ -13,6 +13,12 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Unique identifier for this browser tab instance
+ * Generated once at module load time (app startup)
+ */
+export const currentOriginId: string = uuidv4();
+
 async function parseJson(response: Response) {
   const text = await response.text();
   if (!text) {
@@ -120,11 +126,18 @@ async function request<T>(
   const requestId = uuidv4();
   registerRequestId(requestId);
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-Request-ID": requestId,
+  };
+
+  // Add origin ID header
+  headers["X-Origin-ID"] = currentOriginId;
+
   const response = await fetch(input, {
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
-      "X-Request-ID": requestId,
+      ...headers,
       ...init.headers,
     },
     ...init,

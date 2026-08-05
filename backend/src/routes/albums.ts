@@ -62,6 +62,7 @@ router.get("/", validateRequest(listAlbumsQuerySchema, "query"), async (req, res
 router.post("/", validateRequest(albumCreateSchema), async (req, res) => {
   const albumData = albumCreateSchema.parse(req.body);
   const requestId = req.requestId;
+  const originId = req.originId;
 
   const createdAlbum = await createAlbum(albumData);
 
@@ -76,6 +77,7 @@ router.post("/", validateRequest(albumCreateSchema), async (req, res) => {
         created: [createdAlbum],
       },
       requestId,
+      originId,
     };
     broadcastMessage(wss, message);
   }
@@ -97,6 +99,7 @@ router.patch("/:id", validateRequest(albumUpdateSchema), async (req, res) => {
   const updateData = albumUpdateSchema.parse(req.body);
   const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const requestId = req.requestId;
+  const originId = req.originId;
 
   if (Object.keys(updateData).length === 0) {
     return res.status(400).json({ error: "No update fields provided" });
@@ -122,6 +125,7 @@ router.patch("/:id", validateRequest(albumUpdateSchema), async (req, res) => {
         updated: [updatedAlbum],
       },
       requestId,
+      originId,
     };
     broadcastMessage(wss, message);
   }
@@ -134,6 +138,7 @@ router.put("/:id/songs/:songId", validateRequest(albumSongSchema), async (req, r
   const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const songId = Array.isArray(req.params.songId) ? req.params.songId[0] : req.params.songId;
   const requestId = req.requestId;
+  const originId = req.originId;
 
   try {
     await upsertAlbumSong(albumId, songId, trackNumber);
@@ -156,6 +161,7 @@ router.put("/:id/songs/:songId", validateRequest(albumSongSchema), async (req, r
           updated: [updatedAlbum],
         },
         requestId,
+        originId,
       };
       broadcastMessage(wss, message);
     }
@@ -180,6 +186,7 @@ router.delete("/:id/songs/:songId", async (req, res) => {
   const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const songId = Array.isArray(req.params.songId) ? req.params.songId[0] : req.params.songId;
   const requestId = req.requestId;
+  const originId = req.originId;
   const deleted = await deleteAlbumSong(albumId, songId);
 
   if (!deleted) {
@@ -205,6 +212,7 @@ router.delete("/:id/songs/:songId", async (req, res) => {
         updated: [updatedAlbum],
       },
       requestId,
+      originId,
     };
     broadcastMessage(wss, message);
   }

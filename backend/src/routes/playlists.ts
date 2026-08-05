@@ -55,6 +55,7 @@ router.post("/", validateRequest(playlistCreateSchema), async (req, res) => {
   const { name } = playlistCreateSchema.parse(req.body);
   const playlist = await insertPlaylist(name);
   const requestId = req.requestId;
+  const originId = req.originId;
 
   // Broadcast to all connected clients
   const wss = req.app.locals.wss;
@@ -67,6 +68,7 @@ router.post("/", validateRequest(playlistCreateSchema), async (req, res) => {
         created: [playlist],
       },
       requestId,
+      originId,
     };
     broadcastMessage(wss, message);
   }
@@ -129,6 +131,7 @@ router.patch("/:id/songs", validateRequest(playlistUpsertSongsSchema), async (re
   const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const { songIds } = playlistUpsertSongsSchema.parse(req.body);
   const requestId = req.requestId;
+  const originId = req.originId;
 
   try {
     const result = await upsertPlaylistSongs(playlistId, songIds);
@@ -145,6 +148,7 @@ router.patch("/:id/songs", validateRequest(playlistUpsertSongsSchema), async (re
           updated: [updatedPlaylist],
         },
         requestId,
+        originId,
       };
       broadcastMessage(wss, message);
     }

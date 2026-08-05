@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useEffect } from "react";
 import { z } from "zod";
 import { api } from "../api/client";
 import { withStoreLoadingSilent } from "../api/middleware";
@@ -55,14 +56,14 @@ export interface PlaylistsState {
   getPlaylistDetail: (id: PlaylistId) => PlaylistDetail | undefined;
 
   // Actions - Mutations
-  createPlaylist: (name: string) => Promise<PlaylistId | null>;
+  createPlaylist: (name: string) => Promise<void>;
   updatePlaylist: (id: PlaylistId, name: string) => Promise<void>;
   deletePlaylist: (id: PlaylistId) => Promise<void>;
   addSongsToPlaylist: (playlistId: PlaylistId, songIds: SongId[]) => Promise<void>;
   removeSongFromPlaylist: (playlistId: PlaylistId, songId: SongId) => Promise<void>;
 
   // Actions - Remote Updates (WebSocket)
-  addPlaylist: (playlist: Playlist) => void;
+  addPlaylist: (playlist: Playlist, isOwnOrigin?: boolean) => void;
   updatePlaylistFromRemote: (
     id: PlaylistId,
     updates: Partial<Playlist> & Partial<PlaylistDetail>,
@@ -72,18 +73,28 @@ export interface PlaylistsState {
   // Actions - State
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  _setPlaylistCreatedCallback: (callback: ((id: PlaylistId) => void) | null) => void;
 }
 
-export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
-  playlists: [],
-  playlistDetailsMap: new Map(),
-  playlistDetails: {},
-  songCounts: {},
-  isLoading: false,
-  error: null,
+type PlaylistNavigationCallback = (id: PlaylistId) => void;
 
-  setLoading: (loading: boolean) => set({ isLoading: loading }),
-  setError: (error: string | null) => set({ error }),
+const _usePlaylistsStoreBase = create<PlaylistsState>((set, get) => {
+  let playlistCreatedCallback: PlaylistNavigationCallback | null = null;
+
+  return {
+    playlists: [],
+    playlistDetailsMap: new Map(),
+    playlistDetails: {},
+    songCounts: {},
+    isLoading: false,
+    error: null,
+
+    setLoading: (loading: boolean) => set({ isLoading: loading }),
+    setError: (error: string | null) => set({ error }),
+
+    _setPlaylistCreatedCallback: (callback: PlaylistNavigationCallback | null) => {
+      playlistCreatedCallback = callback;
+    },
 
   // Fetch all playlists
   fetchPlaylists: async () => {
@@ -178,16 +189,15 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     const trimmedName = name.trim();
     if (!trimmedName) {
       set({ error: "Playlist name cannot be empty" });
-      return null;
+      return;
     }
 
     try {
-      const newPlaylist = await api.post("/api/playlists", { name: trimmedName }, PlaylistSchema);
-      return newPlaylist.id;
+      await api.post("/api/playlists", { name: trimmedName }, PlaylistSchema);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create playlist";
       set({ error: message });
-      return null;
+      throw error;
     }
   },
 
@@ -250,12 +260,17 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     );
   },
 
-  // Remote update handlers (for WebSocket)
-  addPlaylist: (playlist: Playlist) => {
-    set((state) => ({
-      playlists: [...state.playlists, playlist],
-      songCounts: {
-        ...state.songCounts,
+    // Remote update handlers (for WebSocket)
+    addPlaylist: (playlist: Playlist, isOwnOrigin?: boolean) => {
+      // If this playlist was created by our own tab (originId matches), call the callback
+      if (isOwnOrigin && playlistCreatedCallback) {
+        playlistCreatedCallback(playlist.id);
+      }
+
+      set((state) => ({
+        playlists: [...state.playlists, playlist],
+        songCounts: {
+          ...state.songCounts,
         [playlist.id]: 0,
       },
     }));
@@ -296,4 +311,35 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
       };
     });
   },
-}));
+  };
+});
+
+/**
+ * Options for configuring playlists store
+ */
+export interface PlaylistsStoreOptions {
+  onPlaylistCreated?: (id: PlaylistId) => void;
+}
+
+/**
+ * Hook to configure playlists store with callbacks
+ * Must be called at the component level that wants to listen for playlist creation events
+ */
+export function usePlaylistsStoreSetup(options?: PlaylistsStoreOptions) {
+  const setCallback = _usePlaylistsStoreBase((state) => state._setPlaylistCreatedCallback);
+
+  useEffect(() => {
+    if (options?.onPlaylistCreated) {
+      setCallback(options.onPlaylistCreated);
+    }
+
+    return () => {
+      setCallback(null);
+    };
+  }, [options?.onPlaylistCreated, setCallback]);
+}
+
+/**
+ * Direct export of the playlists store hook for use in components
+ */
+export { _usePlaylistsStoreBase as usePlaylistsStore };

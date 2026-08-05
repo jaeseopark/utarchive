@@ -18,6 +18,7 @@ export interface WebSocketMessage {
   timestamp: number;
   data?: unknown;
   requestId?: string;
+  originId?: string;
   error?: string;
 }
 
@@ -36,6 +37,7 @@ export interface DataChangedMessage extends WebSocketMessage {
     deleted?: Array<{ id: string }>;
   };
   requestId?: string;
+  originId?: string;
 }
 
 export interface PingMessage extends WebSocketMessage {

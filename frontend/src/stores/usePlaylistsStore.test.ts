@@ -66,9 +66,15 @@ describe("usePlaylistsStore", () => {
       createdAt: new Date().toISOString(),
     });
 
-    const createdId = await usePlaylistsStore.getState().createPlaylist("New Playlist");
+    await usePlaylistsStore.getState().createPlaylist("New Playlist");
 
-    expect(createdId).toBe(playlistId);
+    // Verify the API was called with the correct data
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      "/api/playlists",
+      { name: "New Playlist" },
+      expect.anything(),
+    );
+    // Store should not be mutated directly - updates come from WebSocket
     expect(usePlaylistsStore.getState().playlists).toEqual([]);
   });
 

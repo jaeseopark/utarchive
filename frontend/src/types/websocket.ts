@@ -17,6 +17,7 @@ export interface WebSocketMessage {
   timestamp: number;
   data?: unknown;
   requestId?: string;
+  originId?: string;
   error?: string;
 }
 
@@ -29,6 +30,7 @@ export interface DataChangedMessage extends WebSocketMessage {
     deleted?: Array<{ id: string }>;
   };
   requestId?: string;
+  originId?: string;
 }
 
 export interface UserConfigChangedMessage extends WebSocketMessage {
@@ -68,6 +70,7 @@ export const WebSocketMessageSchema: z.ZodType<WebSocketMessage> = z.lazy(() =>
       timestamp: z.number(),
       data: z.unknown().optional(),
       requestId: z.string().optional(),
+      originId: z.string().optional(),
       error: z.string().optional(),
     })
     .strict(),
@@ -84,6 +87,7 @@ export const DataChangedMessageSchema: z.ZodType<DataChangedMessage> = z
       deleted: z.array(z.object({ id: z.string() })).optional(),
     }),
     requestId: z.string().optional(),
+    originId: z.string().optional(),
   })
   .strict();
 
