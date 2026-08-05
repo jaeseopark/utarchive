@@ -1,8 +1,7 @@
-import { useMemo, useState, FormEvent, useEffect } from "react";
+import { useMemo, useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import { usePlaylistsStore } from "../stores/usePlaylistsStore";
-import { useUIIdentifier } from "../context/UIIdentifierContext";
+import { usePlaylistsStore, usePlaylistsStoreSetup } from "../stores/usePlaylistsStore";
 
 function PlaylistsPage() {
   const playlists = usePlaylistsStore((state) => state.playlists);
@@ -10,34 +9,25 @@ function PlaylistsPage() {
   const isLoading = usePlaylistsStore((state) => state.isLoading);
   const error = usePlaylistsStore((state) => state.error);
   const { createPlaylist } = usePlaylistsStore();
-  // Initialize origin ID context (needed for websocket origin identification)
-  useUIIdentifier();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [playlistName, setPlaylistName] = useState("");
-  const [createdPlaylistName, setCreatedPlaylistName] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const hasPlaylists = playlists.length > 0;
 
-  // Watch for the newly created playlist and navigate to it
-  useEffect(() => {
-    if (createdPlaylistName) {
-      const newPlaylist = playlists.find((p) => p.name === createdPlaylistName);
-      if (newPlaylist) {
-        setCreatedPlaylistName(null);
-        setPlaylistName("");
-        setIsModalOpen(false);
-        navigate(`/playlists/${newPlaylist.id}`);
-      }
-    }
-  }, [playlists, createdPlaylistName, navigate]);
+  // Set up callback for when a playlist is created on this tab
+  usePlaylistsStoreSetup({
+    onPlaylistCreated: (id) => {
+      setPlaylistName("");
+      setIsModalOpen(false);
+      navigate(`/playlists/${id}`);
+    },
+  });
 
   const handleCreatePlaylist = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
       await createPlaylist(playlistName);
-      // Store the playlist name so we can watch for it to appear
-      setCreatedPlaylistName(playlistName);
     } catch {
       // Error is already set in store
     }

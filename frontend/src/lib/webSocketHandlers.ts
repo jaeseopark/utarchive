@@ -1,5 +1,6 @@
 import { DataChangedMessage, UserConfigChangedMessage } from "../types/websocket";
 import { isOwnRequest } from "./requestIdDeduplication";
+import { currentOriginId } from "../api/client";
 import { useSongsStore } from "../stores/useSongsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
@@ -111,7 +112,19 @@ export const handleDataChanged = (message: DataChangedMessage): void => {
 
   // Process creations last
   if (data.created && data.created.length > 0) {
-    updateStoreByAction(entity, "created", data.created);
+    // For playlists, check if this creation originated from our tab
+    if (entity === "playlist") {
+      // this logic is temporary. handling should be generalized/declaritive.
+      const isOwnOrigin = message.originId === currentOriginId;
+      data.created.forEach((item) => {
+        if (typeof item.id === "string") {
+          // eslint-disable-next-line no-restricted-syntax
+          usePlaylistsStore.getState().addPlaylist(item as never, isOwnOrigin);
+        }
+      });
+    } else {
+      updateStoreByAction(entity, "created", data.created);
+    }
   }
 };
 

@@ -14,13 +14,8 @@ vi.mock("../api/client", async () => {
       get: vi.fn(),
       post: vi.fn(),
     },
-    setCurrentUIId: vi.fn(),
   };
 });
-
-vi.mock("../context/UIIdentifierContext", () => ({
-  useUIIdentifier: () => ({ uiId: "test-ui-id" }),
-}));
 
 // eslint-disable-next-line no-restricted-syntax
 const mockedApi = api as unknown as {

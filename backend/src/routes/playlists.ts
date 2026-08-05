@@ -131,6 +131,7 @@ router.patch("/:id/songs", validateRequest(playlistUpsertSongsSchema), async (re
   const playlistId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const { songIds } = playlistUpsertSongsSchema.parse(req.body);
   const requestId = req.requestId;
+  const originId = req.originId;
 
   try {
     const result = await upsertPlaylistSongs(playlistId, songIds);
@@ -147,6 +148,7 @@ router.patch("/:id/songs", validateRequest(playlistUpsertSongsSchema), async (re
           updated: [updatedPlaylist],
         },
         requestId,
+        originId,
       };
       broadcastMessage(wss, message);
     }

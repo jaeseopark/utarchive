@@ -14,14 +14,10 @@ export class ApiError extends Error {
 }
 
 /**
- * Module-level storage for the current origin identifier
- * Set by UIIdentifierProvider during app initialization
+ * Unique identifier for this browser tab instance
+ * Generated once at module load time (app startup)
  */
-let currentOriginId: string | null = null;
-
-export function setCurrentOriginId(originId: string): void {
-  currentOriginId = originId;
-}
+export const currentOriginId: string = uuidv4();
 
 async function parseJson(response: Response) {
   const text = await response.text();
@@ -135,10 +131,8 @@ async function request<T>(
     "X-Request-ID": requestId,
   };
 
-  // Add origin ID header if available
-  if (currentOriginId) {
-    headers["X-Origin-ID"] = currentOriginId;
-  }
+  // Add origin ID header
+  headers["X-Origin-ID"] = currentOriginId;
 
   const response = await fetch(input, {
     credentials: "include",

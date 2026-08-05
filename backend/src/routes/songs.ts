@@ -187,6 +187,7 @@ router.post("/", validateRequest(songCreateSchema), async (req, res, next) => {
     const songData = songCreateSchema.parse(req.body);
     const artistIds = songData.artistIds;
     const requestId = req.requestId;
+    const originId = req.originId;
 
     const createdSong = await createSong(songData, artistIds);
 
@@ -202,6 +203,7 @@ router.post("/", validateRequest(songCreateSchema), async (req, res, next) => {
           created: [serializeForApiResponse(createdSong) as Record<string, unknown>],
         },
         requestId,
+        originId,
       };
       broadcastMessage(wss, message);
     }
@@ -248,6 +250,7 @@ router.patch("/:id", validateRequest(songUpdateSchema), async (req, res, next) =
     // ✅ PARAMETER VALIDATION FIX: Use Zod validation instead of Array.isArray
     const songId = z.string().uuid().parse(req.params.id);
     const requestId = req.requestId;
+    const originId = req.originId;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: "No update fields provided" });
@@ -271,6 +274,7 @@ router.patch("/:id", validateRequest(songUpdateSchema), async (req, res, next) =
           updated: [serializeForApiResponse(updatedSong) as Record<string, unknown>],
         },
         requestId,
+        originId,
       };
       broadcastMessage(wss, message);
     }
@@ -308,6 +312,7 @@ router.post("/:id/children", validateRequest(linkChildSchema), async (req, res, 
     const parentId = z.string().uuid().parse(req.params.id);
     const { childId } = linkChildSchema.parse(req.body);
     const requestId = req.requestId;
+    const originId = req.originId;
 
     const linkedChild = await linkChildToParent(childId, parentId);
 
@@ -323,6 +328,7 @@ router.post("/:id/children", validateRequest(linkChildSchema), async (req, res, 
           updated: [serializeForApiResponse(linkedChild) as Record<string, unknown>],
         },
         requestId,
+        originId,
       };
       broadcastMessage(wss, message);
     }
@@ -353,6 +359,7 @@ router.patch("/:id/tags", validateRequest(tagsUpdateSchema), async (req, res, ne
     // ✅ PARAMETER VALIDATION FIX: Use Zod validation instead of Array.isArray
     const songId = z.string().uuid().parse(req.params.id);
     const requestId = req.requestId;
+    const originId = req.originId;
 
     const updatedSong = await updateSongTags(songId, tags ?? []);
 
@@ -371,6 +378,7 @@ router.patch("/:id/tags", validateRequest(tagsUpdateSchema), async (req, res, ne
           updated: [{ id: updatedSong.id, tags: updatedSong.tags }],
         },
         requestId,
+        originId,
       };
       broadcastMessage(wss, message);
     }
@@ -484,6 +492,7 @@ router.post("/:id/audio", audioUpload.single("file"), async (req, res, next) => 
           updated: [serializeForApiResponse(updatedSong) as Record<string, unknown>],
         },
         requestId,
+        originId: req.originId,
       };
       broadcastMessage(wss, message);
     }

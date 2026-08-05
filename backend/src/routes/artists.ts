@@ -52,6 +52,7 @@ router.get("/", validateRequest(paginationSchema, "query"), async (req, res) => 
 router.post("/", validateRequest(artistCreateSchema), async (req, res) => {
   const artist = artistCreateSchema.parse(req.body);
   const requestId = req.requestId;
+  const originId = req.originId;
 
   const [createdArtist] = await insertArtist(artist);
 
@@ -67,6 +68,7 @@ router.post("/", validateRequest(artistCreateSchema), async (req, res) => {
         created: [serializeForApiResponse(createdArtist) as Record<string, unknown>],
       },
       requestId,
+      originId,
     };
     broadcastMessage(wss, message);
   }
@@ -88,6 +90,7 @@ router.patch("/:id", validateRequest(artistUpdateSchema), async (req, res) => {
   const updateData = artistUpdateSchema.parse(req.body);
   const artistId = String(req.params.id);
   const requestId = req.requestId;
+  const originId = req.originId;
 
   if (Object.keys(updateData).length === 0) {
     return res.status(400).json({ error: "No update fields provided" });
@@ -111,6 +114,7 @@ router.patch("/:id", validateRequest(artistUpdateSchema), async (req, res) => {
         updated: [serializeForApiResponse(updatedRows[0]) as Record<string, unknown>],
       },
       requestId,
+      originId,
     };
     broadcastMessage(wss, message);
   }
@@ -121,6 +125,7 @@ router.patch("/:id", validateRequest(artistUpdateSchema), async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const artistId = String(req.params.id);
   const requestId = req.requestId;
+  const originId = req.originId;
 
   const result = await deleteArtistById(artistId);
 
@@ -151,6 +156,7 @@ router.delete("/:id", async (req, res) => {
         deleted: [{ id: artistId }],
       },
       requestId,
+      originId,
     };
     broadcastMessage(wss, message);
   }
