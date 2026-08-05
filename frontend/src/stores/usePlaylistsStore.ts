@@ -55,7 +55,7 @@ export interface PlaylistsState {
   getPlaylistDetail: (id: PlaylistId) => PlaylistDetail | undefined;
 
   // Actions - Mutations
-  createPlaylist: (name: string) => Promise<PlaylistId | null>;
+  createPlaylist: (name: string) => Promise<void>;
   updatePlaylist: (id: PlaylistId, name: string) => Promise<void>;
   deletePlaylist: (id: PlaylistId) => Promise<void>;
   addSongsToPlaylist: (playlistId: PlaylistId, songIds: SongId[]) => Promise<void>;
@@ -178,16 +178,15 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     const trimmedName = name.trim();
     if (!trimmedName) {
       set({ error: "Playlist name cannot be empty" });
-      return null;
+      return;
     }
 
     try {
-      const newPlaylist = await api.post("/api/playlists", { name: trimmedName }, PlaylistSchema);
-      return newPlaylist.id;
+      await api.post("/api/playlists", { name: trimmedName }, PlaylistSchema);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create playlist";
       set({ error: message });
-      return null;
+      throw error;
     }
   },
 

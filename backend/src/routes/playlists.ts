@@ -55,6 +55,7 @@ router.post("/", validateRequest(playlistCreateSchema), async (req, res) => {
   const { name } = playlistCreateSchema.parse(req.body);
   const playlist = await insertPlaylist(name);
   const requestId = req.requestId;
+  const originId = req.originId;
 
   // Broadcast to all connected clients
   const wss = req.app.locals.wss;
@@ -67,6 +68,7 @@ router.post("/", validateRequest(playlistCreateSchema), async (req, res) => {
         created: [playlist],
       },
       requestId,
+      originId,
     };
     broadcastMessage(wss, message);
   }

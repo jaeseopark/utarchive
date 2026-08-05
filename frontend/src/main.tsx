@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { SessionProvider } from "./context/SessionContext";
 import { InitializationProvider } from "./context/InitializationContext";
+import { UIIdentifierProvider } from "./context/UIIdentifierContext";
 import { WebSocketProvider } from "./context/WebSocketContext";
 import { handleWebSocketMessage } from "./hooks/useWebSocketIntegration";
 import "./index.css";
@@ -12,11 +13,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <SessionProvider>
-        <InitializationProvider>
-          <WebSocketProvider onMessage={handleWebSocketMessage}>
-            <App />
-          </WebSocketProvider>
-        </InitializationProvider>
+        <UIIdentifierProvider>
+          <InitializationProvider>
+            <WebSocketProvider onMessage={handleWebSocketMessage}>
+              <App />
+            </WebSocketProvider>
+          </InitializationProvider>
+        </UIIdentifierProvider>
       </SessionProvider>
     </BrowserRouter>
   </React.StrictMode>,
