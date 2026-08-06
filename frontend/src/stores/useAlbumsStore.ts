@@ -212,6 +212,11 @@ const _useAlbumsStoreBase = create<AlbumsState>((set, get) => {
       };
     });
   },
+
+  // EntityStore interface methods (required by WebSocket handler)
+  add: ({ item }: { item: Album }) => get().addAlbum({ item }),
+  update: ({ id, updates }: { id: AlbumId; updates: Partial<Album> }) => get().updateAlbum({ id, updates }),
+  remove: ({ id }: { id: AlbumId }) => get().removeAlbum({ id }),
   };
 });
 

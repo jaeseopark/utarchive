@@ -104,7 +104,7 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
 
     switch (message.type) {
       case "DATA_CHANGED": {
-          handleDataChanged(message);
+          handleDataChanged(message as DataChangedMessage);
         break;
       }
 

@@ -9,17 +9,10 @@ import {
   type SongCreateInput,
 } from "../api/schemas";
 import { useSongCreation } from "../hooks/useSongCreation";
-import { useArtistsStore } from "../stores/useArtistsStore";
-import { useCreateArtist } from "../hooks/useCreateArtist";
 import { useAddSongModalStore } from "../stores/useAddSongModalStore";
 import { toBrandId, type SongId, type ArtistId, type CoverArtId } from "../types/brands";
+import { ArtistSelector } from "./ArtistSelector";
 import clsx from "clsx";
-
-type ArtistOption = {
-  value: string;
-  label: string;
-  isNew?: boolean;
-};
 
 type UrlOption = {
   value: string;
@@ -34,12 +27,7 @@ type TagOption = {
 export function AddSongModal() {
   const { isOpen, closeModal } = useAddSongModalStore();
   const { createSong, isLoading, error: creationError } = useSongCreation();
-  const artists = useArtistsStore((state) => state.artists);
-  const artistsLoaded = useArtistsStore((state) => state.isLoaded);
-  const { createArtist } = useCreateArtist();
 
-  const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
-  const [isCreatingArtist, setIsCreatingArtist] = useState(false);
   const [selectedUrls, setSelectedUrls] = useState<UrlOption[]>([]);
   const [selectedTags, setSelectedTags] = useState<TagOption[]>([]);
 
@@ -64,35 +52,23 @@ export function AddSongModal() {
   useEffect(() => {
     if (!isOpen) {
       reset();
-      setSelectedArtists([]);
       setSelectedUrls([]);
       setSelectedTags([]);
     }
   }, [isOpen, reset]);
 
-  // Update form artistIds whenever selectedArtists changes
-  useEffect(() => {
-    const artistIds = selectedArtists.map((a) => a.value);
-    setValue("artistIds", artistIds);
-  }, [selectedArtists, setValue]);
-
-  // Update form urls whenever selectedUrls changes
-  useEffect(() => {
-    const urls = selectedUrls.map((u) => u.value);
-    setValue("urls", urls);
-  }, [selectedUrls, setValue]);
+  const handleArtistsChange = useCallback(
+    (artistIds: string[]) => {
+      setValue("artistIds", artistIds);
+    },
+    [setValue],
+  );
 
   // Update form tags whenever selectedTags changes
   useEffect(() => {
     const tags = selectedTags.map((t) => t.value);
     setValue("tags", tags);
   }, [selectedTags, setValue]);
-
-  // Convert artists to options for CreatableSelect
-  const artistOptions: ArtistOption[] = artists.map((artist) => ({
-    value: artist.id,
-    label: artist.name,
-  }));
 
   const onSubmit = useCallback(
     async (formData: SongCreateFormInput) => {
@@ -115,7 +91,6 @@ export function AddSongModal() {
         // eslint-disable-next-line no-restricted-syntax
         await createSong(cleanedData as SongCreateInput);
         reset();
-        setSelectedArtists([]);
         closeModal();
       } catch {
         // Error is handled by the hook and displayed
@@ -126,38 +101,22 @@ export function AddSongModal() {
 
   const handleClear = useCallback(() => {
     reset();
-    setSelectedArtists([]);
     setSelectedUrls([]);
     setSelectedTags([]);
   }, [reset]);
 
   const handleCancel = useCallback(() => {
     reset();
-    setSelectedArtists([]);
     setSelectedUrls([]);
     setSelectedTags([]);
     closeModal();
   }, [closeModal, reset]);
 
-  // Handle artist creation
-  const handleCreateArtist = useCallback(
-    async (inputValue: string) => {
-      setIsCreatingArtist(true);
-      try {
-        const newArtist = await createArtist({ name: inputValue });
-        const newOption: ArtistOption = {
-          value: newArtist.id,
-          label: newArtist.name,
-        };
-        setSelectedArtists([...selectedArtists, newOption]);
-      } catch (error) {
-        console.error("Failed to create artist:", error);
-      } finally {
-        setIsCreatingArtist(false);
-      }
-    },
-    [selectedArtists, createArtist],
-  );
+  // Update form urls whenever selectedUrls changes
+  useEffect(() => {
+    const urls = selectedUrls.map((u) => u.value);
+    setValue("urls", urls);
+  }, [selectedUrls, setValue]);
 
   if (!isOpen) {
     return null;
@@ -189,53 +148,12 @@ export function AddSongModal() {
           </div>
 
           {/* Artist Selection */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700">Artists (optional)</label>
-            {!artistsLoaded ? (
-              <p className="mt-1 text-sm text-slate-500">Loading artists...</p>
-            ) : (
-              <div className="mt-1">
-                <CreatableSelect
-                  isMulti
-                  isClearable
-                  isDisabled={isCreatingArtist}
-                  isLoading={isCreatingArtist}
-                  options={artistOptions}
-                  value={selectedArtists}
-                  onChange={(newValue) => {
-                    setSelectedArtists(newValue ? Array.from(newValue) : []);
-                  }}
-                  onCreateOption={handleCreateArtist}
-                  formatCreateLabel={(inputValue) => `Create artist "${inputValue}"`}
-                  placeholder="Select or create artists..."
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                  styles={{
-                    control: (base, state) => ({
-                      ...base,
-                      boxShadow: state.isFocused ? "0 0 0 1px #0ea5e9" : "none",
-                      borderRadius: "0.5rem",
-                      minHeight: "2.5rem",
-                    }),
-                    multiValue: (base) => ({
-                      ...base,
-                      backgroundColor: "#dbeafe",
-                      borderRadius: "0.375rem",
-                    }),
-                    multiValueLabel: (base) => ({
-                      ...base,
-                      color: "#1e40af",
-                    }),
-                  }}
-                />
-              </div>
-            )}
-            {selectedArtists.length > 0 && (
-              <p className="mt-1 text-sm text-slate-600">
-                {selectedArtists.length} artist(s) selected
-              </p>
-            )}
-          </div>
+          <ArtistSelector
+            onArtistsChange={handleArtistsChange}
+            disabled={isLoading}
+            label="Artists"
+            placeholder="Select or create artists..."
+          />
 
           {/* Parent ID */}
           <div>

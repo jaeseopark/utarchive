@@ -313,6 +313,11 @@ const _usePlaylistsStoreBase = create<PlaylistsState>((set, get) => {
         };
       });
     },
+
+    // EntityStore interface methods (required by WebSocket handler)
+    add: ({ item }: { item: Playlist }) => get().addPlaylist({ item }),
+    update: ({ id, updates }: { id: PlaylistId; updates: Partial<Playlist> & Partial<PlaylistDetail> }) => get().updatePlaylistFromRemote({ id, updates }),
+    remove: ({ id }: { id: PlaylistId }) => get().removePlaylistFromRemote({ id }),
   };
 });
 

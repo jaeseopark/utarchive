@@ -55,6 +55,9 @@ export interface ArtistsState {
     hasMore: boolean;
   };
 
+  // Event listeners
+  listeners: Map<EntityEventType, Set<EntityListener<ArtistId>>>;
+
   // Actions
   fetchAllArtists: () => Promise<void>;
   fetchArtistDetail: (id: ArtistId) => Promise<void>;
@@ -83,6 +86,11 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
     limit: 50,
     hasMore: false,
   },
+  listeners: new Map<EntityEventType, Set<EntityListener<ArtistId>>>([
+    ['created', new Set()],
+    ['updated', new Set()],
+    ['deleted', new Set()],
+  ]),
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setLoading: (_loading: boolean) => {
@@ -166,6 +174,11 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
         artistMap: new Map(newArtists.map((a) => [a.id, a])),
       };
     });
+    // Emit 'created' event to listeners
+    const listeners = get().listeners.get('created');
+    if (listeners) {
+      listeners.forEach((callback) => callback(artist.id as ArtistId));
+    }
   },
 
   updateArtist: ({ id, updates }) => {
@@ -260,15 +273,32 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
     });
   },
 
-  subscribe: () => {
-    throw new Error('[Artists Store] Event listeners are not supported');
+  subscribe: ({ event, callback }) => {
+    set((state) => {
+      const eventListeners = state.listeners.get(event);
+      if (eventListeners) {
+        eventListeners.add(callback);
+      }
+      return state;
+    });
   },
 
-  unsubscribe: () => {
-    throw new Error('[Artists Store] Event listeners are not supported');
+  unsubscribe: ({ event, callback }) => {
+    set((state) => {
+      const eventListeners = state.listeners.get(event);
+      if (eventListeners) {
+        eventListeners.delete(callback);
+      }
+      return state;
+    });
   },
 
-  getListeners: () => {
-    throw new Error('[Artists Store] Event listeners are not supported');
+  getListeners: (event) => {
+    return get().listeners.get(event) || new Set();
   },
+
+  // EntityStore interface methods (required by WebSocket handler)
+  add: ({ item }: { item: Artist }) => get().addArtist({ item }),
+  update: ({ id, updates }: { id: ArtistId; updates: Partial<Artist> }) => get().updateArtist({ id, updates }),
+  remove: ({ id }: { id: ArtistId }) => get().removeArtist({ id }),
 }));

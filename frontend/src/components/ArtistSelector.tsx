@@ -1,18 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useCreateArtist } from "../hooks/useCreateArtist";
+import { type ArtistId } from "../types/brands";
 import clsx from "clsx";
 
 type ArtistOption = {
-  value: string;
+  value: ArtistId;
   label: string;
   isNew?: boolean;
 };
 
 interface ArtistSelectorProps {
   /** Called when selected artists change */
-  onArtistsChange: (artistIds: string[]) => void;
+  onArtistsChange: (artistIds: ArtistId[]) => void;
   /** Whether the selector should be disabled */
   disabled?: boolean;
   /** Whether artists are required */
@@ -22,7 +23,7 @@ interface ArtistSelectorProps {
   /** Optional custom label */
   label?: string;
   /** Initial selected artist IDs (useful for edit forms) */
-  initialArtistIds?: string[];
+  initialArtistIds?: ArtistId[];
   /** Custom className for the container */
   className?: string;
 }
@@ -40,28 +41,25 @@ export function ArtistSelector({
   const artistsLoaded = useArtistsStore((state) => state.isLoaded);
   const { createArtist } = useCreateArtist();
 
-  const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
+  // Initialize selected artists from props
+  const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>(() => {
+    if (initialArtistIds.length === 0 || artists.length === 0) return [];
+
+    return initialArtistIds
+      .map((id) => {
+        const artist = artists.find((a) => a.id === id);
+        return artist ? { value: artist.id, label: artist.name } : null;
+      })
+      .filter((option): option is ArtistOption => option !== null);
+  });
+
   const [isCreatingArtist, setIsCreatingArtist] = useState(false);
 
-  // Initialize selected artists if provided
+  // Keep a ref to current artists for use in the subscription callback
+  const artistsRef = useRef(artists);
   useEffect(() => {
-    if (initialArtistIds.length > 0 && artists.length > 0) {
-      const selected = initialArtistIds
-        .map((id) => {
-          const artist = artists.find((a) => a.id === id);
-          return artist
-            ? {
-                value: artist.id,
-                label: artist.name,
-              }
-            : null;
-        })
-        .filter((option): option is ArtistOption => option !== null);
-
-      setSelectedArtists(selected);
-      onArtistsChange(selected.map((a) => a.value));
-    }
-  }, []);
+    artistsRef.current = artists;
+  }, [artists]);
 
   // Notify parent when selected artists change
   useEffect(() => {
@@ -74,24 +72,44 @@ export function ArtistSelector({
     label: artist.name,
   }));
 
-  // Handle artist creation
-  const handleCreateArtist = useCallback(
-    async (inputValue: string) => {
-      setIsCreatingArtist(true);
-      try {
-        const newArtist = await createArtist({ name: inputValue });
+  // Subscribe to artist creation events for the lifetime of the component
+  useEffect(() => {
+    const onArtistCreated = (artistId: ArtistId) => {
+      const artist = artistsRef.current.find((a) => a.id === artistId);
+      if (artist) {
         const newOption: ArtistOption = {
-          value: newArtist.id,
-          label: newArtist.name,
+          value: artist.id,
+          label: artist.name,
         };
-        setSelectedArtists([...selectedArtists, newOption]);
-      } catch (error) {
-        console.error("Failed to create artist:", error);
-      } finally {
+        setSelectedArtists((prev) => [...prev, newOption]);
         setIsCreatingArtist(false);
       }
+    };
+
+    useArtistsStore.getState().subscribe({
+      event: 'created',
+      callback: onArtistCreated,
+    });
+
+    // Cleanup: unsubscribe when component unmounts
+    return () => {
+      useArtistsStore.getState().unsubscribe({
+        event: 'created',
+        callback: onArtistCreated,
+      });
+    };
+  }, []);
+
+  // Handle artist creation
+  const handleCreateArtist = useCallback(
+    (inputValue: string) => {
+      setIsCreatingArtist(true);
+      createArtist({ name: inputValue }).catch((error) => {
+        console.error("Failed to create artist:", error);
+        setIsCreatingArtist(false);
+      });
     },
-    [selectedArtists, createArtist],
+    [createArtist],
   );
 
   return (

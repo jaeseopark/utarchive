@@ -242,4 +242,9 @@ export const useSongsStore = create<SongsState>((set, get) => ({
   getListeners: () => {
     throw new Error('[Songs Store] Event listeners are not supported');
   },
+
+  // EntityStore interface methods (required by WebSocket handler)
+  add: ({ item }: { item: Song }) => get().addSong({ item }),
+  update: ({ id, updates }: { id: SongId; updates: Partial<Song> }) => get().updateSong({ id, updates }),
+  remove: ({ id }: { id: SongId }) => get().removeSong({ id }),
 }));

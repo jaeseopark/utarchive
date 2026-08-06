@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "./ui/Button";
@@ -9,6 +10,7 @@ import {
 } from "../api/schemas";
 import { useAlbumCreation } from "../hooks/useAlbumCreation";
 import { useAddAlbumModalStore } from "../stores/useAddAlbumModalStore";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { toBrandId, type ArtistId, type SongId, type CoverArtId } from "../types/brands";
 import { TrackListEditor } from "./TrackListEditor";
 import { useSongSelectorModal } from "./SongSelector";
@@ -19,6 +21,9 @@ import clsx from "clsx";
 export function AddAlbumModal() {
   const { isOpen, closeModal } = useAddAlbumModalStore();
   const { createAlbum, isLoading, error: creationError } = useAlbumCreation();
+  const navigate = useNavigate();
+  const subscribe = useAlbumsStore((state) => state.subscribe);
+  const unsubscribe = useAlbumsStore((state) => state.unsubscribe);
 
   const [tracks, setTracks] = useState<NumberedTrack[]>([]);
   const [trackNumberForSongSelect, setTrackNumberForSongSelect] = useState<number | null>(null);
@@ -71,6 +76,25 @@ export function AddAlbumModal() {
       setTrackNumberForSongSelect(null);
     }
   }, [isOpen, reset]);
+
+  // Subscribe to album creation events to close modal and navigate
+  useEffect(() => {
+    const handleAlbumCreated = (id: string) => {
+      // Close modal and reset state
+      closeModal();
+      reset();
+      setTracks([]);
+      
+      // Navigate to the newly created album
+      navigate(`/albums/${id}`);
+    };
+
+    subscribe({ event: 'created', callback: handleAlbumCreated });
+
+    return () => {
+      unsubscribe({ event: 'created', callback: handleAlbumCreated });
+    };
+  }, [navigate, closeModal, reset, subscribe, unsubscribe]);
 
   const handleArtistsChange = useCallback(
     (artistIds: string[]) => {
@@ -136,21 +160,25 @@ export function AddAlbumModal() {
 
       // eslint-disable-next-line no-restricted-syntax
       createAlbum(cleanedData as AlbumCreateInput);
-    } catch {
+      // Modal close and navigation handled by useEffect subscription to 'created' event
+    } catch (err) {
       // Error is handled by the hook and displayed
+      console.error("Failed to create album:", err);
     }
   };
 
   const handleClear = useCallback(() => {
     reset();
+    setValue("artistIds", []);
     setTracks([]);
-  }, [reset]);
+  }, [reset, setValue]);
 
   const handleCancel = useCallback(() => {
     reset();
+    setValue("artistIds", []);
     setTracks([]);
     closeModal();
-  }, [closeModal, reset]);
+  }, [closeModal, reset, setValue]);
 
   const handleSelectExistingSong = useCallback(
     (trackNumber: number) => {
