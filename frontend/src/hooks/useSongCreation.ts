@@ -21,7 +21,7 @@ export function useSongCreation() {
       try {
         const response = await api.post("/api/songs", data, SongSchema);
         addSongDetail(response);
-        addSong(response); // Add to songs list for immediate display
+        addSong({ item: response }); // Add to songs list for immediate display
 
         // Update song count for each artist associated with this song
         if (response.artistIds && response.artistIds.length > 0) {

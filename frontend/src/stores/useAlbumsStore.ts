@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import { withStoreLoadingSilent } from "../api/middleware";
 import { AlbumListItemSchema, AlbumSchema, type Album, type AlbumListItem } from "../api/schemas";
 import { type AlbumId } from "../types/brands";
+import type { EntityListener, EntityEventType } from "../types/entityStore";
 
 const AlbumsListResponseSchema = z.object({
   albums: z.array(AlbumListItemSchema),
@@ -31,33 +32,56 @@ export interface AlbumsState {
   fetchAllAlbums: () => Promise<void>;
   fetchAlbumDetail: (id: AlbumId) => Promise<void>;
   getAlbum: (id: AlbumId) => Album | undefined;
-  addAlbum: (album: Album) => void;
-  updateAlbum: (id: AlbumId, updates: Partial<Album>) => void;
-  removeAlbum: (id: AlbumId) => void;
+  addAlbum: (params: { item: Album }) => void;
+  updateAlbum: (params: { id: AlbumId; updates: Partial<Album> }) => void;
+  removeAlbum: (params: { id: AlbumId }) => void;
   setError: (error: string | null) => void;
   // Internal methods (for detail fetches)
   setLoading: (loading: boolean) => void;
+  subscribe: (options: { event: EntityEventType; callback: EntityListener<AlbumId> }) => void;
+  unsubscribe: (options: { event: EntityEventType; callback: EntityListener<AlbumId> }) => void;
+  getListeners: (event: EntityEventType) => Set<EntityListener<AlbumId>>;
 }
 
-export const useAlbumsStore = create<AlbumsState>((set, get) => ({
-  albums: [],
-  albumsMap: new Map(),
-  albumDetails: {},
-  albumDetailsMap: new Map(),
-  isLoaded: false,
-  error: null,
-  pagination: {
-    page: 0,
-    limit: 50,
-    hasMore: false,
-  },
+const _useAlbumsStoreBase = create<AlbumsState>((set, get) => {
+  const listeners: Record<EntityEventType, Set<EntityListener<AlbumId>>> = {
+    created: new Set(),
+    updated: new Set(),
+    deleted: new Set(),
+  };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setLoading: (_loading: boolean) => {
-    // No-op: detail fetches are silent and don't affect isLoaded
-    // isLoaded only reflects the state of fetchAllAlbums
-  },
-  setError: (error: string | null) => set({ error }),
+  return {
+    albums: [],
+    albumsMap: new Map(),
+    albumDetails: {},
+    albumDetailsMap: new Map(),
+    isLoaded: false,
+    error: null,
+    pagination: {
+      page: 0,
+      limit: 50,
+      hasMore: false,
+    },
+
+    setLoading: (
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _loading: boolean,
+    ) => {
+      // No-op: detail fetches are silent and don't affect isLoaded
+      // isLoaded only reflects the state of fetchAllAlbums
+    },
+    setError: (error: string | null) => set({ error }),
+
+    subscribe: (options: { event: EntityEventType; callback: EntityListener<AlbumId> }) => {
+      listeners[options.event].add(options.callback);
+    },
+
+    unsubscribe: (options: { event: EntityEventType; callback: EntityListener<AlbumId> }) => {
+      // Remove callback from the specified event type
+      listeners[options.event].delete(options.callback);
+    },
+
+    getListeners: (event: EntityEventType) => listeners[event],
 
   fetchAllAlbums: async () => {
     set({ error: null });
@@ -138,14 +162,14 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     }
   },
 
-  addAlbum: (album: Album) => {
+  addAlbum: ({ item: album }) => {
     set((state) => ({
       albums: [album, ...state.albums],
       albumsMap: new Map([...state.albumsMap, [album.id, album]]),
     }));
   },
 
-  updateAlbum: (id: string, updates: Partial<Album>) => {
+  updateAlbum: ({ id, updates }) => {
     set((state) => {
       // Update album in the main array
       const updatedAlbums = state.albums.map((album) => {
@@ -178,7 +202,7 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
     });
   },
 
-  removeAlbum: (id: string) => {
+  removeAlbum: ({ id }) => {
     set((state) => {
       const newMap = new Map(state.albumsMap);
       newMap.delete(id);
@@ -188,4 +212,10 @@ export const useAlbumsStore = create<AlbumsState>((set, get) => ({
       };
     });
   },
-}));
+  };
+});
+
+/**
+ * Direct export of the albums store hook for use in components
+ */
+export { _useAlbumsStoreBase as useAlbumsStore };

@@ -10,6 +10,7 @@ import {
   type SongListItem,
 } from "../api/schemas";
 import { type SongId } from "../types/brands";
+import type { EntityEventType, EntityListener } from "../types/entityStore";
 
 export interface SongsState {
   // Data
@@ -34,12 +35,15 @@ export interface SongsState {
   fetchSongTree: (id: SongId) => Promise<SongTree | null>;
   getSongDetail: (id: SongId) => Song | undefined;
   addSongDetail: (song: Song) => void;
-  addSong: (song: Song) => void;
-  updateSong: (id: SongId, updates: Partial<Song>) => void;
-  removeSong: (id: SongId) => void;
+  addSong: (params: { item: Song }) => void;
+  updateSong: (params: { id: SongId; updates: Partial<Song> }) => void;
+  removeSong: (params: { id: SongId }) => void;
   setError: (error: string | null) => void;
   // Internal methods (for detail fetches)
   setLoading: (loading: boolean) => void;
+  subscribe: (options: { event: EntityEventType; callback: EntityListener<SongId> }) => void;
+  unsubscribe: (options: { event: EntityEventType; callback: EntityListener<SongId> }) => void;
+  getListeners: (event: EntityEventType) => Set<EntityListener<SongId>>;
 }
 
 export const useSongsStore = create<SongsState>((set, get) => ({
@@ -158,7 +162,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     });
   },
 
-  addSong: (song: Song) => {
+  addSong: ({ item: song }) => {
     set((state) => {
       // Convert Song to SongListItem
       const songListItem: SongListItem = {
@@ -183,7 +187,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     });
   },
 
-  updateSong: (id: string, updates: Partial<Song>) => {
+  updateSong: ({ id, updates }) => {
     set((state) => {
       // Update song details if cached
       const updatedDetails = { ...state.songDetails };
@@ -214,7 +218,7 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     });
   },
 
-  removeSong: (id: string) => {
+  removeSong: ({ id }) => {
     set((state) => {
       const updatedDetails = { ...state.songDetails };
       delete updatedDetails[id];
@@ -225,5 +229,17 @@ export const useSongsStore = create<SongsState>((set, get) => ({
         songDetailsMap: new Map(Object.entries(updatedDetails)),
       };
     });
+  },
+
+  subscribe: () => {
+    throw new Error('[Songs Store] Event listeners are not supported');
+  },
+
+  unsubscribe: () => {
+    throw new Error('[Songs Store] Event listeners are not supported');
+  },
+
+  getListeners: () => {
+    throw new Error('[Songs Store] Event listeners are not supported');
   },
 }));

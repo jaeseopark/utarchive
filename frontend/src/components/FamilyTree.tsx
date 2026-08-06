@@ -37,7 +37,7 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
 
   const handlePlaybackEnabledChange = useCallback(
     (songId: string, newPlaybackEnabled: boolean) => {
-      updateSong(toBrandId<SongId>(songId), { playbackEnabled: newPlaybackEnabled });
+      updateSong({ id: toBrandId<SongId>(songId), updates: { playbackEnabled: newPlaybackEnabled } });
     },
     [updateSong],
   );

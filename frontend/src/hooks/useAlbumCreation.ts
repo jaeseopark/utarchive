@@ -1,14 +1,12 @@
 import { useCallback, useState } from "react";
-import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { api } from "../api/client";
 import { AlbumSchema, type AlbumCreateInput } from "../api/schemas";
 
 /**
- * Hook to create a new album and update the store
- * Also updates artist album associations when an album is added with existing artists
+ * Hook to create a new album
+ * Album creation is handled by WebSocket (no optimistic update)
  */
 export function useAlbumCreation() {
-  const { addAlbum } = useAlbumsStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,8 +18,8 @@ export function useAlbumCreation() {
       try {
         const response = await api.post("/api/albums", data, AlbumSchema);
 
-        // Add album to store for immediate display
-        addAlbum(response);
+        // Album will be added to store via WebSocket handler
+        // The store callback will handle navigation on isOwnOrigin
 
         setIsLoading(false);
         return response;
@@ -32,7 +30,7 @@ export function useAlbumCreation() {
         throw err;
       }
     },
-    [addAlbum],
+    [],
   );
 
   return {

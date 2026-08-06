@@ -21,7 +21,7 @@ export function useUpdateAlbum() {
         const response = await api.patch(`/api/albums/${albumId}`, data, AlbumSchema);
 
         // Update album in store with both ID and updated fields
-        updateAlbum(albumId, response);
+        updateAlbum({ id: albumId, updates: response });
 
         setIsLoading(false);
         return response;

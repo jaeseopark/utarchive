@@ -17,7 +17,7 @@ export function useUnlinkSongFromAlbum() {
         const response = await api.delete(`/api/albums/${albumId}/songs/${songId}`, AlbumSchema);
 
         // Update store with the response
-        updateAlbum(albumId, response);
+        updateAlbum({ id: albumId, updates: response });
       } catch (err) {
         throw new Error(err instanceof Error ? err.message : "Failed to unlink song from album", {
           cause: err,

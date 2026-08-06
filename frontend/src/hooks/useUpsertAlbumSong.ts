@@ -21,7 +21,7 @@ export function useUpsertAlbumSong() {
         );
 
         // Update store with the response
-        updateAlbum(albumId, response);
+        updateAlbum({ id: albumId, updates: response });
       } catch (err) {
         throw new Error(err instanceof Error ? err.message : "Failed to link song to track", {
           cause: err,

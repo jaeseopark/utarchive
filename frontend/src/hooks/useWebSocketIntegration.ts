@@ -55,38 +55,7 @@ export const useWebSocketMessages = (onMessage?: (message: WebSocketMessage) => 
   }, [onMessage]);
 };
 
-/**
- * Type guard to check if a WebSocketMessage is a DataChangedMessage
- */
-function isDataChangedMessage(message: WebSocketMessage): message is DataChangedMessage {
-  return message.type === "DATA_CHANGED";
-}
 
-/**
- * Type guard to check if a WebSocketMessage is a UserConfigChangedMessage
- */
-function isUserConfigChangedMessage(
-  message: WebSocketMessage,
-): message is UserConfigChangedMessage {
-  return message.type === "USER_CONFIG_CHANGED";
-}
-
-/**
- * Type guard to check if a WebSocketMessage is an AudioIngestionStatusMessage
- */
-function isAudioIngestionStatusMessage(
-  message: WebSocketMessage,
-): message is AudioIngestionStatusMessage {
-  return message.type === "AUDIO_INGESTION_STATUS";
-}
-
-/**
- * Helper to safely extract string ID from an item
- */
-function getId(item: Record<string, unknown>): string | undefined {
-  const id = item.id;
-  return typeof id === "string" ? id : undefined;
-}
 
 /**
  * Handler for audio ingestion status messages
@@ -135,30 +104,7 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
 
     switch (message.type) {
       case "DATA_CHANGED": {
-        if (isDataChangedMessage(message)) {
           handleDataChanged(message);
-          const dataMsg = message;
-
-          // Log each action type separately
-          dataMsg.data.created?.forEach((item: Record<string, unknown>) => {
-            const id = getId(item);
-            if (id) {
-              logStateUpdate(dataMsg.entity, "add", id);
-            }
-          });
-          dataMsg.data.updated?.forEach((item: Record<string, unknown>) => {
-            const id = getId(item);
-            if (id) {
-              logStateUpdate(dataMsg.entity, "update", id);
-            }
-          });
-          dataMsg.data.deleted?.forEach((item: Record<string, unknown>) => {
-            const id = getId(item);
-            if (id) {
-              logStateUpdate(dataMsg.entity, "delete", id);
-            }
-          });
-        }
         break;
       }
 
@@ -179,16 +125,12 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
       }
 
       case "USER_CONFIG_CHANGED": {
-        if (isUserConfigChangedMessage(message)) {
-          handleUserConfigChanged(message);
-        }
+        handleUserConfigChanged(message as UserConfigChangedMessage);
         break;
       }
 
       case "AUDIO_INGESTION_STATUS": {
-        if (isAudioIngestionStatusMessage(message)) {
-          handleAudioIngestionStatus(message);
-        }
+        handleAudioIngestionStatus(message as AudioIngestionStatusMessage);
         break;
       }
 

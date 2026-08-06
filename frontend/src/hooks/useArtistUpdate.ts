@@ -28,7 +28,7 @@ export function useArtistUpdate() {
         );
 
         // Update local store
-        updateArtist(artistId, updatedArtist);
+        updateArtist({ id: artistId, updates: updatedArtist });
 
         return { success: true, data: updatedArtist };
       } catch (err) {

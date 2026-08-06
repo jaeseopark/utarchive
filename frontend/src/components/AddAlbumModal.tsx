@@ -120,8 +120,8 @@ export function AddAlbumModal() {
     return true;
   }, [tracks]);
 
-  const onSubmit = useCallback(
-    async (formData: AlbumCreateFormInput) => {
+  // no need to wrap the function in useCallback due to React 19's built-in optimization.
+  const onSubmit = (formData: AlbumCreateFormInput) => {
       try {
         // Validate tracks before submission
         if (!validateTracks()) {
@@ -154,17 +154,11 @@ export function AddAlbumModal() {
         }
 
         // eslint-disable-next-line no-restricted-syntax
-        await createAlbum(cleanedData as AlbumCreateInput);
-        reset();
-        setSelectedArtists([]);
-        setTracks([]);
-        closeModal();
+        createAlbum(cleanedData as AlbumCreateInput);
       } catch {
         // Error is handled by the hook and displayed
       }
-    },
-    [createAlbum, closeModal, reset, tracks, validateTracks],
-  );
+    };
 
   const handleClear = useCallback(() => {
     reset();

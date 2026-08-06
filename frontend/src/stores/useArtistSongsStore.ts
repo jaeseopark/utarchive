@@ -115,6 +115,6 @@ export const useArtistSongsStore = create<ArtistSongsState>((set, get) => ({
 
   updateArtistSong: (songId: string, updates: Partial<SongListItem>) => {
     const songsStore = useSongsStore.getState();
-    songsStore.updateSong(toBrandId<SongId>(songId), updates);
+    songsStore.updateSong({ id: toBrandId<SongId>(songId), updates });
   },
 }));

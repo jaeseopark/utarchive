@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
@@ -8,11 +8,27 @@ import { AddAlbumModal } from "../components/AddAlbumModal";
 import { useAddAlbumModalStore } from "../stores/useAddAlbumModalStore";
 
 function AlbumsPage() {
+  const navigate = useNavigate();
   const albums = useAlbumsStore((state) => state.albums);
   const isLoaded = useAlbumsStore((state) => state.isLoaded);
   const error = useAlbumsStore((state) => state.error);
   const artists = useArtistsStore((state) => state.artists);
   const { openModal } = useAddAlbumModalStore();
+  const subscribe = useAlbumsStore((state) => state.subscribe);
+  const unsubscribe = useAlbumsStore((state) => state.unsubscribe);
+
+  // Set up callback for when an album is created on this tab
+  useEffect(() => {
+    const handleAlbumCreated = (id: string) => {
+      navigate(`/albums/${id}`);
+    };
+
+    subscribe({ event: 'created', callback: handleAlbumCreated });
+
+    return () => {
+      unsubscribe({ event: 'created', callback: handleAlbumCreated });
+    };
+  }, [navigate, subscribe, unsubscribe]);
 
   const albumsWithArtistNames = useMemo(() => {
     const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
