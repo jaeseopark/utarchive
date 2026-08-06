@@ -3,7 +3,7 @@ import { z } from "zod";
 import { api } from "../api/client";
 import { withStoreLoadingSilent } from "../api/middleware";
 import { ArtistSchema, type Artist } from "../api/schemas";
-import { type ArtistId } from "../types/brands";
+import { toBrandId, type ArtistId } from "../types/brands";
 import { ApiError } from "../api/client";
 import type { EntityEventType, EntityListener } from "../types/entityStore";
 
@@ -177,7 +177,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
     // Emit 'created' event to listeners
     const listeners = get().listeners.get('created');
     if (listeners) {
-      listeners.forEach((callback) => callback(artist.id as ArtistId));
+      listeners.forEach((callback) => callback(toBrandId<ArtistId>(artist.id)));
     }
   },
 

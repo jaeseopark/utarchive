@@ -2,8 +2,6 @@ import { useEffect } from "react";
 import { useWebSocketContext } from "../context/WebSocketContext";
 import { handleDataChanged, handleUserConfigChanged } from "../lib/webSocketHandlers";
 import {
-  DataChangedMessage,
-  UserConfigChangedMessage,
   WebSocketMessage,
   AudioIngestionStatusMessage,
 } from "../types/websocket";
@@ -13,7 +11,6 @@ import {
   logConnection,
   logMessageReceived,
   logError,
-  logStateUpdate,
 } from "../lib/webSocketLogger";
 
 /**
@@ -104,7 +101,7 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
 
     switch (message.type) {
       case "DATA_CHANGED": {
-          handleDataChanged(message as DataChangedMessage);
+          handleDataChanged(message);
         break;
       }
 
@@ -125,12 +122,12 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
       }
 
       case "USER_CONFIG_CHANGED": {
-        handleUserConfigChanged(message as UserConfigChangedMessage);
+        handleUserConfigChanged(message);
         break;
       }
 
       case "AUDIO_INGESTION_STATUS": {
-        handleAudioIngestionStatus(message as AudioIngestionStatusMessage);
+        handleAudioIngestionStatus(message);
         break;
       }
 

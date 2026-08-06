@@ -3,7 +3,6 @@ import CreatableSelect from "react-select/creatable";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useCreateArtist } from "../hooks/useCreateArtist";
 import { type ArtistId } from "../types/brands";
-import clsx from "clsx";
 
 type ArtistOption = {
   value: ArtistId;
