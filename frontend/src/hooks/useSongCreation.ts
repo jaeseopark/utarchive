@@ -1,15 +1,12 @@
 import { useCallback, useState } from "react";
-import { useSongsStore } from "../stores/useSongsStore";
-import { useArtistsStore } from "../stores/useArtistsStore";
 import { api } from "../api/client";
 import { SongSchema, type SongCreateInput } from "../api/schemas";
 
 /**
- * Hook to create a new song and update the store
- * Also updates artist song counts when a song is added with existing artists
+ * Hook to create a new song
+ * Song creation is handled by WebSocket (no optimistic update)
  */
 export function useSongCreation() {
-  const { addSongDetail, addSong } = useSongsStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,14 +17,9 @@ export function useSongCreation() {
 
       try {
         const response = await api.post("/api/songs", data, SongSchema);
-        addSongDetail(response);
-        addSong({ item: response }); // Add to songs list for immediate display
 
-        // Update song count for each artist associated with this song
-        if (response.artistIds && response.artistIds.length > 0) {
-          const { incrementArtistSongCount } = useArtistsStore.getState();
-          response.artistIds.forEach((artistId) => incrementArtistSongCount(artistId));
-        }
+        // Song will be added to store via WebSocket handler
+        // The store callback will handle any side effects on isOwnOrigin
 
         setIsLoading(false);
         return response;
@@ -38,7 +30,7 @@ export function useSongCreation() {
         throw err;
       }
     },
-    [addSongDetail, addSong],
+    [],
   );
 
   return {

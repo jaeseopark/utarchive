@@ -46,24 +46,31 @@ export interface SongsState {
   getListeners: (event: EntityEventType) => Set<EntityListener<SongId>>;
 }
 
-export const useSongsStore = create<SongsState>((set, get) => ({
-  songs: [],
-  songDetailsMap: new Map(),
-  songDetails: {},
-  isLoaded: false,
-  error: null,
-  pagination: {
-    page: 0,
-    limit: 50,
-    hasMore: false,
-  },
+export const useSongsStore = create<SongsState>((set, get) => {
+  const listeners: Record<EntityEventType, Set<EntityListener<SongId>>> = {
+    created: new Set(),
+    updated: new Set(),
+    deleted: new Set(),
+  };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setLoading: (_loading: boolean) => {
-    // No-op: detail fetches are silent and don't affect isLoaded
-    // isLoaded only reflects the state of fetchAllSongs
-  },
-  setError: (error: string | null) => set({ error }),
+  return {
+    songs: [],
+    songDetailsMap: new Map(),
+    songDetails: {},
+    isLoaded: false,
+    error: null,
+    pagination: {
+      page: 0,
+      limit: 50,
+      hasMore: false,
+    },
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setLoading: (_loading: boolean) => {
+      // No-op: detail fetches are silent and don't affect isLoaded
+      // isLoaded only reflects the state of fetchAllSongs
+    },
+    setError: (error: string | null) => set({ error }),
 
   fetchAllSongs: async () => {
     set({ error: null });
@@ -231,20 +238,20 @@ export const useSongsStore = create<SongsState>((set, get) => ({
     });
   },
 
-  subscribe: () => {
-    throw new Error('[Songs Store] Event listeners are not supported');
+  subscribe: (options: { event: EntityEventType; callback: EntityListener<SongId> }) => {
+    listeners[options.event].add(options.callback);
   },
 
-  unsubscribe: () => {
-    throw new Error('[Songs Store] Event listeners are not supported');
+  unsubscribe: (options: { event: EntityEventType; callback: EntityListener<SongId> }) => {
+    // Remove callback from the specified event type
+    listeners[options.event].delete(options.callback);
   },
 
-  getListeners: () => {
-    throw new Error('[Songs Store] Event listeners are not supported');
-  },
+  getListeners: (event: EntityEventType) => listeners[event],
 
   // EntityStore interface methods (required by WebSocket handler)
   add: ({ item }: { item: Song }) => get().addSong({ item }),
   update: ({ id, updates }: { id: SongId; updates: Partial<Song> }) => get().updateSong({ id, updates }),
   remove: ({ id }: { id: SongId }) => get().removeSong({ id }),
-}));
+  };
+});
