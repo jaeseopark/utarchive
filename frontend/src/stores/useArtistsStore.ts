@@ -3,8 +3,9 @@ import { z } from "zod";
 import { api } from "../api/client";
 import { withStoreLoadingSilent } from "../api/middleware";
 import { ArtistSchema, type Artist } from "../api/schemas";
-import { type ArtistId } from "../types/brands";
+import { toBrandId, type ArtistId } from "types";
 import { ApiError } from "../api/client";
+import type { EntityEventType, EntityListener } from "../types/entityStore";
 
 const ArtistsResponseSchema = z.object({
   artists: z.array(ArtistSchema),
@@ -54,18 +55,24 @@ export interface ArtistsState {
     hasMore: boolean;
   };
 
+  // Event listeners
+  listeners: Map<EntityEventType, Set<EntityListener<ArtistId>>>;
+
   // Actions
   fetchAllArtists: () => Promise<void>;
   fetchArtistDetail: (id: ArtistId) => Promise<void>;
   getArtistDetail: (id: ArtistId) => ArtistDetail | undefined;
-  addArtist: (artist: Artist) => void;
-  updateArtist: (id: ArtistId, updates: Partial<Artist>) => void;
-  removeArtist: (id: ArtistId) => void;
+  addArtist: (params: { item: Artist }) => void;
+  updateArtist: (params: { id: ArtistId; updates: Partial<Artist> }) => void;
+  removeArtist: (params: { id: ArtistId }) => void;
   deleteArtist: (id: ArtistId) => Promise<void>;
   incrementArtistSongCount: (artistId: ArtistId) => void;
   setError: (error: string | null) => void;
   // Internal methods (for detail fetches)
   setLoading: (loading: boolean) => void;
+  subscribe: (options: { event: EntityEventType; callback: EntityListener<ArtistId> }) => void;
+  unsubscribe: (options: { event: EntityEventType; callback: EntityListener<ArtistId> }) => void;
+  getListeners: (event: EntityEventType) => Set<EntityListener<ArtistId>>;
 }
 
 export const useArtistsStore = create<ArtistsState>((set, get) => ({
@@ -79,6 +86,11 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
     limit: 50,
     hasMore: false,
   },
+  listeners: new Map<EntityEventType, Set<EntityListener<ArtistId>>>([
+    ['created', new Set()],
+    ['updated', new Set()],
+    ['deleted', new Set()],
+  ]),
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setLoading: (_loading: boolean) => {
@@ -154,7 +166,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
     return get().artistDetails[id];
   },
 
-  addArtist: (artist: Artist) => {
+  addArtist: ({ item: artist }) => {
     set((state) => {
       const newArtists = [artist, ...state.artists];
       return {
@@ -162,9 +174,14 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
         artistMap: new Map(newArtists.map((a) => [a.id, a])),
       };
     });
+    // Emit 'created' event to listeners
+    const listeners = get().listeners.get('created');
+    if (listeners) {
+      listeners.forEach((callback) => callback(toBrandId<ArtistId>(artist.id)));
+    }
   },
 
-  updateArtist: (id: string, updates: Partial<Artist>) => {
+  updateArtist: ({ id, updates }) => {
     set((state) => {
       // Update artist details if cached
       const updatedDetails = { ...state.artistDetails };
@@ -188,7 +205,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
     });
   },
 
-  removeArtist: (id: string) => {
+  removeArtist: ({ id }) => {
     set((state) => {
       const updatedDetails = { ...state.artistDetails };
       delete updatedDetails[id];
@@ -255,4 +272,33 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
       };
     });
   },
+
+  subscribe: ({ event, callback }) => {
+    set((state) => {
+      const eventListeners = state.listeners.get(event);
+      if (eventListeners) {
+        eventListeners.add(callback);
+      }
+      return state;
+    });
+  },
+
+  unsubscribe: ({ event, callback }) => {
+    set((state) => {
+      const eventListeners = state.listeners.get(event);
+      if (eventListeners) {
+        eventListeners.delete(callback);
+      }
+      return state;
+    });
+  },
+
+  getListeners: (event) => {
+    return get().listeners.get(event) || new Set();
+  },
+
+  // EntityStore interface methods (required by WebSocket handler)
+  add: ({ item }: { item: Artist }) => get().addArtist({ item }),
+  update: ({ id, updates }: { id: ArtistId; updates: Partial<Artist> }) => get().updateArtist({ id, updates }),
+  remove: ({ id }: { id: ArtistId }) => get().removeArtist({ id }),
 }));

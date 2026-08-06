@@ -7,7 +7,7 @@ import { usePlayerStore } from "../stores/usePlayerStore";
 import { useFamilyTree } from "../hooks/useFamilyTree";
 import { PlaybackEnabledToggle } from "./PlaybackEnabledToggle";
 import { AddChildModal } from "./AddChildModal";
-import { toBrandId, type SongId } from "../types/brands";
+import { toBrandId, type SongId } from "types";
 
 interface FamilyTreeProps {
   masterId: string;
@@ -37,7 +37,7 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
 
   const handlePlaybackEnabledChange = useCallback(
     (songId: string, newPlaybackEnabled: boolean) => {
-      updateSong(toBrandId<SongId>(songId), { playbackEnabled: newPlaybackEnabled });
+      updateSong({ id: toBrandId<SongId>(songId), updates: { playbackEnabled: newPlaybackEnabled } });
     },
     [updateSong],
   );

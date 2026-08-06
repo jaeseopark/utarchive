@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { z } from "zod";
 import { api } from "../api/client";
-import { toBrandId, type SongId, type ArtistId, type AlbumId } from "../types/brands";
+import { toBrandId, type SongId, type ArtistId, type AlbumId } from "types";
 
 export const SearchSongSchema = z.object({
   id: z

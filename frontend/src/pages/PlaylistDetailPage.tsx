@@ -7,7 +7,7 @@ import { useSongSelectorModal } from "../components/SongSelector";
 import { useSongSelection } from "../hooks/useSongSelection";
 import { SongActionsDropdown } from "../components/SongTable";
 import { buildPlaylistQueue } from "../lib/queueBuilder";
-import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
+import { toBrandId, type PlaylistId, type SongId } from "types";
 
 function PlaylistDetailPage() {
   const { id } = useParams<"id">();

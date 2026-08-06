@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useArtistsStore } from "../../stores/useArtistsStore";
 import { useArtistAlbums } from "../../hooks/useArtistAlbums";
 import { useArtistSongs } from "../../hooks/useArtistSongs";
-import { toBrandId, type ArtistId } from "../../types/brands";
+import { toBrandId, type ArtistId } from "types";
 import { ArtistHeader } from "./ArtistHeader";
 import { SongsSection } from "./SongsSection";
 import { AlbumsSection } from "./AlbumsSection";

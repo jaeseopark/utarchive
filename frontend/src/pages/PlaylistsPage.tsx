@@ -1,7 +1,7 @@
-import { useMemo, useState, FormEvent } from "react";
+import { useEffect, useMemo, useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import { usePlaylistsStore, usePlaylistsStoreSetup } from "../stores/usePlaylistsStore";
+import { usePlaylistsStore } from "../stores/usePlaylistsStore";
 
 function PlaylistsPage() {
   const playlists = usePlaylistsStore((state) => state.playlists);
@@ -9,6 +9,8 @@ function PlaylistsPage() {
   const isLoading = usePlaylistsStore((state) => state.isLoading);
   const error = usePlaylistsStore((state) => state.error);
   const { createPlaylist } = usePlaylistsStore();
+  const subscribe = usePlaylistsStore((state) => state.subscribe);
+  const unsubscribe = usePlaylistsStore((state) => state.unsubscribe);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [playlistName, setPlaylistName] = useState("");
   const navigate = useNavigate();
@@ -16,13 +18,19 @@ function PlaylistsPage() {
   const hasPlaylists = playlists.length > 0;
 
   // Set up callback for when a playlist is created on this tab
-  usePlaylistsStoreSetup({
-    onPlaylistCreated: (id) => {
+  useEffect(() => {
+    const handlePlaylistCreated = (id: string) => {
       setPlaylistName("");
       setIsModalOpen(false);
       navigate(`/playlists/${id}`);
-    },
-  });
+    };
+
+    subscribe({ event: 'created', callback: handlePlaylistCreated });
+
+    return () => {
+      unsubscribe({ event: 'created', callback: handlePlaylistCreated });
+    };
+  }, [navigate, subscribe, unsubscribe]);
 
   const handleCreatePlaylist = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

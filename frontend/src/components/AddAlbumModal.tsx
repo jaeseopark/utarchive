@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import CreatableSelect from "react-select/creatable";
 import { Button } from "./ui/Button";
 import {
   AlbumCreateFormSchema,
@@ -9,30 +9,22 @@ import {
   type AlbumCreateInput,
 } from "../api/schemas";
 import { useAlbumCreation } from "../hooks/useAlbumCreation";
-import { useArtistsStore } from "../stores/useArtistsStore";
-import { useCreateArtist } from "../hooks/useCreateArtist";
 import { useAddAlbumModalStore } from "../stores/useAddAlbumModalStore";
-import { toBrandId, type ArtistId, type SongId, type CoverArtId } from "../types/brands";
+import { useAlbumsStore } from "../stores/useAlbumsStore";
+import { toBrandId, type ArtistId, type SongId, type CoverArtId } from "types";
 import { TrackListEditor } from "./TrackListEditor";
 import { useSongSelectorModal } from "./SongSelector";
 import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";
+import { ArtistSelector } from "./ArtistSelector";
 import clsx from "clsx";
-
-type ArtistOption = {
-  value: string;
-  label: string;
-  isNew?: boolean;
-};
 
 export function AddAlbumModal() {
   const { isOpen, closeModal } = useAddAlbumModalStore();
   const { createAlbum, isLoading, error: creationError } = useAlbumCreation();
-  const artists = useArtistsStore((state) => state.artists);
-  const artistsLoaded = useArtistsStore((state) => state.isLoaded);
-  const { createArtist } = useCreateArtist();
+  const navigate = useNavigate();
+  const subscribe = useAlbumsStore((state) => state.subscribe);
+  const unsubscribe = useAlbumsStore((state) => state.unsubscribe);
 
-  const [selectedArtists, setSelectedArtists] = useState<ArtistOption[]>([]);
-  const [isCreatingArtist, setIsCreatingArtist] = useState(false);
   const [tracks, setTracks] = useState<NumberedTrack[]>([]);
   const [trackNumberForSongSelect, setTrackNumberForSongSelect] = useState<number | null>(null);
 
@@ -80,23 +72,36 @@ export function AddAlbumModal() {
   useEffect(() => {
     if (!isOpen) {
       reset();
-      setSelectedArtists([]);
       setTracks([]);
       setTrackNumberForSongSelect(null);
     }
   }, [isOpen, reset]);
 
-  // Update form artistIds whenever selectedArtists changes
+  // Subscribe to album creation events to close modal and navigate
   useEffect(() => {
-    const artistIds = selectedArtists.map((a) => a.value);
-    setValue("artistIds", artistIds);
-  }, [selectedArtists, setValue]);
+    const handleAlbumCreated = (id: string) => {
+      // Close modal and reset state
+      closeModal();
+      reset();
+      setTracks([]);
+      
+      // Navigate to the newly created album
+      navigate(`/albums/${id}`);
+    };
 
-  // Convert artists to options for CreatableSelect
-  const artistOptions: ArtistOption[] = artists.map((artist) => ({
-    value: artist.id,
-    label: artist.name,
-  }));
+    subscribe({ event: 'created', callback: handleAlbumCreated });
+
+    return () => {
+      unsubscribe({ event: 'created', callback: handleAlbumCreated });
+    };
+  }, [navigate, closeModal, reset, subscribe, unsubscribe]);
+
+  const handleArtistsChange = useCallback(
+    (artistIds: string[]) => {
+      setValue("artistIds", artistIds);
+    },
+    [setValue],
+  );
 
   const validateTracks = useCallback((): boolean => {
     // Check that each track has either a title or a songId
@@ -120,84 +125,60 @@ export function AddAlbumModal() {
     return true;
   }, [tracks]);
 
-  const onSubmit = useCallback(
-    async (formData: AlbumCreateFormInput) => {
-      try {
-        // Validate tracks before submission
-        if (!validateTracks()) {
-          throw new Error("All tracks must have either a title or be linked to a song");
-        }
-
-        // Convert form data to API input
-        const yearReleasedNum = formData.yearReleased ? parseInt(formData.yearReleased, 10) : null;
-        const apiData: AlbumCreateInput = {
-          title: formData.title,
-          artistIds: formData.artistIds.map((id) => toBrandId<ArtistId>(id)),
-          yearReleased: yearReleasedNum,
-          coverArtId: formData.coverArtId ? toBrandId<CoverArtId>(formData.coverArtId) : null,
-          trackList: tracks.map((track) => ({
-            number: track.trackNumber,
-            // eslint-disable-next-line no-restricted-syntax
-            title: "title" in track ? (track as { title: string }).title : "",
-            // eslint-disable-next-line no-restricted-syntax
-            duration: "duration" in track ? (track as { duration?: number }).duration : undefined,
-          })),
-          urls: formData.urls ? formData.urls.filter((url) => url && url.trim()) : undefined,
-        };
-
-        // Remove empty string values from optional fields before submission
-        const cleanedData: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(apiData)) {
-          if (value !== "" && value !== undefined && value !== null) {
-            cleanedData[key] = value;
-          }
-        }
-
-        // eslint-disable-next-line no-restricted-syntax
-        await createAlbum(cleanedData as AlbumCreateInput);
-        reset();
-        setSelectedArtists([]);
-        setTracks([]);
-        closeModal();
-      } catch {
-        // Error is handled by the hook and displayed
+  // no need to wrap the function in useCallback due to React 19's built-in optimization.
+  const onSubmit = (formData: AlbumCreateFormInput) => {
+    try {
+      // Validate tracks before submission
+      if (!validateTracks()) {
+        throw new Error("All tracks must have either a title or be linked to a song");
       }
-    },
-    [createAlbum, closeModal, reset, tracks, validateTracks],
-  );
+
+      // Convert form data to API input
+      const yearReleasedNum = formData.yearReleased ? parseInt(formData.yearReleased, 10) : null;
+      const apiData: AlbumCreateInput = {
+        title: formData.title,
+        artistIds: formData.artistIds.map((id) => toBrandId<ArtistId>(id)),
+        yearReleased: yearReleasedNum,
+        coverArtId: formData.coverArtId ? toBrandId<CoverArtId>(formData.coverArtId) : null,
+        trackList: tracks.map((track) => ({
+          number: track.trackNumber,
+          // eslint-disable-next-line no-restricted-syntax
+          title: "title" in track ? (track as { title: string }).title : "",
+          // eslint-disable-next-line no-restricted-syntax
+          duration: "duration" in track ? (track as { duration?: number }).duration : undefined,
+        })),
+        urls: formData.urls ? formData.urls.filter((url) => url && url.trim()) : undefined,
+      };
+
+      // Remove empty string values from optional fields before submission
+      const cleanedData: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(apiData)) {
+        if (value !== "" && value !== undefined && value !== null) {
+          cleanedData[key] = value;
+        }
+      }
+
+      // eslint-disable-next-line no-restricted-syntax
+      createAlbum(cleanedData as AlbumCreateInput);
+      // Modal close and navigation handled by useEffect subscription to 'created' event
+    } catch (err) {
+      // Error is handled by the hook and displayed
+      console.error("Failed to create album:", err);
+    }
+  };
 
   const handleClear = useCallback(() => {
     reset();
-    setSelectedArtists([]);
+    setValue("artistIds", []);
     setTracks([]);
-  }, [reset]);
+  }, [reset, setValue]);
 
   const handleCancel = useCallback(() => {
     reset();
-    setSelectedArtists([]);
+    setValue("artistIds", []);
     setTracks([]);
     closeModal();
-  }, [closeModal, reset]);
-
-  // Handle artist creation
-  const handleCreateArtist = useCallback(
-    async (inputValue: string) => {
-      setIsCreatingArtist(true);
-      try {
-        const newArtist = await createArtist({ name: inputValue });
-        const newOption: ArtistOption = {
-          value: newArtist.id,
-          label: newArtist.name,
-        };
-        setSelectedArtists([...selectedArtists, newOption]);
-      } catch (error) {
-        console.error("Failed to create artist:", error);
-      } finally {
-        setIsCreatingArtist(false);
-      }
-    },
-    [selectedArtists, createArtist],
-  );
+  }, [closeModal, reset, setValue]);
 
   const handleSelectExistingSong = useCallback(
     (trackNumber: number) => {
@@ -240,35 +221,14 @@ export function AddAlbumModal() {
 
             {/* Artist Selection */}
             <div>
-              <label className="block text-sm font-medium text-slate-700">
-                Artists <span className="text-red-500">*</span>
-              </label>
-              {!artistsLoaded ? (
-                <p className="mt-1 text-sm text-slate-500">Loading artists...</p>
-              ) : (
-                <div className="mt-1">
-                  <CreatableSelect
-                    isMulti
-                    isClearable
-                    isDisabled={isCreatingArtist || isLoading}
-                    isLoading={isCreatingArtist}
-                    options={artistOptions}
-                    value={selectedArtists}
-                    onChange={(newValue) => {
-                      setSelectedArtists(newValue ? Array.from(newValue) : []);
-                    }}
-                    onCreateOption={handleCreateArtist}
-                    formatCreateLabel={(inputValue) => `Create artist "${inputValue}"`}
-                    placeholder="Select or create artists..."
-                    className={clsx(
-                      "react-select-container",
-                      selectedArtists.length === 0 && errors.artistIds ? "has-error" : "",
-                    )}
-                  />
-                  {errors.artistIds && (
-                    <p className="mt-1 text-sm text-red-500">{errors.artistIds.message}</p>
-                  )}
-                </div>
+              <ArtistSelector
+                onArtistsChange={handleArtistsChange}
+                disabled={isLoading}
+                required
+                label="Artists"
+              />
+              {errors.artistIds && (
+                <p className="mt-1 text-sm text-red-500">{errors.artistIds.message}</p>
               )}
             </div>
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { api } from "../api/client";
-import { type ArtistId } from "../types/brands";
+import { type ArtistId } from "types";
 
 const AlbumPreviewSchema = z.object({
   id: z.string(),

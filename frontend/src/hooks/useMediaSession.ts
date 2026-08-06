@@ -3,7 +3,7 @@ import { usePlayerStore } from "../stores/usePlayerStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useResolveCoverArt } from "./useResolveCoverArt";
 import { getArtistNames } from "../lib/artistNames";
-import { toBrandId, type SongId } from "../types/brands";
+import { toBrandId, type SongId } from "types";
 
 /**
  * Hook to integrate with OS-level media controls via MediaSession API

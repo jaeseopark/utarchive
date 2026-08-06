@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { api } from "../api/client";
 import { AlbumSchema, type Album } from "../api/schemas";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
-import { type AlbumId } from "../types/brands";
+import { type AlbumId } from "types";
 
 /**
  * Hook to update an album via API with store integration
@@ -24,7 +24,7 @@ export function useAlbumUpdate() {
         const updatedAlbum = await api.patch(`/api/albums/${albumId}`, fieldsToUpdate, AlbumSchema);
 
         // Update local store
-        updateAlbum(albumId, updatedAlbum);
+        updateAlbum({ id: albumId, updates: updatedAlbum });
 
         return { success: true, data: updatedAlbum };
       } catch (err) {

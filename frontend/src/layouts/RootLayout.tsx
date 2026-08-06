@@ -11,7 +11,7 @@ import { useNotifications } from "../hooks/useNotifications";
 import { SONG_IDS_DRAG_MIME, parseDraggedSongIds } from "../lib/songDragPayload";
 import { useDraggedSongsStore } from "../stores/useDraggedSongsStore";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
-import { type PlaylistId } from "../types/brands";
+import { type PlaylistId } from "types";
 
 const navItems = [
   { to: "/artists", label: "Artists" },

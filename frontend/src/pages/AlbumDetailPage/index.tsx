@@ -5,7 +5,7 @@ import { useEditAlbumModalStore } from "../../stores/useEditAlbumModalStore";
 import { useSongsStore } from "../../stores/useSongsStore";
 import { useArtistsStore } from "../../stores/useArtistsStore";
 import { usePlayerStore } from "../../stores/usePlayerStore";
-import { toBrandId, type AlbumId } from "../../types/brands";
+import { toBrandId, type AlbumId } from "types";
 import type { Song } from "../../api/schemas";
 import AlbumInfoSection from "./AlbumInfoSection";
 import TrackListSection from "./TrackListSection";

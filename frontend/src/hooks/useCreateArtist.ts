@@ -11,7 +11,7 @@ export function useCreateArtist() {
     try {
       const response = await api.post("/api/artists", data, ArtistSchema);
       // Update the store with the new artist
-      useArtistsStore.getState().addArtist(response);
+      useArtistsStore.getState().addArtist({ item: response });
       return response;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create artist";

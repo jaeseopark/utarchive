@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSongsStore } from "../stores/useSongsStore";
 import type { SongTree } from "../api/schemas";
-import { toBrandId, type SongId } from "../types/brands";
+import { toBrandId, type SongId } from "types";
 
 /**
  * Hook to fetch and manage a family tree by masterId.

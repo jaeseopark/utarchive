@@ -1,85 +1,141 @@
 import { DataChangedMessage, UserConfigChangedMessage } from "../types/websocket";
-import { isOwnRequest } from "./requestIdDeduplication";
 import { currentOriginId } from "../api/client";
-import { useSongsStore } from "../stores/useSongsStore";
-import { useAlbumsStore } from "../stores/useAlbumsStore";
-import { useArtistsStore } from "../stores/useArtistsStore";
-import { usePlaylistsStore } from "../stores/usePlaylistsStore";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { useUserConfigStore } from "../stores/useUserConfigStore";
-import {
-  toBrandId,
-  type SongId,
-  type AlbumId,
-  type ArtistId,
-  type PlaylistId,
-} from "../types/brands";
+import { toBrandId } from "types";
+import { getStoreForEntity, isSupportedEntityType } from "./entityStoreMapping";
 
 /**
- * Helper function to call the appropriate store method based on entity type and action
+ * Processes created items for an entity store.
+ * Adds items to store and invokes listeners if event originated from current client.
+ *
+ * @param store The entity store to add items to
+ * @param items The items that were created
+ * @param isOwnOrigin Whether this event originated from the current client
  */
-const updateStoreByAction = (
-  entity: string,
-  action: "created" | "updated" | "deleted",
-  items: Array<Record<string, unknown>>,
-) => {
+const handleCreatedAction = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  store: any,
+  items: Array<Record<string, unknown>> | undefined,
+  isOwnOrigin: boolean,
+): void => {
+  // Gracefully handle empty arrays
+  if (!items || items.length === 0) {
+    return;
+  }
+
   items.forEach((item) => {
     // Validate id is a string
     if (typeof item.id !== "string") {
-      console.warn(`[WebSocket] Item missing or invalid id for ${entity}`);
+      console.warn("[WebSocket] Item missing or invalid id");
       return;
     }
-    const id = item.id;
 
-    switch (entity) {
-      case "song":
-        if (action === "created") {
-          // eslint-disable-next-line no-restricted-syntax
-          useSongsStore.getState().addSong(item as never);
-        } else if (action === "updated") {
-          // eslint-disable-next-line no-restricted-syntax
-          useSongsStore.getState().updateSong(toBrandId<SongId>(id), item as never);
-        } else if (action === "deleted") {
-          useSongsStore.getState().removeSong(toBrandId<SongId>(id));
+    const id = toBrandId(item.id);
+
+    store.add({ item });
+    // If this entity was created by our own tab, invoke listeners after updating store
+    // so the data is available for components that might navigate or update views
+    if (isOwnOrigin) {
+      const listeners = store.getListeners('created');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listeners.forEach((listener: any) => {
+        try {
+          listener(id);
+        } catch (error) {
+          console.error("[WebSocket] Error in created listener:", error);
         }
-        break;
-      case "album":
-        if (action === "created") {
-          // eslint-disable-next-line no-restricted-syntax
-          useAlbumsStore.getState().addAlbum(item as never);
-        } else if (action === "updated") {
-          // eslint-disable-next-line no-restricted-syntax
-          useAlbumsStore.getState().updateAlbum(toBrandId<AlbumId>(id), item as never);
-        } else if (action === "deleted") {
-          useAlbumsStore.getState().removeAlbum(toBrandId<AlbumId>(id));
+      });
+    }
+  });
+};
+
+/**
+ * Processes updated items for an entity store.
+ * Updates items in store and invokes listeners if event originated from current client.
+ *
+ * @param store The entity store to update items in
+ * @param items The items that were updated
+ * @param isOwnOrigin Whether this event originated from the current client
+ */
+const handleUpdatedAction = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  store: any,
+  items: Array<Record<string, unknown>> | undefined,
+  isOwnOrigin: boolean,
+): void => {
+  // Gracefully handle empty arrays
+  if (!items || items.length === 0) {
+    return;
+  }
+
+  items.forEach((item) => {
+    // Validate id is a string
+    if (typeof item.id !== "string") {
+      console.warn("[WebSocket] Item missing or invalid id");
+      return;
+    }
+
+    const id = toBrandId(item.id);
+
+    store.update({ id, updates: item });
+    // If this entity was updated by our own tab, invoke listeners after updating store
+    // so the latest data is available for components that might refresh views
+    if (isOwnOrigin) {
+      const listeners = store.getListeners('updated');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listeners.forEach((listener: any) => {
+        try {
+          listener(id);
+        } catch (error) {
+          console.error("[WebSocket] Error in updated listener:", error);
         }
-        break;
-      case "artist":
-        if (action === "created") {
-          // eslint-disable-next-line no-restricted-syntax
-          useArtistsStore.getState().addArtist(item as never);
-        } else if (action === "updated") {
-          // eslint-disable-next-line no-restricted-syntax
-          useArtistsStore.getState().updateArtist(toBrandId<ArtistId>(id), item as never);
-        } else if (action === "deleted") {
-          useArtistsStore.getState().removeArtist(toBrandId<ArtistId>(id));
+      });
+    }
+  });
+};
+
+/**
+ * Processes deleted items for an entity store.
+ * Removes items from store and invokes listeners if event originated from current client.
+ *
+ * @param store The entity store to remove items from
+ * @param items The items that were deleted
+ * @param isOwnOrigin Whether this event originated from the current client
+ */
+const handleDeletedAction = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  store: any,
+  items: Array<Record<string, unknown>> | undefined,
+  isOwnOrigin: boolean,
+): void => {
+  // Gracefully handle empty arrays
+  if (!items || items.length === 0) {
+    return;
+  }
+
+  items.forEach((item) => {
+    // Validate id is a string
+    if (typeof item.id !== "string") {
+      console.warn("[WebSocket] Item missing or invalid id");
+      return;
+    }
+
+    const id = toBrandId(item.id);
+
+    store.remove({ id });
+    // If this entity was deleted by our own tab, invoke listeners after removing from store
+    // so components can know it's been removed before doing cleanup
+    if (isOwnOrigin) {
+      const listeners = store.getListeners('deleted');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listeners.forEach((listener: any) => {
+        try {
+          listener(id);
+        } catch (error) {
+          console.error("[WebSocket] Error in deleted listener:", error);
         }
-        break;
-      case "playlist":
-        if (action === "created") {
-          // eslint-disable-next-line no-restricted-syntax
-          usePlaylistsStore.getState().addPlaylist(item as never);
-        } else if (action === "updated") {
-          usePlaylistsStore
-            .getState()
-            // eslint-disable-next-line no-restricted-syntax
-            .updatePlaylistFromRemote(toBrandId<PlaylistId>(id), item as never);
-        } else if (action === "deleted") {
-          usePlaylistsStore.getState().removePlaylistFromRemote(toBrandId<PlaylistId>(id));
-        }
-        break;
-      default:
-        console.warn(`[WebSocket] Unhandled entity type: ${entity}`);
+      });
     }
   });
 };
@@ -93,37 +149,31 @@ const updateStoreByAction = (
 export const handleDataChanged = (message: DataChangedMessage): void => {
   const { entity, data } = message;
 
-  // Process deletions first - always process (store update only from WebSocket)
-  if (data.deleted && data.deleted.length > 0) {
-    updateStoreByAction(entity, "deleted", data.deleted);
+  // Validate entity type is supported before processing
+  if (!isSupportedEntityType(entity)) {
+    console.warn(`[WebSocket] Unhandled entity type: ${entity}`);
+    return;
   }
 
-  // Process updates and creations from WebSocket even for our own requests,
-  // since the store now relies on WebSocket-driven state changes instead of
-  // mutating directly from HTTP responses.
-  if (isOwnRequest(message.requestId)) {
-    // Keep the request ID cleanup behavior, but do not skip the update.
-  }
+  try {
+    const store = getStoreForEntity(entity);
 
-  // Process updates second
-  if (data.updated && data.updated.length > 0) {
-    updateStoreByAction(entity, "updated", data.updated);
-  }
+    // Determine if this event originated from the current client
+    const isOwnOrigin = message.originId === currentOriginId;
 
-  // Process creations last
-  if (data.created && data.created.length > 0) {
-    // For playlists, check if this creation originated from our tab
-    if (entity === "playlist") {
-      // this logic is temporary. handling should be generalized/declaritive.
-      const isOwnOrigin = message.originId === currentOriginId;
-      data.created.forEach((item) => {
-        if (typeof item.id === "string") {
-          // eslint-disable-next-line no-restricted-syntax
-          usePlaylistsStore.getState().addPlaylist(item as never, isOwnOrigin);
-        }
-      });
+    // Process deletions first - always process (store update only from WebSocket)
+    handleDeletedAction(store, data.deleted, isOwnOrigin);
+
+    // Process updates second
+    handleUpdatedAction(store, data.updated, isOwnOrigin);
+
+    // Process creations last
+    handleCreatedAction(store, data.created, isOwnOrigin);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.warn(`[WebSocket] Error processing ${entity} data:`, error.message);
     } else {
-      updateStoreByAction(entity, "created", data.created);
+      console.warn(`[WebSocket] Error processing ${entity} data:`, error);
     }
   }
 };

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Button } from "../../components/ui/Button";
-import { toBrandId, type AlbumId, type SongId } from "../../types/brands";
+import { toBrandId, type AlbumId, type SongId } from "types";
 import type { Album } from "../../api/schemas";
 
 type AlbumTrack = Album["tracks"][number];

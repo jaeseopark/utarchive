@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import PlaylistsPage from "./PlaylistsPage";
 import { api } from "../api/client";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
-import { toBrandId, type PlaylistId } from "../types/brands";
+import { toBrandId, type PlaylistId } from "types";
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual<typeof import("../api/client")>("../api/client");

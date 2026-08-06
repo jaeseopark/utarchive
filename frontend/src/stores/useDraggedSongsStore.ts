@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { SongId } from "../types/brands";
+import type { SongId } from "types";
 
 interface DraggedSongsState {
   draggedSongIds: SongId[];

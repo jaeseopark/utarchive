@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import PlaylistDetailPage from "./PlaylistDetailPage";
 import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
-import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
+import { toBrandId, type PlaylistId, type SongId } from "types";
 
 vi.mock("../hooks/usePlaylistDetail", () => ({
   usePlaylistDetail: vi.fn(),

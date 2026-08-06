@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from "react";
 import { useArtistSongsStore } from "../stores/useArtistSongsStore";
-import { type ArtistId } from "../types/brands";
+import { type ArtistId } from "types";
 import { type SongListItem } from "../api/schemas";
 
 /**

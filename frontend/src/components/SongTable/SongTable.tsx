@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { useSongSelection } from "../../hooks/useSongSelection";
 import { useSongTableMouseEvents } from "../../hooks/useSongTableMouseEvents";
 import type { Song, SongListItem } from "../../api/schemas";
-import type { SongId } from "../../types/brands";
+import type { SongId } from "types";
 import { SongContextMenu } from "./SongContextMenu";
 import { useDraggedSongsStore } from "../../stores/useDraggedSongsStore";
 import { SONG_IDS_DRAG_MIME, serializeDraggedSongIds } from "../../lib/songDragPayload";
