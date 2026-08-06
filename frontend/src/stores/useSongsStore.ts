@@ -9,7 +9,7 @@ import {
   type SongTree,
   type SongListItem,
 } from "../api/schemas";
-import { type SongId } from "../types/brands";
+import { type SongId } from "types";
 import type { EntityEventType, EntityListener } from "../types/entityStore";
 
 export interface SongsState {

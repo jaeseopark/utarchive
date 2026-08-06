@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
-import type { PlaylistId, SongId } from "../types/brands";
+import type { PlaylistId, SongId } from "types";
 
 export interface BulkOperationState {
   isLoading: boolean;

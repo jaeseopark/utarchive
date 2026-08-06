@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useCreateArtist } from "../hooks/useCreateArtist";
-import { type ArtistId } from "../types/brands";
+import { type ArtistId } from "types";
 
 type ArtistOption = {
   value: ArtistId;

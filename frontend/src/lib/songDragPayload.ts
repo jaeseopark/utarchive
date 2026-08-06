@@ -1,4 +1,4 @@
-import { toBrandId, type SongId } from "../types/brands";
+import { toBrandId, type SongId } from "types";
 
 export const SONG_IDS_DRAG_MIME = "application/x-utarchive-song-ids";
 

@@ -5,7 +5,7 @@ import { useUpsertAlbumSong } from "../hooks/useUpsertAlbumSong";
 import { TrackListEditor } from "./TrackListEditor";
 import { useSongSelectorModal } from "./SongSelector";
 import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";
-import { toBrandId, type AlbumId, type SongId } from "../types/brands";
+import { toBrandId, type AlbumId, type SongId } from "types";
 
 interface EditAlbumModalProps {
   album: {

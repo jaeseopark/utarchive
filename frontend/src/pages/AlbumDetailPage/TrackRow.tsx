@@ -1,7 +1,7 @@
 import { Fragment, useMemo } from "react";
 import FamilyTree from "../../components/FamilyTree";
 import { useFamilyTree } from "../../hooks/useFamilyTree";
-import { toBrandId, type AlbumId, type SongId } from "../../types/brands";
+import { toBrandId, type AlbumId, type SongId } from "types";
 import type { Album, Artist, Song } from "../../api/schemas";
 
 type AlbumTrack = Album["tracks"][number];

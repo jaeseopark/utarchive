@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { api } from "../api/client";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
-import { type AlbumId, type SongId } from "../types/brands";
+import { type AlbumId, type SongId } from "types";
 import { AlbumSchema } from "../api/schemas";
 
 /**

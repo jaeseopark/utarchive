@@ -13,7 +13,7 @@ import { useArtistsStore } from "../stores/useArtistsStore";
 import { useCreateArtist } from "../hooks/useCreateArtist";
 import { useLinkChildToParent } from "../hooks/useLinkChildToParent";
 import { SongSelector } from "./SongSelector";
-import { toBrandId, type SongId, type ArtistId, type CoverArtId } from "../types/brands";
+import { toBrandId, type SongId, type ArtistId, type CoverArtId } from "types";
 import clsx from "clsx";
 
 type ArtistOption = {

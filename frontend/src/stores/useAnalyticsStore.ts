@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { z } from "zod";
 import { api } from "../api/client";
-import { type SongId } from "../types/brands";
+import { type SongId } from "types";
 
 const AnalyticsListenSchema = z.object({
   ok: z.literal(true),

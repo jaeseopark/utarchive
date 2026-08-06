@@ -3,7 +3,7 @@ import { z } from "zod";
 import { api } from "../api/client";
 import { withStoreLoadingSilent } from "../api/middleware";
 import { AlbumListItemSchema, AlbumSchema, type Album, type AlbumListItem } from "../api/schemas";
-import { type AlbumId } from "../types/brands";
+import { type AlbumId } from "types";
 import type { EntityListener, EntityEventType } from "../types/entityStore";
 
 const AlbumsListResponseSchema = z.object({

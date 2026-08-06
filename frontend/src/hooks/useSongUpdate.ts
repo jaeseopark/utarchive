@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { api } from "../api/client";
 import { SongSchema, type Song } from "../api/schemas";
 import { useSongsStore } from "../stores/useSongsStore";
-import { type SongId } from "../types/brands";
+import { type SongId } from "types";
 
 /**
  * Hook to update a song via API with store integration

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSongDetail } from "./useSongDetail";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
-import { type SongId, type AlbumId } from "../types/brands";
+import { type SongId, type AlbumId } from "types";
 
 interface CoverArtOwner {
   songId?: SongId;

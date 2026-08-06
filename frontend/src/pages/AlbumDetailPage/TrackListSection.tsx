@@ -7,7 +7,7 @@ import { buildAlbumQueue } from "../../lib/queueBuilder";
 import { useUnlinkSongFromAlbum } from "../../hooks/useUnlinkSongFromAlbum";
 import { useUpsertAlbumSong } from "../../hooks/useUpsertAlbumSong";
 import { useSongSelection } from "../../hooks/useSongSelection";
-import { toBrandId, type AlbumId, type SongId } from "../../types/brands";
+import { toBrandId, type AlbumId, type SongId } from "types";
 import type { Album, Artist, Song } from "../../api/schemas";
 import TrackRow from "./TrackRow";
 

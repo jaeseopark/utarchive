@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { api } from "../api/client";
 import { AlbumSchema, type Album } from "../api/schemas";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
-import { type AlbumId } from "../types/brands";
+import { type AlbumId } from "types";
 
 /**
  * Hook to update an album via API with store integration

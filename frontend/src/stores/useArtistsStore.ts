@@ -3,7 +3,7 @@ import { z } from "zod";
 import { api } from "../api/client";
 import { withStoreLoadingSilent } from "../api/middleware";
 import { ArtistSchema, type Artist } from "../api/schemas";
-import { toBrandId, type ArtistId } from "../types/brands";
+import { toBrandId, type ArtistId } from "types";
 import { ApiError } from "../api/client";
 import type { EntityEventType, EntityListener } from "../types/entityStore";
 

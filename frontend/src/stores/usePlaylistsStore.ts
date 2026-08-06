@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { EntityListener, EntityEventType } from "../types/entityStore";
 import { api } from "../api/client";
 import { withStoreLoadingSilent } from "../api/middleware";
-import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
+import { toBrandId, type PlaylistId, type SongId } from "types";
 
 // Schemas
 export const PlaylistSchema = z.object({

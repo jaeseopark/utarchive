@@ -2,7 +2,7 @@ import React, { FC, useRef, useState, useCallback } from "react";
 import { Button } from "./ui/Button";
 import { useUploadAudio } from "../hooks/useUploadAudio";
 import { useNotifications } from "../hooks/useNotifications";
-import { type SongId } from "../types/brands";
+import { type SongId } from "types";
 
 interface AudioUploadButtonProps {
   songId: SongId;

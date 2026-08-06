@@ -5,7 +5,7 @@ import {
   type ArtistId,
   type AlbumId,
   type CoverArtId,
-} from "../types/brands";
+} from "types";
 
 export const UrlArraySchema = z.array(z.string());
 

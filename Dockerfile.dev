@@ -6,6 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY backend/package.json backend/tsconfig.json ./backend/
 COPY frontend/package.json frontend/tsconfig.json ./frontend/
+COPY types/package.json types/tsconfig.json ./types/
 
 RUN npm ci
 

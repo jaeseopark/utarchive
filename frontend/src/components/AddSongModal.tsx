@@ -10,7 +10,7 @@ import {
 } from "../api/schemas";
 import { useSongCreation } from "../hooks/useSongCreation";
 import { useAddSongModalStore } from "../stores/useAddSongModalStore";
-import { toBrandId, type SongId, type ArtistId, type CoverArtId } from "../types/brands";
+import { toBrandId, type SongId, type ArtistId, type CoverArtId } from "types";
 import { ArtistSelector } from "./ArtistSelector";
 import clsx from "clsx";
 

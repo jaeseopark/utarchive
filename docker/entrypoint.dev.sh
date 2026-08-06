@@ -13,6 +13,10 @@ while [ $i -le 10 ]; do
   i=$((i+1))
 done
 
+echo "Building types package..."
+cd /app/types
+npm run build
+
 echo "Synchronizing database schema..."
 cd /app/backend
 npx drizzle-kit push

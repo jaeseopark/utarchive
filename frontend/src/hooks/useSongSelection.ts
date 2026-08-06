@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { SongId } from "../types/brands";
+import type { SongId } from "types";
 
 /**
  * Minimal type for objects that can be used with song selection.

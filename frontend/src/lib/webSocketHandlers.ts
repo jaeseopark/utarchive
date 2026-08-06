@@ -2,7 +2,7 @@ import { DataChangedMessage, UserConfigChangedMessage } from "../types/websocket
 import { currentOriginId } from "../api/client";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { useUserConfigStore } from "../stores/useUserConfigStore";
-import { toBrandId } from "../types/brands";
+import { toBrandId } from "types";
 import { getStoreForEntity, isSupportedEntityType } from "./entityStoreMapping";
 
 /**

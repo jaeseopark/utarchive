@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";
 import { usePlaylistsStore } from "./usePlaylistsStore";
-import { toBrandId, type PlaylistId, type SongId } from "../types/brands";
+import { toBrandId, type PlaylistId, type SongId } from "types";
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual<typeof import("../api/client")>("../api/client");

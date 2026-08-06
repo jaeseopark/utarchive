@@ -11,7 +11,7 @@ import {
 import { useAlbumCreation } from "../hooks/useAlbumCreation";
 import { useAddAlbumModalStore } from "../stores/useAddAlbumModalStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
-import { toBrandId, type ArtistId, type SongId, type CoverArtId } from "../types/brands";
+import { toBrandId, type ArtistId, type SongId, type CoverArtId } from "types";
 import { TrackListEditor } from "./TrackListEditor";
 import { useSongSelectorModal } from "./SongSelector";
 import { type NumberedTrack, hasSongId, isLiteralTrack } from "../types/album";

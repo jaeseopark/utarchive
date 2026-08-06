@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSongsStore } from "../stores/useSongsStore";
-import { type SongId } from "../types/brands";
+import { type SongId } from "types";
 
 /**
  * Hook to fetch and manage song detail with caching

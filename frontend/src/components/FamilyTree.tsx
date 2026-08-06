@@ -7,7 +7,7 @@ import { usePlayerStore } from "../stores/usePlayerStore";
 import { useFamilyTree } from "../hooks/useFamilyTree";
 import { PlaybackEnabledToggle } from "./PlaybackEnabledToggle";
 import { AddChildModal } from "./AddChildModal";
-import { toBrandId, type SongId } from "../types/brands";
+import { toBrandId, type SongId } from "types";
 
 interface FamilyTreeProps {
   masterId: string;

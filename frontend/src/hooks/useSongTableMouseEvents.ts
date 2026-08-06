@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import type React from "react";
-import type { SongId } from "../types/brands";
+import type { SongId } from "types";
 
 interface SelectionState {
   lastClickedId: SongId | null;

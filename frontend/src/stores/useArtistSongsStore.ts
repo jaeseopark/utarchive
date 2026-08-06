@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { z } from "zod";
 import { api } from "../api/client";
 import { type SongListItem } from "../api/schemas";
-import { type ArtistId, type SongId, toBrandId } from "../types/brands";
+import { type ArtistId, type SongId, toBrandId } from "types";
 import { useSongsStore } from "./useSongsStore";
 
 const ArtistSongIdsSchema = z.object({

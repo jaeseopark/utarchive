@@ -7,7 +7,7 @@ import { useAlbumUpdate } from "../hooks/useAlbumUpdate";
 import { useResolveCoverArt } from "../hooks/useResolveCoverArt";
 import { useSongDetail } from "../hooks/useSongDetail";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
-import { type SongId, type AlbumId } from "../types/brands";
+import { type SongId, type AlbumId } from "types";
 
 interface CoverArtDisplayProps {
   owner: {

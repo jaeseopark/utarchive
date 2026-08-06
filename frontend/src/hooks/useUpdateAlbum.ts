@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { api } from "../api/client";
 import { AlbumSchema, type AlbumCreateInput } from "../api/schemas";
-import { type AlbumId } from "../types/brands";
+import { type AlbumId } from "types";
 
 /**
  * Hook to update an existing album and refresh the store

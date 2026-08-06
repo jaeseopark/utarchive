@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
-import { type PlaylistId, type SongId } from "../types/brands";
+import { type PlaylistId, type SongId } from "types";
 
 /**
  * Hook to fetch and manage playlist detail with caching

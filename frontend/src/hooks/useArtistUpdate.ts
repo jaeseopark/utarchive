@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { api } from "../api/client";
 import { ArtistSchema, type Artist } from "../api/schemas";
 import { useArtistsStore } from "../stores/useArtistsStore";
-import { type ArtistId } from "../types/brands";
+import { type ArtistId } from "types";
 
 /**
  * Hook to update an artist via API with store integration

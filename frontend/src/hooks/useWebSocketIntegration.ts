@@ -3,8 +3,11 @@ import { useWebSocketContext } from "../context/WebSocketContext";
 import { handleDataChanged, handleUserConfigChanged } from "../lib/webSocketHandlers";
 import {
   WebSocketMessage,
-  AudioIngestionStatusMessage,
-} from "../types/websocket";
+  DataChangedMessageSchema,
+  UserConfigChangedMessageSchema,
+  AudioIngestionStatusMessageSchema,
+  type AudioIngestionStatusMessage,
+} from "types";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { startRequestIdCleanup, stopRequestIdCleanup } from "../lib/requestIdDeduplication";
 import {
@@ -101,7 +104,7 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
 
     switch (message.type) {
       case "DATA_CHANGED": {
-          handleDataChanged(message);
+          handleDataChanged(DataChangedMessageSchema.parse(message));
         break;
       }
 
@@ -122,12 +125,12 @@ export const handleWebSocketMessage = (message: WebSocketMessage): void => {
       }
 
       case "USER_CONFIG_CHANGED": {
-        handleUserConfigChanged(message);
+        handleUserConfigChanged(UserConfigChangedMessageSchema.parse(message));
         break;
       }
 
       case "AUDIO_INGESTION_STATUS": {
-        handleAudioIngestionStatus(message);
+        handleAudioIngestionStatus(AudioIngestionStatusMessageSchema.parse(message));
         break;
       }
 

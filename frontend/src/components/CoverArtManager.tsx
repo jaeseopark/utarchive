@@ -3,7 +3,7 @@ import { Button } from "./ui/Button";
 import CoverArt from "./CoverArt";
 import { useUploadCoverArt } from "../hooks/useUploadCoverArt";
 import { useSongUpdate } from "../hooks/useSongUpdate";
-import { toBrandId, type SongId } from "../types/brands";
+import { toBrandId, type SongId } from "types";
 
 interface CoverArtManagerProps {
   songId: string;

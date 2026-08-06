@@ -2,7 +2,7 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { usePlaylistsStore } from "../../stores/usePlaylistsStore";
 import { useBulkOperations } from "../../hooks/useBulkOperations";
-import type { SongId, PlaylistId } from "../../types/brands";
+import type { SongId, PlaylistId } from "types";
 import clsx from "clsx";
 
 export interface SongContextMenuProps {

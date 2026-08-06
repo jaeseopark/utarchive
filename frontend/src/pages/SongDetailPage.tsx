@@ -10,7 +10,7 @@ import { useArtistsStore } from "../stores/useArtistsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { getArtistNames } from "../lib/artistNames";
 import { useSongDetail } from "../hooks/useSongDetail";
-import { toBrandId, type SongId } from "../types/brands";
+import { toBrandId, type SongId } from "types";
 import type { Song } from "../api/schemas";
 
 interface SongHeaderProps {

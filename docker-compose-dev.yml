@@ -18,11 +18,14 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./frontend:/app/frontend
+      - ./types:/app/types
       - ./tmp/audio:/data/audio
       - ./tmp/ingestion:/data/ingestion:ro # Read-only ingestion folder (optional, for audio watcher)
       - /app/node_modules
       - /app/backend/node_modules
       - /app/frontend/node_modules
+      - /app/types/node_modules
+      - /app/types/dist
   db:
     image: postgres:15-alpine
     environment:
