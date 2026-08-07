@@ -1,5 +1,6 @@
 import { type ComponentType } from "react";
 import SettingsGlobalsPage from "./SettingsGlobalsPage";
+import SettingsAccountPage from "./SettingsAccountPage";
 
 export interface SettingsRouteEntry {
   path: string;
@@ -12,6 +13,11 @@ const settingsRoutes: SettingsRouteEntry[] = [
     path: "globals",
     label: "Globals",
     Component: SettingsGlobalsPage,
+  },
+  {
+    path: "account",
+    label: "Account",
+    Component: SettingsAccountPage,
   },
 ];
 
