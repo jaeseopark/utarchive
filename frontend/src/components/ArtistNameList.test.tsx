@@ -11,13 +11,14 @@ const mockArtists = [
 
 describe("ArtistNameList", () => {
   beforeEach(() => {
-    // Mock useArtistsStore
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.spyOn(useArtistsStoreModule, "useArtistsStore").mockImplementation((selector: any) => {
-      // eslint-disable-next-line no-restricted-syntax
-      const state = { artists: mockArtists } as unknown;
-      return selector(state);
-    });
+    // Mock useArtistsStore with proper typing - selector receives partial state for testing
+    vi.spyOn(useArtistsStoreModule, "useArtistsStore").mockImplementation(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (selector: any) => {
+        const state = { artists: mockArtists };
+        return selector(state);
+      },
+    );
   });
 
   it("renders linked artist names with correct comma spacing", () => {
