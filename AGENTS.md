@@ -33,3 +33,67 @@ Applied to all tasks
     - Mock API calls with `vi.mock()` before imports
     - Use `vi.mocked()` to access mocked implementations with proper typing
     - Avoid direct property assignment (e.g., `api.get = async () => ...`) - use `vi.mocked(api.get).mockResolvedValue()` instead
+
+## Frontend State Management - isOwnOrigin Subscription Pattern
+
+1.  **Prefer subscription-based updates over awaiting on API calls**
+    
+    When a component makes an API call that triggers a WebSocket message, use the `isOwnOrigin` subscription pattern instead of callbacks. This pattern is implemented in the WebSocket handlers and allows components to directly subscribe to store updates.
+
+    **Why**: Reduces prop drilling, improves component isolation, and aligns with reactive state management best practices.
+
+    ### Bad Example ❌ (awaiting)
+    ```tsx
+    // Component makes API call, then awaits to take actino or callback to parent.
+    
+    export function MyComponent() {
+      ...
+      const handleToggle = async () => {
+        await api.patch('/api/...'); // some API call
+        // react to api call finish
+      };
+      ...
+    }
+    ```
+
+    ### Good Example ✅ (Subscription-based, self-contained)
+    ```tsx
+    // Component subscribes to store updates directly
+    // When API succeeds, WebSocket message arrives with isOwnOrigin=true
+    // Store update fires, listeners are invoked
+    // Component subscribes to listener and updates local state
+    // No prop drilling needed, component is self-contained
+    
+    export function MyComponent() {
+      ...
+      const subscribe = useSomeStore((state) => state.subscribe);
+      const unsubscribe = useSomeStore((state) => state.unsubscribe);
+
+      useEffect(() => {
+        const handleUpdate = () => {
+          ...
+        };
+
+        subscribe({
+          event: 'updated',
+          callback: handleUpdate,
+        });
+
+        return () => {
+          unsubscribe({
+            event: 'updated',
+            callback: handleUpdate,
+          });
+        };
+      }, [...]);
+    }
+    ```
+
+    ### When to use subscription pattern
+    - ✅ Component makes an API call that results in entity creation/update/deletion
+    - ✅ Component needs to react to changes triggered by the same action like updating local state, navigating to another route, etc
+    - ✅ Multiple components might update the same entity (need reactive sync)
+
+    ### When callback props are acceptable
+    - ✅ No api calls are being made, or the api call does not alter entities.
+    - ✅ When the updated entity is already configured to re-render automatically based on zustand & react lifecycle.

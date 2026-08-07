@@ -18,7 +18,7 @@ beforeEach(() => {
 
 test("PlaybackEnabledToggle - renders as editable when filePath is provided", () => {
   render(
-    <PlaybackEnabledToggle songId="song-123" isEnabled={false} filePath="/path/to/audio.mp3" />,
+    <PlaybackEnabledToggle songId="song-123" initialEnabled={false} filePath="/path/to/audio.mp3" />,
   );
 
   const button = screen.getByRole("button");
@@ -27,7 +27,7 @@ test("PlaybackEnabledToggle - renders as editable when filePath is provided", ()
 });
 
 test("PlaybackEnabledToggle - renders as disabled when filePath is not provided", () => {
-  render(<PlaybackEnabledToggle songId="song-123" isEnabled={false} filePath={undefined} />);
+  render(<PlaybackEnabledToggle songId="song-123" initialEnabled={false} filePath={undefined} />);
 
   const button = screen.getByRole("button");
   expect(button).toHaveAttribute("disabled");
@@ -35,7 +35,7 @@ test("PlaybackEnabledToggle - renders as disabled when filePath is not provided"
 });
 
 test("PlaybackEnabledToggle - renders as disabled when filePath is null", () => {
-  render(<PlaybackEnabledToggle songId="song-123" isEnabled={false} filePath={null} />);
+  render(<PlaybackEnabledToggle songId="song-123" initialEnabled={false} filePath={null} />);
 
   const button = screen.getByRole("button");
   expect(button).toHaveAttribute("disabled");
@@ -44,15 +44,13 @@ test("PlaybackEnabledToggle - renders as disabled when filePath is null", () => 
 
 test("PlaybackEnabledToggle - calls API when clicked with filePath", async () => {
   const user = userEvent.setup();
-  const onPlaybackEnabledChange = vi.fn();
   vi.mocked(api.patch).mockResolvedValue({});
 
   render(
     <PlaybackEnabledToggle
       songId="song-123"
-      isEnabled={false}
+      initialEnabled={false}
       filePath="/path/to/audio.mp3"
-      onPlaybackEnabledChange={onPlaybackEnabledChange}
     />,
   );
 
@@ -64,18 +62,16 @@ test("PlaybackEnabledToggle - calls API when clicked with filePath", async () =>
     { playbackEnabled: true },
     expect.anything(),
   );
-  expect(onPlaybackEnabledChange).toHaveBeenCalledWith("song-123", true);
 });
 
-test("PlaybackEnabledToggle - does not call API when button is disabled (no filePath)", () => {
-  const onPlaybackEnabledChange = vi.fn();
+test("PlaybackEnabledToggle - does not call API when button is disabled (no filePath)", async () => {
+  vi.mocked(api.patch).mockResolvedValue({});
 
   render(
     <PlaybackEnabledToggle
       songId="song-123"
-      isEnabled={false}
+      initialEnabled={false}
       filePath={undefined}
-      onPlaybackEnabledChange={onPlaybackEnabledChange}
     />,
   );
 
@@ -89,16 +85,17 @@ test("PlaybackEnabledToggle - does not call API when button is disabled (no file
   expect(api.patch).not.toHaveBeenCalled();
 });
 
-test("PlaybackEnabledToggle - shows title changes based on state", () => {
+test("PlaybackEnabledToggle - updates when prop changes", () => {
   const { rerender } = render(
-    <PlaybackEnabledToggle songId="song-123" isEnabled={false} filePath="/path/to/audio.mp3" />,
+    <PlaybackEnabledToggle songId="song-123" initialEnabled={false} filePath="/path/to/audio.mp3" />,
   );
 
   let button = screen.getByRole("button");
   expect(button).toHaveAttribute("title", "Disabled");
 
+  // Rerender with enabled state
   rerender(
-    <PlaybackEnabledToggle songId="song-123" isEnabled={true} filePath="/path/to/audio.mp3" />,
+    <PlaybackEnabledToggle songId="song-123" initialEnabled={true} filePath="/path/to/audio.mp3" />,
   );
 
   button = screen.getByRole("button");

@@ -16,7 +16,7 @@ interface FamilyTreeProps {
 
 function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
   const artists = useArtistsStore((state) => state.artists);
-  const { updateSong, getSongDetail } = useSongsStore();
+  const { getSongDetail } = useSongsStore();
   const { play } = usePlayerStore();
   const { tree, isLoading, error, refetch } = useFamilyTree(
     toBrandId<SongId>(masterId),
@@ -34,13 +34,6 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
       artistNames: getArtistNames(node.artistIds, artistMap),
     }));
   }, [nodesBeforeArtistNameSubstituted, artists]);
-
-  const handlePlaybackEnabledChange = useCallback(
-    (songId: string, newPlaybackEnabled: boolean) => {
-      updateSong({ id: toBrandId<SongId>(songId), updates: { playbackEnabled: newPlaybackEnabled } });
-    },
-    [updateSong],
-  );
 
   const handlePlaySingle = useCallback(
     (nodeId: string) => {
@@ -154,9 +147,8 @@ function FamilyTree({ masterId, currentSongId }: FamilyTreeProps) {
                     <div className="h-6">
                       <PlaybackEnabledToggle
                         songId={node.id}
-                        isEnabled={node.playbackEnabled}
+                        initialEnabled={node.playbackEnabled}
                         filePath={getSongDetail(toBrandId<SongId>(node.id))?.filePath}
-                        onPlaybackEnabledChange={handlePlaybackEnabledChange}
                       />
                     </div>
                   </td>

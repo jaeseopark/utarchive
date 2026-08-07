@@ -25,7 +25,7 @@ export interface ArtistSongsState {
   // Actions
   fetchArtistSongs: (artistId: ArtistId) => Promise<SongListItem[]>;
   getArtistSongs: (artistId: ArtistId) => SongListItem[] | undefined;
-  updateArtistSong: (artistId: ArtistId, songId: string, updates: Partial<SongListItem>) => void;
+  updateArtistSong: (songId: string, updates: Partial<SongListItem>) => void;
   setLoading: (artistId: ArtistId, loading: boolean) => void;
   setError: (artistId: ArtistId, error: string | null) => void;
 }
