@@ -146,7 +146,6 @@ async function processIncomingFile(
         hash: fileHash,
       };
       console.log(`[AudioIngestion] Duplicate detected (skipped): ${filename}`);
-      broadcastIngestionStatus(wss, duplicateStatus);
       return duplicateStatus;
     }
 
