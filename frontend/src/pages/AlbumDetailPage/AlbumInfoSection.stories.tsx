@@ -15,6 +15,7 @@ const sampleAlbum = {
   id: "00000000-0000-0000-0000-000000000001",
   title: "Test Album",
   artistIds: [],
+  coverArtId: null,
   yearReleased: 2024,
   trackList: [],
   urls: [],
