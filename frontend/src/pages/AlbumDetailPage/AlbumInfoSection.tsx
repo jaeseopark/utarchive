@@ -4,10 +4,9 @@ import type { Album } from "../../api/schemas";
 
 interface AlbumInfoSectionProps {
   album: Album;
-  onEditClick: () => void;
 }
 
-const AlbumInfoSection = ({ album, onEditClick }: AlbumInfoSectionProps) => {
+const AlbumInfoSection = ({ album }: AlbumInfoSectionProps) => {
   // Always call the hook unconditionally
   const albumEditorState = useAlbumAttributeEditor(album ?? null);
 
@@ -23,7 +22,11 @@ const AlbumInfoSection = ({ album, onEditClick }: AlbumInfoSectionProps) => {
           <div className="mt-4">{albumEditorState.Component}</div>
         </div>
         {albumEditorState.mode === "view" && (
-          <Button variant="secondary" onClick={onEditClick} className="ml-4 mt-1 flex-shrink-0">
+          <Button
+            variant="secondary"
+            onClick={albumEditorState.enterEditMode}
+            className="ml-4 mt-1 flex-shrink-0"
+          >
             ✎ Edit
           </Button>
         )}

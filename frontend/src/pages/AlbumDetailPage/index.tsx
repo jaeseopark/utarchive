@@ -99,7 +99,7 @@ const AlbumDetailPage = () => {
         <h2 className="text-2xl font-semibold">Album Detail</h2>
       </div>
       <div className="space-y-6">
-        <AlbumInfoSection album={album} onEditClick={openEditModal} />
+        <AlbumInfoSection album={album} />
         <TrackListSection
           album={album}
           artists={artists}
