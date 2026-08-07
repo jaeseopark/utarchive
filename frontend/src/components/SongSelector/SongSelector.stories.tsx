@@ -99,12 +99,13 @@ function setupMocks(overrides?: MockSetupOptions) {
     mockApiGet.mockResolvedValue(apiResponse);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
   vi.spyOn(apiModule.api, "get").mockImplementation(mockApiGet as any);
 
   return { mockApiGet };
 }
 
+// eslint-disable-next-line no-restricted-syntax
 const meta = {
   title: "Components/SongSelector",
   component: SongSelector,
