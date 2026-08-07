@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
 import AlbumInfoSection from "./AlbumInfoSection";
+import { toBrandId, type AlbumId } from "types";
+import type { Album } from "../../api/schemas";
 
 const meta: Meta<typeof AlbumInfoSection> = {
   title: "Pages/AlbumDetailPage/AlbumInfoSection",
@@ -11,8 +13,8 @@ export default meta;
 
 type Story = StoryObj<typeof AlbumInfoSection>;
 
-const sampleAlbum = {
-  id: "00000000-0000-0000-0000-000000000001",
+const sampleAlbum: Album = {
+  id: toBrandId<AlbumId>("00000000-0000-0000-0000-000000000001"),
   title: "Test Album",
   artistIds: [],
   coverArtId: null,
