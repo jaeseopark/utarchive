@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import ArtistNameList from "../components/ArtistNameList";
 import CoverArtDisplay from "../components/CoverArtDisplay";
@@ -7,7 +7,6 @@ import FamilyTree from "../components/FamilyTree";
 import AudioUploadButton from "../components/AudioUploadButton";
 import { useSongAttributesEditor } from "../components/SongAttributesEditor";
 import { PlayButton } from "../components/PlayButton";
-import { useArtistsStore } from "../stores/useArtistsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useSongDetail } from "../hooks/useSongDetail";
 import { toBrandId, type SongId } from "types";
@@ -20,7 +19,6 @@ interface SongHeaderProps {
 function SongHeaderContent({ song }: SongHeaderProps) {
   // Hook call is now unconditional within this component
   const songEditorState = useSongAttributesEditor(song);
-  const artists = useArtistsStore((state) => state.artists);
 
 
 
@@ -38,7 +36,7 @@ function SongHeaderContent({ song }: SongHeaderProps) {
           <div>
             <h1 className="text-3xl font-semibold text-slate-900">{song.title}</h1>
             <div className="mt-3 text-sm text-slate-600">
-              Artists: <ArtistNameList artistIds={song.artistIds} artists={artists} />
+              Artists: <ArtistNameList artistIds={song.artistIds} />
             </div>
           </div>
         </div>

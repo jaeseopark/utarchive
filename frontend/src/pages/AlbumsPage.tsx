@@ -85,10 +85,7 @@ function AlbumsPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-4 text-slate-700">
-                    <ArtistNameList
-                      artistIds={album.artistIds}
-                      artistNames={album.artistNames}
-                    />
+                    <ArtistNameList artistIds={album.artistIds} />
                   </td>
                   <td className="px-4 py-4 text-slate-700">{album.yearReleased ?? "—"}</td>
                 </tr>

@@ -7,7 +7,7 @@ describe("ArtistNameList", () => {
   it("renders linked artist names with correct comma spacing", () => {
     render(
       <MemoryRouter>
-        <ArtistNameList artistIds={["artist-1", "artist-2"]} artistNames={["Name One", "Name Two"]} />
+        <ArtistNameList artistIds={["artist-1", "artist-2"]} />
       </MemoryRouter>,
     );
 
@@ -18,13 +18,13 @@ describe("ArtistNameList", () => {
     expect(screen.getByText("Name Two").closest("a")).toHaveAttribute("href", "/artists/artist-2");
   });
 
-  it("renders unknown when no artists are provided", () => {
+  it("renders a dash when no artists are provided", () => {
     render(
       <MemoryRouter>
-        <ArtistNameList />
+        <ArtistNameList artistIds={[]} />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Unknown")).toBeInTheDocument();
+    expect(screen.getByText("-")).toBeInTheDocument();
   });
 });

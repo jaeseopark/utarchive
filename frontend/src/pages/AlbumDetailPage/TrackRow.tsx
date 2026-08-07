@@ -67,7 +67,7 @@ const TrackRow = ({
           <TrackSongCell track={track} songDetail={songDetail} onPlaySong={onPlaySong} />
         </td>
         <td className="px-4 py-4 text-slate-600">
-          <TrackArtistsCell track={track} artists={artists} songDetail={songDetail} />
+          <TrackArtistsCell track={track} songDetail={songDetail} />
         </td>
         <td className="px-4 py-4 text-slate-600 text-center">
           <TrackDurationCell track={track} album={album} songDetail={songDetail} />

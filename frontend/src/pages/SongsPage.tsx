@@ -90,7 +90,7 @@ function SongsPage() {
         render: (song) => {
           return (
             <div className="flex flex-wrap">
-              <ArtistNameList artistIds={song.artistIds} artists={artists} />
+              <ArtistNameList artistIds={song.artistIds} />
             </div>
           );
         },

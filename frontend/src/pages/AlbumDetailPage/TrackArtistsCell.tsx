@@ -1,16 +1,15 @@
-import { Fragment, useMemo } from "react";
-import { Link } from "react-router-dom";
-import type { Album, Artist, Song } from "../../api/schemas";
+import { useMemo } from "react";
+import ArtistNameList from "../../components/ArtistNameList";
+import type { Album, Song } from "../../api/schemas";
 
 type AlbumTrack = Album["tracks"][number];
 
 interface TrackArtistsCellProps {
   track: AlbumTrack;
-  artists: Artist[];
   songDetail: Song | undefined;
 }
 
-const TrackArtistsCell = ({ track, artists, songDetail }: TrackArtistsCellProps) => {
+const TrackArtistsCell = ({ track, songDetail }: TrackArtistsCellProps) => {
   const artistIds = useMemo(() => {
     // Try to get artist IDs from registered song first
     if (track.isRegistered && track.song?.id && songDetail?.artistIds) {
@@ -28,7 +27,7 @@ const TrackArtistsCell = ({ track, artists, songDetail }: TrackArtistsCellProps)
 
   return (
     <div className="flex flex-wrap">
-      <ArtistNameList artistIds={artistIds} artists={artists} />
+      <ArtistNameList artistIds={artistIds} />
     </div>
   );
 };

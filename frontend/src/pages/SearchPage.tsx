@@ -192,7 +192,7 @@ function SearchPage() {
                             </Link>
                           </td>
                           <td className="px-4 py-4 text-slate-700">
-                            <ArtistNameList artistIds={song.artistIds} artists={artists} disableLinks />
+                            <ArtistNameList artistIds={song.artistIds} disableLinks />
                           </td>
                             <td className="px-4 py-4 text-slate-700">
                               {song.playbackEnabled ? "Yes" : "No"}

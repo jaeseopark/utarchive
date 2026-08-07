@@ -1,12 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { getArtistNames } from "../lib/artistNames";
-import type { Artist } from "../api/schemas";
+import { useArtistsStore } from "../stores/useArtistsStore";
 
 interface ArtistNameListProps {
-  artistIds?: string[];
-  artistNames?: string[];
-  artists?: Artist[];
+  artistIds: string[];
   disableLinks?: boolean;
   className?: string;
   delimiter?: string;
@@ -14,28 +12,24 @@ interface ArtistNameListProps {
 
 export default function ArtistNameList({
   artistIds,
-  artistNames,
-  artists,
   disableLinks = false,
   className,
   delimiter = ", ",
 }: ArtistNameListProps) {
-  const resolvedArtistNames = React.useMemo(() => {
-    if (artistNames && artistNames.length > 0) {
-      return artistNames;
-    }
+  const artists = useArtistsStore((state) => state.artists);
 
+  const resolvedArtistNames = React.useMemo(() => {
     if (!artistIds || artistIds.length === 0) {
       return [];
     }
 
-    const map = artists ? new Map(artists.map((artist) => [artist.id, artist.name])) : new Map();
+    const map = new Map(artists.map((artist) => [artist.id, artist.name]));
 
     return getArtistNames(artistIds, map);
-  }, [artistIds, artistNames, artists]);
+  }, [artistIds, artists]);
 
   if (resolvedArtistNames.length === 0) {
-    return <>Unknown</>;
+    return <>-</>;
   }
 
   return (
