@@ -245,20 +245,14 @@ const _usePlaylistsStoreBase = create<PlaylistsState>((set, get) => {
       return;
     }
 
-    try {
-      await api.patch(
-        `/api/playlists/${playlistId}/songs`,
-        { songIds },
-        z.object({
-          playlistId: z.string().uuid(),
-          songIds: z.array(z.string().uuid()),
-        }),
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to add song to playlist";
-      set({ error: message });
-      throw error;
-    }
+    await api.patch(
+      `/api/playlists/${playlistId}/songs`,
+      { songIds },
+      z.object({
+        playlistId: z.string().uuid(),
+        songIds: z.array(z.string().uuid()),
+      }),
+    );
   },
 
   // Remove song from playlist.

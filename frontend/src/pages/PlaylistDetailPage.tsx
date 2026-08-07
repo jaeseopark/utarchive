@@ -74,7 +74,7 @@ function PlaylistDetailPage() {
     setIsDeleteLoading(true);
     try {
       await deletePlaylist();
-      navigate("/playlists");
+      navigate("/songs");
     } finally {
       setIsDeleteLoading(false);
     }
