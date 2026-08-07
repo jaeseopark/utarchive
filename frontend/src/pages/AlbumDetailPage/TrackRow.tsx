@@ -2,7 +2,7 @@ import { Fragment, useMemo } from "react";
 import FamilyTree from "../../components/FamilyTree";
 import { useFamilyTree } from "../../hooks/useFamilyTree";
 import { toBrandId, type AlbumId, type SongId } from "types";
-import type { Album, Artist, Song } from "../../api/schemas";
+import type { Album, Song } from "../../api/schemas";
 
 type AlbumTrack = Album["tracks"][number];
 import TrackSongCell from "./TrackSongCell";
@@ -13,7 +13,6 @@ import TrackActionsCell from "./TrackActionsCell";
 interface TrackRowProps {
   track: AlbumTrack;
   album: Album;
-  artists: Artist[];
   songDetail: Song | undefined;
   isExpanded: boolean;
   onToggleTree: () => void;
@@ -29,7 +28,6 @@ interface TrackRowProps {
 const TrackRow = ({
   track,
   album,
-  artists,
   songDetail,
   isExpanded,
   onToggleTree,
@@ -67,7 +65,7 @@ const TrackRow = ({
           <TrackSongCell track={track} songDetail={songDetail} onPlaySong={onPlaySong} />
         </td>
         <td className="px-4 py-4 text-slate-600">
-          <TrackArtistsCell track={track} artists={artists} songDetail={songDetail} />
+          <TrackArtistsCell track={track} songDetail={songDetail} />
         </td>
         <td className="px-4 py-4 text-slate-600 text-center">
           <TrackDurationCell track={track} album={album} songDetail={songDetail} />

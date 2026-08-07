@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import ArtistNameList from "../components/ArtistNameList";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { getArtistNames } from "../lib/artistNames";
@@ -84,19 +85,7 @@ function AlbumsPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-4 text-slate-700">
-                    {album.artistNames.length > 0
-                      ? album.artistNames.map((name, index) => (
-                          <span key={index}>
-                            {index > 0 && ", "}
-                            <Link
-                              to={`/artists/${album.artistIds[index]}`}
-                              className="text-sky-500 hover:underline"
-                            >
-                              {name}
-                            </Link>
-                          </span>
-                        ))
-                      : "Unknown"}
+                    <ArtistNameList artistIds={album.artistIds} />
                   </td>
                   <td className="px-4 py-4 text-slate-700">{album.yearReleased ?? "—"}</td>
                 </tr>

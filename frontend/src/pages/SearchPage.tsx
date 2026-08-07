@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useSongsStore } from "../stores/useSongsStore";
-import { getArtistNames } from "../lib/artistNames";
+import ArtistNameList from "../components/ArtistNameList";
 import { toBrandId, type SongId } from "types";
 
 const SearchSongSchema = z.object({
@@ -181,34 +181,24 @@ function SearchPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {enrichedResults.songs.map((song) => {
-                        const artistNames = getArtistNames(song.artistIds, artists);
-                        return (
-                          <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
-                            <td className="px-4 py-4">
-                              <Link
-                                to={`/songs/${song.id}`}
-                                className="text-slate-900 transition hover:text-sky-500"
-                              >
-                                {song.title}
-                              </Link>
-                            </td>
-                            <td className="px-4 py-4 text-slate-700">
-                              {artistNames.length > 0
-                                ? artistNames.map((name, idx) => (
-                                    <span key={idx}>
-                                      {idx > 0 && ", "}
-                                      {name}
-                                    </span>
-                                  ))
-                                : "Unknown"}
-                            </td>
+                      {enrichedResults.songs.map((song) => (
+                        <tr key={song.id} className="border-b border-slate-300 last:border-b-0">
+                          <td className="px-4 py-4">
+                            <Link
+                              to={`/songs/${song.id}`}
+                              className="text-slate-900 transition hover:text-sky-500"
+                            >
+                              {song.title}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-4 text-slate-700">
+                            <ArtistNameList artistIds={song.artistIds} disableLinks />
+                          </td>
                             <td className="px-4 py-4 text-slate-700">
                               {song.playbackEnabled ? "Yes" : "No"}
                             </td>
                           </tr>
-                        );
-                      })}
+                        ))}
                     </tbody>
                   </table>
                 </div>

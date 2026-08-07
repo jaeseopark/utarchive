@@ -3,10 +3,9 @@ import { useParams } from "react-router-dom";
 import { useAlbumsStore } from "../../stores/useAlbumsStore";
 import { useEditAlbumModalStore } from "../../stores/useEditAlbumModalStore";
 import { useSongsStore } from "../../stores/useSongsStore";
-import { useArtistsStore } from "../../stores/useArtistsStore";
+import type { Song } from "../../api/schemas";
 import { usePlayerStore } from "../../stores/usePlayerStore";
 import { toBrandId, type AlbumId } from "types";
-import type { Song } from "../../api/schemas";
 import AlbumInfoSection from "./AlbumInfoSection";
 import TrackListSection from "./TrackListSection";
 
@@ -22,9 +21,6 @@ const AlbumDetailPage = () => {
   // Song details - always subscribe to trigger re-renders
   // eslint-disable-next-line no-restricted-syntax
   const songDetailsMap = useSongsStore((state) => state.songDetails) as Record<string, Song>;
-
-  // Store selectors
-  const artists = useArtistsStore((state) => state.artists);
 
   // Modal and player state
   const {
@@ -102,7 +98,6 @@ const AlbumDetailPage = () => {
         <AlbumInfoSection album={album} />
         <TrackListSection
           album={album}
-          artists={artists}
           songDetailsMap={songDetailsMap}
           expandedSongId={expandedSongId}
           onToggleTree={(songId) => setExpandedSongId(expandedSongId === songId ? null : songId)}
