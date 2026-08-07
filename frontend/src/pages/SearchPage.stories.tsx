@@ -1,8 +1,19 @@
 import type { ReactNode } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
+import { vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import SearchPage from "./SearchPage";
 import { api } from "../api/client";
+
+vi.mock("../api/client", async () => {
+  const actual = await vi.importActual<typeof import("../api/client")>("../api/client");
+  return {
+    api: {
+      ...actual.api,
+      get: vi.fn(),
+    },
+  };
+});
 
 const meta: Meta<typeof SearchPage> = {
   title: "Pages/SearchPage",
@@ -24,8 +35,7 @@ const searchResults = {
 
 const createMockRouterDecorator = (initialEntries: string[], response: unknown) => {
   return (Story: () => ReactNode) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
-    api.get = async () => response as any;
+    vi.mocked(api.get).mockResolvedValue(response);
     return (
       <MemoryRouter initialEntries={initialEntries}>
         <Story />

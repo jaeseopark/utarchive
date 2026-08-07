@@ -14,8 +14,7 @@ vi.mock("../api/client", async () => {
   };
 });
 
-// eslint-disable-next-line no-restricted-syntax
-const mockedApi = api as unknown as { get: ReturnType<typeof vi.fn> };
+const mockedApi = vi.mocked(api);
 
 describe("SearchPage", () => {
   it("displays message to use header search bar when no query is provided", () => {

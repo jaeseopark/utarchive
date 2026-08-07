@@ -92,20 +92,19 @@ function setupMocks(overrides?: MockSetupOptions) {
   });
 
   // Mock API
-  // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-explicit-any
-  const mockApiGet = vi.fn() as any;
+  const mockApiGet = vi.fn();
   if (shouldFail) {
     mockApiGet.mockRejectedValue(new Error("Search failed"));
   } else {
     mockApiGet.mockResolvedValue(apiResponse);
   }
 
-  vi.spyOn(apiModule.api, "get").mockImplementation(mockApiGet);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  vi.spyOn(apiModule.api, "get").mockImplementation(mockApiGet as any);
 
   return { mockApiGet };
 }
 
-// eslint-disable-next-line no-restricted-syntax
 const meta = {
   title: "Components/SongSelector",
   component: SongSelector,

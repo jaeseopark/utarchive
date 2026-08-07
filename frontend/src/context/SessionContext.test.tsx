@@ -16,13 +16,7 @@ vi.mock("../api/client", async () => {
   };
 });
 
-// eslint-disable-next-line no-restricted-syntax
-const mockedApi = api as unknown as {
-  get: ReturnType<typeof vi.fn>;
-  post: ReturnType<typeof vi.fn>;
-  put: ReturnType<typeof vi.fn>;
-  delete: ReturnType<typeof vi.fn>;
-};
+const mockedApi = vi.mocked(api);
 
 const TestConsumer = () => {
   const { user, isLoading, login, logout } = useSession();
