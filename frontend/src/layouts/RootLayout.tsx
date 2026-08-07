@@ -5,6 +5,7 @@ import { SidebarNav } from "../components/SidebarNav";
 import { PlaylistCreateModal } from "../components/PlaylistCreateModal";
 import { NotificationCenter } from "../components/NotificationCenter";
 import { GlobalPlayer } from "../components/GlobalPlayer";
+import { HeaderSearchBar } from "../components/HeaderSearchBar";
 import { useSession } from "../context/SessionContext";
 
 function RootLayout() {
@@ -21,6 +22,9 @@ function RootLayout() {
 
           {/* Global Player - centered, grows to fill available space */}
           <GlobalPlayer />
+
+          {/* Header Search Bar - far right, before action buttons */}
+          <HeaderSearchBar className="w-64" />
 
           {/* Action buttons - right side */}
           <div className="flex flex-shrink-0 items-center gap-3">

@@ -1,7 +1,6 @@
-import { FormEvent, useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
-import { Button } from "../components/ui/Button";
 import { z } from "zod";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
@@ -30,9 +29,8 @@ const SearchResponseSchema = z.object({
 type SearchResponse = z.infer<typeof SearchResponseSchema>;
 
 function SearchPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const queryParam = searchParams.get("q") ?? "";
-  const [query, setQuery] = useState(queryParam);
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +43,6 @@ function SearchPage() {
   const hasQuery = trimmedQuery.length > 0;
 
   useEffect(() => {
-    setQuery(queryParam);
     const searchTerm = queryParam.trim();
 
     if (!searchTerm) {
@@ -64,12 +61,6 @@ function SearchPage() {
       .catch((err) => setError(err instanceof Error ? err.message : String(err)))
       .finally(() => setIsLoading(false));
   }, [queryParam]);
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const nextQuery = query.trim();
-    setSearchParams(nextQuery ? { q: nextQuery } : {});
-  };
 
   const noResults =
     !isLoading &&
@@ -126,23 +117,9 @@ function SearchPage() {
   return (
     <section className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Search</h2>
-        <p className="mt-2 text-slate-600">Search songs, artists, and albums across the archive.</p>
+        <h2 className="text-2xl font-semibold">Search Results</h2>
+        <p className="mt-2 text-slate-600">Results for "{trimmedQuery}"</p>
       </div>
-
-      <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-[1fr_auto]">
-        <label htmlFor="search-query" className="sr-only">
-          Search query
-        </label>
-        <input
-          id="search-query"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search songs, artists, albums"
-          className="min-w-0 rounded-3xl border border-slate-400 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
-        />
-        <Button type="submit">Search</Button>
-      </form>
 
       {isLoading ? (
         <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-center text-slate-600">
@@ -154,7 +131,7 @@ function SearchPage() {
         </div>
       ) : !hasQuery ? (
         <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">
-          Enter a search query to see songs, artists, and albums.
+          Use the search bar in the header to search songs, artists, and albums.
         </div>
       ) : noResults ? (
         <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-8 text-slate-600">
