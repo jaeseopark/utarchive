@@ -1,9 +1,9 @@
 import { useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
+import ArtistNameList from "../components/ArtistNameList";
 import { useSongSelection } from "../hooks/useSongSelection";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { useArtistsStore } from "../stores/useArtistsStore";
-import { getArtistNames } from "../lib/artistNames";
 import { Button } from "../components/ui/Button";
 import { AddSongModal } from "../components/AddSongModal";
 import { useAddSongModalStore } from "../stores/useAddSongModalStore";
@@ -88,31 +88,9 @@ function SongsPage() {
         key: "artistText",
         label: "Artist(s)",
         render: (song) => {
-          const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
-          const artistNames = getArtistNames(song.artistIds ?? [], artistMap);
-
           return (
-            <div className="flex flex-wrap gap-1">
-              {artistNames.length > 0
-                ? artistNames.map((name, index) => {
-                    const artistId = song.artistIds?.[index];
-                    return (
-                      <span key={index}>
-                        {index > 0 && <span className="text-slate-400">,</span>}
-                        {artistId ? (
-                          <Link
-                            to={`/artists/${artistId}`}
-                            className="text-sky-500 hover:underline"
-                          >
-                            {name}
-                          </Link>
-                        ) : (
-                          name
-                        )}
-                      </span>
-                    );
-                  })
-                : "Unknown"}
+            <div className="flex flex-wrap">
+              <ArtistNameList artistIds={song.artistIds} artists={artists} />
             </div>
           );
         },

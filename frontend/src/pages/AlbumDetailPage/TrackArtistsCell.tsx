@@ -26,22 +26,9 @@ const TrackArtistsCell = ({ track, artists, songDetail }: TrackArtistsCellProps)
     return <span>—</span>;
   }
 
-  const artistMap = new Map(artists.map((artist) => [artist.id, artist.name]));
-
   return (
-    <div className="flex flex-wrap gap-1">
-      {artistIds.map((artistId, index) => {
-        const artistName = artistMap.get(artistId);
-        const artistPath: string = `/artists/${String(artistId)}`;
-        return (
-          <Fragment key={artistId}>
-            {index > 0 && <span className="text-slate-400">,</span>}
-            <Link to={artistPath} className="text-sky-500 hover:underline">
-              {artistName || "Unknown"}
-            </Link>
-          </Fragment>
-        );
-      })}
+    <div className="flex flex-wrap">
+      <ArtistNameList artistIds={artistIds} artists={artists} />
     </div>
   );
 };

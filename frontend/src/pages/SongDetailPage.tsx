@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
+import ArtistNameList from "../components/ArtistNameList";
 import CoverArtDisplay from "../components/CoverArtDisplay";
 import FamilyTree from "../components/FamilyTree";
 import AudioUploadButton from "../components/AudioUploadButton";
@@ -8,7 +9,6 @@ import { useSongAttributesEditor } from "../components/SongAttributesEditor";
 import { PlayButton } from "../components/PlayButton";
 import { useArtistsStore } from "../stores/useArtistsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
-import { getArtistNames } from "../lib/artistNames";
 import { useSongDetail } from "../hooks/useSongDetail";
 import { toBrandId, type SongId } from "types";
 import type { Song } from "../api/schemas";
@@ -22,13 +22,7 @@ function SongHeaderContent({ song }: SongHeaderProps) {
   const songEditorState = useSongAttributesEditor(song);
   const artists = useArtistsStore((state) => state.artists);
 
-  const artistList = useMemo(() => {
-    const artistNames = getArtistNames(song.artistIds ?? [], artists);
-    return artistNames.map((name, index) => ({
-      id: song.artistIds?.[index] ?? "",
-      name,
-    }));
-  }, [song, artists]);
+
 
   return (
     <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
@@ -44,21 +38,7 @@ function SongHeaderContent({ song }: SongHeaderProps) {
           <div>
             <h1 className="text-3xl font-semibold text-slate-900">{song.title}</h1>
             <div className="mt-3 text-sm text-slate-600">
-              {artistList.length > 0 ? (
-                <span>
-                  Artists:{" "}
-                  {artistList.map((artist, index) => (
-                    <span key={artist.id}>
-                      <Link to={`/artists/${artist.id}`} className="text-sky-500 hover:underline">
-                        {artist.name}
-                      </Link>
-                      {index < artistList.length - 1 ? ", " : ""}
-                    </span>
-                  ))}
-                </span>
-              ) : (
-                "Artists: Unknown"
-              )}
+              Artists: <ArtistNameList artistIds={song.artistIds} artists={artists} />
             </div>
           </div>
         </div>
