@@ -3,7 +3,6 @@ import clsx from "clsx";
 import { CollapsibleGroup } from "./ui/CollapsibleGroup";
 import { usePlaylists } from "../hooks/usePlaylists";
 import { usePlaylistDragDrop } from "../hooks/usePlaylistDragDrop";
-import { type PlaylistId } from "types";
 
 const navItems = [
   { to: "/artists", label: "Artists" },
