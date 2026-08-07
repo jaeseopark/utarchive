@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import SearchPage from "./SearchPage";
@@ -18,7 +18,7 @@ vi.mock("../api/client", async () => {
 const mockedApi = api as unknown as { get: ReturnType<typeof vi.fn> };
 
 describe("SearchPage", () => {
-  it("renders search input and responds to form submission", async () => {
+  it("displays message to use header search bar when no query is provided", () => {
     mockedApi.get.mockResolvedValue({ songs: [], artists: [], albums: [] });
 
     render(
@@ -29,11 +29,23 @@ describe("SearchPage", () => {
       </MemoryRouter>,
     );
 
-    const input = screen.getByPlaceholderText(/search songs, artists, albums/i);
-    fireEvent.change(input, { target: { value: "test" } });
-    fireEvent.click(screen.getByRole("button", { name: /search/i }));
+    expect(
+      screen.getByText(/use the search bar in the header to search/i),
+    ).toBeInTheDocument();
+  });
+
+  it("fetches and displays search results when query is in URL", async () => {
+    mockedApi.get.mockResolvedValue({ songs: [], artists: [], albums: [] });
+
+    render(
+      <MemoryRouter initialEntries={["/search?q=test"]}>
+        <Routes>
+          <Route path="/search" element={<SearchPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     await waitFor(() => expect(mockedApi.get).toHaveBeenCalled());
-    expect(screen.getByText(/no results for/i)).toBeInTheDocument();
+    expect(screen.getByText(/no results for "test"/i)).toBeInTheDocument();
   });
 });
