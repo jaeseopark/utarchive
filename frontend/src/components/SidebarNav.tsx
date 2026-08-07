@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import clsx from "clsx";
 import { CollapsibleGroup } from "./ui/CollapsibleGroup";
-import { usePlaylists } from "../hooks/usePlaylists";
+import { usePlaylistsStore } from "../stores/usePlaylistsStore";
 import { usePlaylistDragDrop } from "../hooks/usePlaylistDragDrop";
 
 const navItems = [
@@ -31,7 +31,7 @@ interface SidebarNavProps {
 }
 
 export function SidebarNav({ onAddPlaylistClick }: SidebarNavProps) {
-  const { playlists, isLoading, error } = usePlaylists();
+  const { playlists, isLoading } = usePlaylistsStore();
   const { hoveredPlaylistId, handlePlaylistDragOver, handlePlaylistDragLeave, handlePlaylistDrop } =
     usePlaylistDragDrop();
 
@@ -63,8 +63,6 @@ export function SidebarNav({ onAddPlaylistClick }: SidebarNavProps) {
       >
         {isLoading && sortedPlaylists.length === 0 ? (
           <div className="px-4 py-2 text-sm text-slate-500">Loading playlists…</div>
-        ) : error ? (
-          <div className="px-4 py-2 text-sm text-rose-600">Unable to load playlists.</div>
         ) : sortedPlaylists.length === 0 ? (
           <div className="px-4 py-2 text-sm text-slate-500">No playlists yet.</div>
         ) : (
