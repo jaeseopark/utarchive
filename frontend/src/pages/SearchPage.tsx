@@ -7,6 +7,7 @@ import { useArtistsStore } from "../stores/useArtistsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useSongsStore } from "../stores/useSongsStore";
 import { getArtistNames } from "../lib/artistNames";
+import { toBrandId, type SongId } from "types";
 
 const SearchSongSchema = z.object({
   id: z.string().uuid(),
@@ -38,6 +39,7 @@ function SearchPage() {
   const artists = useArtistsStore((state) => state.artists);
   const albums = useAlbumsStore((state) => state.albums);
   const songDetails = useSongsStore((state) => state.songDetails);
+  const fetchSongDetail = useSongsStore((state) => state.fetchSongDetail);
 
   const trimmedQuery = queryParam.trim();
   const hasQuery = trimmedQuery.length > 0;
@@ -79,23 +81,33 @@ function SearchPage() {
     results.albums.length === 0;
 
   // Enrich search results with data from stores
+  useEffect(() => {
+    if (!results) return;
+
+    results.songs
+      .map((songResult) => songResult.id)
+      .filter((id) => !songDetails[id])
+      .forEach((id) => {
+        fetchSongDetail(toBrandId<SongId>(id)).catch(() => {
+          // ignore missing detail failures for search results
+        });
+      });
+  }, [results, songDetails, fetchSongDetail]);
+
   const enrichedResults = useMemo(() => {
     if (!results) return null;
 
     return {
-      songs: results.songs
-        .map((songResult) => {
-          const song = songDetails[songResult.id];
-          return song
-            ? {
-                id: songResult.id,
-                title: song.title,
-                artistIds: song.artistIds || [],
-                playbackEnabled: song.playbackEnabled,
-              }
-            : null;
-        })
-        .filter((song) => song !== null),
+      songs: results.songs.map((songResult) => {
+        const song = songDetails[songResult.id];
+        return {
+          id: songResult.id,
+          title: song ? song.title : "Loading…",
+          artistIds: song?.artistIds ?? [],
+          playbackEnabled: song?.playbackEnabled ?? false,
+          isLoading: !song,
+        };
+      }),
       artists: results.artists
         .map((artistResult) => {
           const artist = artists.find((a) => a.id === artistResult.id);
