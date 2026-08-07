@@ -7,6 +7,7 @@ import { useArtistsStore } from "../stores/useArtistsStore";
 import { useAlbumsStore } from "../stores/useAlbumsStore";
 import { useSongsStore } from "../stores/useSongsStore";
 import { getArtistNames } from "../lib/artistNames";
+import { toBrandId, type SongId } from "types";
 
 const SearchSongSchema = z.object({
   id: z.string().uuid(),
@@ -87,7 +88,7 @@ function SearchPage() {
       .map((songResult) => songResult.id)
       .filter((id) => !songDetails[id])
       .forEach((id) => {
-        fetchSongDetail(id as any).catch(() => {
+        fetchSongDetail(toBrandId<SongId>(id)).catch(() => {
           // ignore missing detail failures for search results
         });
       });
