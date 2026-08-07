@@ -8,12 +8,11 @@ import { useUnlinkSongFromAlbum } from "../../hooks/useUnlinkSongFromAlbum";
 import { useUpsertAlbumSong } from "../../hooks/useUpsertAlbumSong";
 import { useSongSelection } from "../../hooks/useSongSelection";
 import { toBrandId, type AlbumId, type SongId } from "types";
-import type { Album, Artist, Song } from "../../api/schemas";
+import type { Album, Song } from "../../api/schemas";
 import TrackRow from "./TrackRow";
 
 interface TrackListSectionProps {
   album: Album;
-  artists: Artist[];
   songDetailsMap: Record<string, Song>;
   expandedSongId: string | null;
   onToggleTree: (songId: string) => void;
@@ -38,7 +37,6 @@ interface TrackListSectionProps {
 
 const TrackListSection = ({
   album,
-  artists,
   songDetailsMap,
   expandedSongId,
   onToggleTree,
@@ -212,7 +210,6 @@ const TrackListSection = ({
                       key={`${track.trackNumber}-${songId ?? "unreg"}`}
                       track={track}
                       album={album}
-                      artists={artists}
                       songDetail={fullSong}
                       isExpanded={expandedSongId === songId}
                       onToggleTree={() => {
