@@ -19,13 +19,8 @@ function ArtistDetailPage() {
     songs,
     isLoading: songsLoading,
     error: songsError,
-    updateSong,
   } = useArtistSongs(artistId);
   const { albums, isLoading: albumsLoading, error: albumsError } = useArtistAlbums(artistId);
-
-  const handlePlaybackEnabledChange = (songId: string, newPlaybackEnabled: boolean) => {
-    updateSong(songId, { playbackEnabled: newPlaybackEnabled });
-  };
 
   const isLoading = artistLoading || songsLoading || albumsLoading;
   const error = artistError || songsError || albumsError;
@@ -54,7 +49,7 @@ function ArtistDetailPage() {
     return (
       <div className="space-y-6">
         <ArtistHeader artist={artist} />
-        <SongsSection songs={songs ?? []} onPlaybackEnabledChange={handlePlaybackEnabledChange} />
+        <SongsSection songs={songs ?? []} />
         <AlbumsSection albums={albums} />
       </div>
     );

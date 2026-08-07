@@ -1,24 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "../api/client";
 import { SongSchema } from "../api/schemas";
 
 interface PlaybackEnabledToggleProps {
   songId: string;
-  isEnabled: boolean;
+  initialEnabled: boolean;
   filePath?: string | null;
-  onPlaybackEnabledChange?: (songId: string, newPlaybackEnabled: boolean) => void;
 }
 
 export function PlaybackEnabledToggle({
   songId,
-  isEnabled,
+  initialEnabled,
   filePath,
-  onPlaybackEnabledChange,
 }: PlaybackEnabledToggleProps) {
+  const [isEnabled, setIsEnabled] = useState(initialEnabled);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const hasFile = Boolean(filePath);
   const isDisabled = !hasFile || isUpdating;
+
+  // Sync local state with prop changes (parent component handles store subscription)
+  useEffect(() => {
+    setIsEnabled(initialEnabled);
+  }, [initialEnabled]);
 
   const handleToggle = async () => {
     if (isDisabled) {
@@ -29,7 +33,7 @@ export function PlaybackEnabledToggle({
     try {
       const newPlaybackEnabled = !isEnabled;
       await api.patch(`/api/songs/${songId}`, { playbackEnabled: newPlaybackEnabled }, SongSchema);
-      onPlaybackEnabledChange?.(songId, newPlaybackEnabled);
+      // Parent receives updated prop via store subscription when WebSocket message arrives
     } catch (err) {
       console.error("Failed to update playback enabled status:", err);
     } finally {

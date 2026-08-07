@@ -5,10 +5,9 @@ import type { SongListItem } from "../../api/schemas";
 
 interface SongsSectionProps {
   songs: SongListItem[];
-  onPlaybackEnabledChange: (songId: string, enabled: boolean) => void; // TODO: this should not need to drill.
 }
 
-export function SongsSection({ songs, onPlaybackEnabledChange }: SongsSectionProps) {
+export function SongsSection({ songs }: SongsSectionProps) {
   if (songs.length === 0) {
     return (
       <section className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
@@ -43,7 +42,7 @@ export function SongsSection({ songs, onPlaybackEnabledChange }: SongsSectionPro
               ),
             },
             "released",
-            createPlaybackEnabledColumn(onPlaybackEnabledChange),
+            createPlaybackEnabledColumn(),
           ]}
         />
       </div>
