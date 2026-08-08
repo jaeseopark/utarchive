@@ -34,7 +34,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isPlaying: false,
   currentTime: 0,
   duration: 0,
-  volume: 0.8,
+  volume: 1.0,
 
   queue: [],
   queueIndex: -1,
