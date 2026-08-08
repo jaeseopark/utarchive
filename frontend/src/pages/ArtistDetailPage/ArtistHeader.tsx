@@ -14,6 +14,8 @@ export function ArtistHeader({ artist }: ArtistHeaderProps) {
   const navigate = useNavigate();
   const artistEditorState = useArtistAttributesEditor(artist);
   const deleteArtist = useArtistsStore((state) => state.deleteArtist);
+  const subscribe = useArtistsStore((state) => state.subscribe);
+  const unsubscribe = useArtistsStore((state) => state.unsubscribe);
   const confirmDialog = useConfirmDialog();
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -34,12 +36,28 @@ export function ArtistHeader({ artist }: ArtistHeaderProps) {
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
     setDeleteError(null);
+    
+    // Subscribe to deletion event - when WebSocket confirms deletion with isOwnOrigin=true, navigate away
+    const handleDeleted = (deletedId: string) => {
+      if (deletedId === artist.id) {
+        navigate("/artists");
+      }
+    };
+
+    subscribe({
+      event: 'deleted',
+      callback: handleDeleted,
+    });
+
     try {
       await deleteArtist(artist.id);
-      navigate("/artists");
     } catch {
       setDeleteError("Failed to delete artist");
-    } finally {
+      // Unsubscribe on error since we won't navigate away
+      unsubscribe({
+        event: 'deleted',
+        callback: handleDeleted,
+      });
       setIsDeleting(false);
     }
   };

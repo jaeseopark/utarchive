@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
+import { BrowserRouter } from "react-router-dom";
 import AlbumInfoSection from "./AlbumInfoSection";
 import { toBrandId, type AlbumId } from "types";
 import type { Album } from "../../api/schemas";
@@ -7,6 +8,13 @@ import type { Album } from "../../api/schemas";
 const meta: Meta<typeof AlbumInfoSection> = {
   title: "Pages/AlbumDetailPage/AlbumInfoSection",
   component: AlbumInfoSection,
+  decorators: [
+    (Story) => (
+      <BrowserRouter>
+        <Story />
+      </BrowserRouter>
+    ),
+  ],
 };
 
 export default meta;

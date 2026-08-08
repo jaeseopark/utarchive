@@ -231,7 +231,7 @@ const _usePlaylistsStoreBase = create<PlaylistsState>((set, get) => {
   // Delete playlist
   deletePlaylist: async (id: PlaylistId) => {
     try {
-      await api.delete(`/api/playlists/${id}`, PlaylistSchema);
+      await api.delete(`/api/playlists/${id}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete playlist";
       set({ error: message });

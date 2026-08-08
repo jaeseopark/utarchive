@@ -1,4 +1,4 @@
-import { ZodSchema } from "zod";
+import { ZodError, ZodSchema } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { registerRequestId } from "../lib/requestIdDeduplication";
 
@@ -38,39 +38,6 @@ type RequestOptions = {
 
 function handleUnauthorized() {
   window.location.assign("/login");
-}
-
-/**
- * Format Zod validation errors into a human-readable message showing which fields failed
- */
-function formatValidationErrors(errors: Record<string, unknown>): string {
-  const failedFields: string[] = [];
-
-  const formatField = (key: string, value: unknown, path: string[] = []): void => {
-    const fieldPath = [...path, key].join(".");
-
-    if (
-      typeof value === "object" &&
-      value !== null &&
-      "_errors" in value &&
-      // eslint-disable-next-line no-restricted-syntax
-      Array.isArray((value as Record<string, unknown>)._errors)
-    ) {
-      // eslint-disable-next-line no-restricted-syntax
-      const errorMessages = ((value as Record<string, unknown>)._errors as string[]).join("; ");
-      failedFields.push(`${fieldPath}: ${errorMessages}`);
-    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      for (const [nestedKey, nestedValue] of Object.entries(value)) {
-        formatField(nestedKey, nestedValue, [...path, key]);
-      }
-    }
-  };
-
-  for (const [key, value] of Object.entries(errors)) {
-    formatField(key, value);
-  }
-
-  return `Response validation failed: ${failedFields.join(", ")}`;
 }
 
 /**
@@ -116,12 +83,15 @@ function logValidationError(
   console.groupEnd();
 }
 
-async function request<T>(
+/**
+ * Untyped base request function - handles HTTP logic and JSON parsing
+ * Returns raw response without schema validation
+ */
+async function requestUntyped(
   input: RequestInfo,
   init: RequestInit,
-  schema: ZodSchema<T>,
   options: RequestOptions = {},
-): Promise<T> {
+): Promise<unknown> {
   // Generate request ID for deduplication
   const requestId = uuidv4();
   registerRequestId(requestId);
@@ -160,15 +130,32 @@ async function request<T>(
     throw new ApiError(response.status, message, payload);
   }
 
-  const parseResult = schema.safeParse(payload);
-  if (!parseResult.success) {
-    const errorFormat = parseResult.error.format();
-    logValidationError(String(input), payload, errorFormat);
-    const validationErrorMessage = formatValidationErrors(errorFormat);
-    throw new ApiError(response.status, validationErrorMessage, errorFormat);
-  }
+  return payload;
+}
 
-  return parseResult.data;
+/**
+ * Typed wrapper - validates response against schema using zod.parse()
+ * Throws immediately on validation error
+ */
+async function request<T>(
+  input: RequestInfo,
+  init: RequestInit,
+  schema: ZodSchema<T>,
+  options: RequestOptions = {},
+): Promise<T> {
+  const payload = await requestUntyped(input, init, options);
+
+  try {
+    return schema.parse(payload);
+  } catch (error) {
+    // If zod throws, log detailed error and re-throw as ApiError
+    if (error instanceof ZodError) {
+      const errorFormat = error.format();
+      logValidationError(String(input), payload, errorFormat);
+    }
+    const message = error instanceof Error ? error.message : "Validation failed";
+    throw new ApiError(200, message, error);
+  }
 }
 
 export const api = {
@@ -180,6 +167,11 @@ export const api = {
     request(url, { method: "PUT", body: JSON.stringify(body) }, schema, options),
   patch: async <T>(url: string, body: unknown, schema: ZodSchema<T>, options?: RequestOptions) =>
     request(url, { method: "PATCH", body: JSON.stringify(body) }, schema, options),
-  delete: async <T>(url: string, schema: ZodSchema<T>, options?: RequestOptions) =>
-    request(url, { method: "DELETE" }, schema, options),
+  delete: async <T = object>(url: string, schema?: ZodSchema<T>, options?: RequestOptions) => {
+    if (schema) {
+      return request(url, { method: "DELETE" }, schema, options);
+    }
+    // eslint-disable-next-line no-restricted-syntax
+    return requestUntyped(url, { method: "DELETE" }, options) as Promise<T>;
+  },
 };

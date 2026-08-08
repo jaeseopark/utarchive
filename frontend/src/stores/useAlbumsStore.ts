@@ -35,6 +35,7 @@ export interface AlbumsState {
   addAlbum: (params: { item: Album }) => void;
   updateAlbum: (params: { id: AlbumId; updates: Partial<Album> }) => void;
   removeAlbum: (params: { id: AlbumId }) => void;
+  deleteAlbum: (id: AlbumId) => Promise<void>;
   setError: (error: string | null) => void;
   // Internal methods (for detail fetches)
   setLoading: (loading: boolean) => void;
@@ -211,6 +212,17 @@ const _useAlbumsStoreBase = create<AlbumsState>((set, get) => {
         albumsMap: newMap,
       };
     });
+  },
+
+  deleteAlbum: async (id: AlbumId) => {
+    try {
+      await api.delete(`/api/albums/${id}`);
+      // Store update will happen via WebSocket DATA_CHANGED message
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete album";
+      set({ error: message });
+      throw error;
+    }
   },
 
   // EntityStore interface methods (required by WebSocket handler)
