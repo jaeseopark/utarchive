@@ -17,7 +17,6 @@ export function GlobalPlayer() {
     isPlaying,
     currentTime,
     duration,
-    volume,
     repeatMode,
     shuffleEnabled,
     pause,
@@ -25,7 +24,6 @@ export function GlobalPlayer() {
     next,
     previous,
     seek,
-    setVolume,
     setRepeatMode,
     toggleShuffle,
   } = usePlayer();
@@ -216,22 +214,6 @@ export function GlobalPlayer() {
             <path d="M10.59 9.38L6.5 5.29 8 3.82 15.47 11.3 4 22.77 2.53 21.3 6.62 17.21H3v-2h7.59zM14.5 4l2.04 2.04L4 18.58 2.58 17.17 14.5 4zm.33 9.41l-2.47 2.47.02.05c0 .8-.19 1.54-.54 2.2l-.5-1.07L7.7 11.49l.33-.41h2.96l1.83 1.83z" />
           </svg>
         </button>
-
-        {/* Volume Control */}
-        <div className="flex items-center gap-1">
-          <svg className="h-4 w-4 text-slate-600" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.26 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-          </svg>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={Math.round(volume * 100)}
-            onChange={(e) => setVolume(Number(e.target.value) / 100)}
-            className="h-1 w-16 cursor-pointer"
-            title="Volume"
-          />
-        </div>
       </div>
     </div>
   );
