@@ -222,8 +222,7 @@ export const useArtistsStore = create<ArtistsState>((set, get) => ({
 
   deleteArtist: async (id: ArtistId) => {
     try {
-      const emptyResponseSchema = z.object({ ok: z.boolean() });
-      await api.delete(`/api/artists/${id}`, emptyResponseSchema);
+      await api.delete(`/api/artists/${id}`);
       // Store update will happen via WebSocket DATA_CHANGED message
     } catch (error) {
       let message = "Failed to delete artist";

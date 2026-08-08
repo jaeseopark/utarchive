@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
 import { usePlayerStore } from "../stores/usePlayerStore";
+import { usePlaylistsStore } from "../stores/usePlaylistsStore";
 import { useSongSelectorModal } from "../components/SongSelector";
 import { useSongSelection } from "../hooks/useSongSelection";
 import { SongActionsDropdown } from "../components/SongTable";
@@ -12,14 +14,19 @@ import { toBrandId, type PlaylistId, type SongId } from "types";
 function PlaylistDetailPage() {
   const { id } = useParams<"id">();
   const navigate = useNavigate();
+  const playlistId = toBrandId<PlaylistId>(id || "");
   const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSongs, removeSong } =
-    usePlaylistDetail(toBrandId<PlaylistId>(id || ""));
+    usePlaylistDetail(playlistId);
+  const subscribe = usePlaylistsStore((state) => state.subscribe);
+  const unsubscribe = usePlaylistsStore((state) => state.unsubscribe);
+  const confirmDialog = useConfirmDialog();
 
   const [draftName, setDraftName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
-  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isPlayLoading, setIsPlayLoading] = useState(false);
+  const [isFrozen, setIsFrozen] = useState(false);
 
   const { setQueue } = usePlayerStore();
 
@@ -66,17 +73,45 @@ function PlaylistDetailPage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm("Delete this playlist? This cannot be undone.")) {
-      return;
-    }
+  const handleDeleteClick = () => {
+    confirmDialog.open({
+      title: "Delete Playlist",
+      message: "Are you sure you want to delete this playlist? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      variant: "destructive",
+      onConfirm: handleConfirmDelete,
+    });
+  };
 
-    setIsDeleteLoading(true);
+  const handleConfirmDelete = async () => {
+    // Close dialog immediately and freeze UI
+    confirmDialog.close();
+    setIsFrozen(true);
+    setDeleteError(null);
+
+    // Subscribe to deletion event - when WebSocket confirms deletion with isOwnOrigin=true, navigate away
+    const handleDeleted = (deletedId: string) => {
+      if (deletedId === playlistId) {
+        navigate("/songs");
+      }
+    };
+
+    subscribe({
+      event: 'deleted',
+      callback: handleDeleted,
+    });
+
     try {
       await deletePlaylist();
-      navigate("/songs");
-    } finally {
-      setIsDeleteLoading(false);
+    } catch {
+      setDeleteError("Failed to delete playlist");
+      // Unsubscribe on error since we won't navigate away
+      unsubscribe({
+        event: 'deleted',
+        callback: handleDeleted,
+      });
+      setIsFrozen(false);
     }
   };
 
@@ -134,24 +169,24 @@ function PlaylistDetailPage() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button type="button" variant="secondary" onClick={() => songSelectorModal.open()}>
+          <Button type="button" variant="secondary" onClick={() => songSelectorModal.open()} disabled={isFrozen}>
             Add Songs
           </Button>
           <Button
             type="button"
             variant="secondary"
             onClick={handlePlayPlaylist}
-            disabled={!playlistSongs.length || isPlayLoading}
+            disabled={!playlistSongs.length || isPlayLoading || isFrozen}
           >
             {isPlayLoading ? "Loading…" : "Play All"}
           </Button>
           <Button
             type="button"
-            variant="secondary"
-            onClick={handleDelete}
-            disabled={isDeleteLoading}
+            variant="destructive"
+            onClick={handleDeleteClick}
+            disabled={isFrozen}
           >
-            {isDeleteLoading ? "Deleting…" : "Delete Playlist"}
+            {isFrozen ? "⏳" : "Delete Playlist"}
           </Button>
         </div>
       </div>
@@ -166,6 +201,11 @@ function PlaylistDetailPage() {
         </div>
       ) : playlist ? (
         <div className="space-y-6">
+          {deleteError && (
+            <div className="rounded-3xl border border-rose-400 bg-rose-100/30 p-6 text-rose-700">
+              {deleteError}
+            </div>
+          )}
           <div className="rounded-3xl border border-slate-300 bg-slate-50/80 p-6 shadow-xl shadow-slate-200/20">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-3">
@@ -178,10 +218,11 @@ function PlaylistDetailPage() {
                       id="playlist-name-edit"
                       value={draftName}
                       onChange={(event) => setDraftName(event.target.value)}
-                      className="w-full rounded-3xl border border-slate-400 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
+                      disabled={isFrozen}
+                      className="w-full rounded-3xl border border-slate-400 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20 disabled:bg-slate-100 disabled:text-slate-500"
                     />
                     <div className="flex gap-2">
-                      <Button type="button" onClick={handleSaveName} disabled={isSavingName}>
+                      <Button type="button" onClick={handleSaveName} disabled={isSavingName || isFrozen}>
                         Save
                       </Button>
                       <Button
@@ -191,6 +232,7 @@ function PlaylistDetailPage() {
                           setDraftName(playlist.name);
                           setIsEditingName(false);
                         }}
+                        disabled={isFrozen}
                       >
                         Cancel
                       </Button>
@@ -203,6 +245,7 @@ function PlaylistDetailPage() {
                       type="button"
                       variant="secondary"
                       onClick={() => setIsEditingName(true)}
+                      disabled={isFrozen}
                     >
                       Rename
                     </Button>
@@ -243,17 +286,17 @@ function PlaylistDetailPage() {
                         return (
                           <tr
                             key={item.song.id}
-                            onClick={() => toggleSelection(item.song.id, false)}
+                            onClick={() => !isFrozen && toggleSelection(item.song.id, false)}
                             onDoubleClick={() => {
                               // Play the song on double-click if playback is enabled
-                              if (item.song.playbackEnabled) {
+                              if (item.song.playbackEnabled && !isFrozen) {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
                                 usePlayerStore().play(item.song as any);
                               }
                             }}
                             className={`border-b border-slate-300 last:border-b-0 cursor-pointer transition ${
                               isSelected ? "bg-blue-50" : "hover:bg-slate-50"
-                            }`}
+                            } ${isFrozen ? "opacity-50 pointer-events-none" : ""}`}
                           >
                             <td className="px-4 py-4 text-slate-700">{index + 1}</td>
                             <td className="px-4 py-4">
@@ -276,6 +319,7 @@ function PlaylistDetailPage() {
                                 <Button
                                   type="button"
                                   variant="secondary"
+                                  disabled={isFrozen}
                                   // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax
                                   onClick={() => usePlayerStore().play(item.song as any)}
                                 >
@@ -285,6 +329,7 @@ function PlaylistDetailPage() {
                               <Button
                                 type="button"
                                 variant="secondary"
+                                disabled={isFrozen}
                                 onClick={() => handleRemoveSong(item.song.id)}
                               >
                                 Remove
@@ -311,6 +356,7 @@ function PlaylistDetailPage() {
       )}
 
       {songSelectorModal.Component}
+      <confirmDialog.Component />
     </section>
   );
 }

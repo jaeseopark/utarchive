@@ -381,3 +381,16 @@ export const selectAlbumsByArtistId = async (artistId: string) => {
 
   return results;
 };
+
+export const deleteAlbumById = async (albumId: string) =>
+  db.transaction(async (tx) => {
+    // Delete album-artist associations
+    await tx.delete(albumArtists).where(eq(albumArtists.albumId, albumId));
+
+    // Delete album-song associations
+    await tx.delete(albumSongs).where(eq(albumSongs.albumId, albumId));
+
+    // Delete the album
+    const result = await tx.delete(albums).where(eq(albums.id, albumId));
+    return (result.rowCount ?? 0) > 0;
+  });

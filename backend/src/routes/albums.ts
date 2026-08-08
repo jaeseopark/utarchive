@@ -4,6 +4,7 @@ import { validateRequest } from "../middleware/validateRequest";
 import { requireAuth } from "../middleware/requireAuth";
 import {
   createAlbum,
+  deleteAlbumById,
   deleteAlbumSong,
   selectAlbumById,
   selectAlbums,
@@ -180,6 +181,36 @@ router.put("/:id/songs/:songId", validateRequest(albumSongSchema), async (req, r
 
     throw error;
   }
+});
+
+router.delete("/:id", async (req, res) => {
+  const albumId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const deleted = await deleteAlbumById(albumId);
+
+  if (!deleted) {
+    return res.status(404).json({ error: "Album not found" });
+  }
+
+  const requestId = req.requestId;
+  const originId = req.originId;
+
+  // Broadcast to all connected clients
+  const wss = req.app.locals.wss;
+  if (wss) {
+    const message: DataChangedMessage = {
+      type: "DATA_CHANGED",
+      entity: "album",
+      timestamp: Date.now(),
+      data: {
+        deleted: [{ id: albumId }],
+      },
+      requestId,
+      originId,
+    };
+    broadcastMessage(wss, message);
+  }
+
+  return res.status(200).json({ ok: true });
 });
 
 router.delete("/:id/songs/:songId", async (req, res) => {
