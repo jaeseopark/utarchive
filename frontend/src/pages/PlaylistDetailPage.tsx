@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type KeyboardEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
@@ -128,6 +128,17 @@ function PlaylistDetailPage() {
     }
   };
 
+  const handleNameKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void handleSaveName();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      setDraftName(playlist?.name || "");
+      setIsEditingName(false);
+    }
+  };
+
   const handlePlayPlaylist = async () => {
     if (!playlist || !playlist.songs.length) {
       return;
@@ -223,6 +234,7 @@ function PlaylistDetailPage() {
                       id="playlist-name-edit"
                       value={draftName}
                       onChange={(event) => setDraftName(event.target.value)}
+                      onKeyDown={handleNameKeyDown}
                       disabled={isFrozen}
                       className="w-full rounded-3xl border border-slate-400 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20 disabled:bg-slate-100 disabled:text-slate-500"
                     />
