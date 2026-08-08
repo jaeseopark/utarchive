@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type KeyboardEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
@@ -128,7 +128,7 @@ function PlaylistDetailPage() {
     }
   };
 
-  const handleNameKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleNameKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
       void handleSaveName();
