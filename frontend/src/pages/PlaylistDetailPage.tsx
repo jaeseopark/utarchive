@@ -53,6 +53,11 @@ function PlaylistDetailPage() {
     }
   }, [playlist]);
 
+  // Exit rename mode when navigating to a different playlist
+  useEffect(() => {
+    setIsEditingName(false);
+  }, [playlistId]);
+
   const handleSaveName = async () => {
     if (!playlist) {
       return;
