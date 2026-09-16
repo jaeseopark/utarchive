@@ -15,7 +15,19 @@ export function usePlaylistDetail(playlistId: PlaylistId) {
     deletePlaylist,
     addSongsToPlaylist,
     removeSongFromPlaylist,
-  } = usePlaylistsStore();
+  } = usePlaylistsStore((state) => ({
+    isLoading: state.isLoading,
+    error: state.error,
+    fetchPlaylistDetail: state.fetchPlaylistDetail,
+    getPlaylistDetail: state.getPlaylistDetail,
+    updatePlaylist: state.updatePlaylist,
+    deletePlaylist: state.deletePlaylist,
+    addSongsToPlaylist: state.addSongsToPlaylist,
+    removeSongFromPlaylist: state.removeSongFromPlaylist,
+  }));
+
+  // Subscribe to playlist data changes via store selector
+  const playlist = usePlaylistsStore((state) => state.playlistDetails[playlistId]);
 
   useEffect(() => {
     if (!playlistId) return;
@@ -24,8 +36,6 @@ export function usePlaylistDetail(playlistId: PlaylistId) {
       void fetchPlaylistDetail(playlistId);
     }
   }, [playlistId, fetchPlaylistDetail, getPlaylistDetail]);
-
-  const playlist = getPlaylistDetail(playlistId);
 
   return {
     playlist,

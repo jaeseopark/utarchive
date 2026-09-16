@@ -97,6 +97,25 @@ router.patch("/:id", validateRequest(playlistUpdateSchema), async (req, res) => 
     return res.status(404).json({ error: "Playlist not found" });
   }
 
+  const requestId = req.requestId;
+  const originId = req.originId;
+
+  // Broadcast to all connected clients
+  const wss = req.app.locals.wss;
+  if (wss) {
+    const message: DataChangedMessage = {
+      type: "DATA_CHANGED",
+      entity: "playlist",
+      timestamp: Date.now(),
+      data: {
+        updated: [updatedPlaylist],
+      },
+      requestId,
+      originId,
+    };
+    broadcastMessage(wss, message);
+  }
+
   return res.status(200).json(updatedPlaylist);
 });
 

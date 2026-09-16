@@ -2,11 +2,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import PlaylistDetailPage from "./PlaylistDetailPage";
-import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
+import { usePlaylistsStore, type PlaylistsState, type PlaylistDetail } from "../stores/usePlaylistsStore";
 import { toBrandId, type PlaylistId, type SongId } from "types";
 
-vi.mock("../hooks/usePlaylistDetail", () => ({
-  usePlaylistDetail: vi.fn(),
+vi.mock("../stores/usePlaylistsStore", () => ({
+  usePlaylistsStore: vi.fn(),
 }));
 
 vi.mock("../components/SongSelector", () => ({
@@ -20,7 +20,7 @@ vi.mock("../components/SongSelector", () => ({
   }),
 }));
 
-const mockedUsePlaylistDetail = vi.mocked(usePlaylistDetail);
+const mockedUsePlaylistsStore = vi.mocked(usePlaylistsStore);
 
 describe("PlaylistDetailPage", () => {
   beforeEach(() => {
@@ -28,22 +28,46 @@ describe("PlaylistDetailPage", () => {
   });
 
   it("renders playlist detail and handles rename UI", async () => {
-    const playlistId = toBrandId<PlaylistId>("11111111-1111-1111-1111-111111111111");
+    const playlistId = toBrandId<PlaylistId>("1");
+    const updatePlaylist = vi.fn();
 
-    mockedUsePlaylistDetail.mockReturnValue({
-      playlist: {
-        id: playlistId,
-        name: "Favorites",
-        createdAt: new Date().toISOString(),
-        songs: [],
-      },
-      isLoading: false,
-      error: null,
-      updatePlaylist: vi.fn(),
-      deletePlaylist: vi.fn(),
-      addSongs: vi.fn(),
-      addSong: vi.fn(),
-      removeSong: vi.fn(),
+    const mockPlaylist: PlaylistDetail = {
+      id: playlistId,
+      name: "Favorites",
+      createdAt: new Date().toISOString(),
+      songs: [],
+    };
+
+    mockedUsePlaylistsStore.mockImplementation((selector) => {
+      const playlistDetailsRecord: Record<string, PlaylistDetail> = {
+        "1": mockPlaylist,
+      };
+
+      const state: PlaylistsState = {
+        playlistDetails: playlistDetailsRecord,
+        playlists: [],
+        playlistDetailsMap: new Map(),
+        songCounts: {},
+        isLoading: false,
+        error: null,
+        fetchPlaylistDetail: vi.fn(),
+        fetchPlaylists: vi.fn(),
+        createPlaylist: vi.fn(),
+        updatePlaylist,
+        deletePlaylist: vi.fn(),
+        addSongsToPlaylist: vi.fn(),
+        removeSongFromPlaylist: vi.fn(),
+        addPlaylist: vi.fn(),
+        updatePlaylistFromRemote: vi.fn(),
+        removePlaylistFromRemote: vi.fn(),
+        getPlaylistDetail: vi.fn(() => mockPlaylist),
+        setLoading: vi.fn(),
+        setError: vi.fn(),
+        subscribe: vi.fn(),
+        unsubscribe: vi.fn(),
+        getListeners: vi.fn(),
+      };
+      return selector(state);
     });
 
     render(
@@ -56,27 +80,50 @@ describe("PlaylistDetailPage", () => {
 
     await waitFor(() => expect(screen.getByText(/favorites/i)).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: /rename/i }));
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("textbox")).toBeInTheDocument());
   });
 
   it("adds songs in a single bulk request when the selector confirms selections", async () => {
-    const playlistId = toBrandId<PlaylistId>("11111111-1111-1111-1111-111111111111");
-    const addSongs = vi.fn();
+    const playlistId = toBrandId<PlaylistId>("1");
+    const addSongsToPlaylist = vi.fn();
 
-    mockedUsePlaylistDetail.mockReturnValue({
-      playlist: {
-        id: playlistId,
-        name: "Favorites",
-        createdAt: new Date().toISOString(),
-        songs: [],
-      },
-      isLoading: false,
-      error: null,
-      updatePlaylist: vi.fn(),
-      deletePlaylist: vi.fn(),
-      addSongs,
-      addSong: vi.fn(),
-      removeSong: vi.fn(),
+    const mockPlaylist: PlaylistDetail = {
+      id: playlistId,
+      name: "Favorites",
+      createdAt: new Date().toISOString(),
+      songs: [],
+    };
+
+    mockedUsePlaylistsStore.mockImplementation((selector) => {
+      const playlistDetailsRecord: Record<string, PlaylistDetail> = {
+        "1": mockPlaylist,
+      };
+
+      const state: PlaylistsState = {
+        playlistDetails: playlistDetailsRecord,
+        playlists: [],
+        playlistDetailsMap: new Map(),
+        songCounts: {},
+        isLoading: false,
+        error: null,
+        fetchPlaylistDetail: vi.fn(),
+        fetchPlaylists: vi.fn(),
+        createPlaylist: vi.fn(),
+        updatePlaylist: vi.fn(),
+        deletePlaylist: vi.fn(),
+        addSongsToPlaylist,
+        removeSongFromPlaylist: vi.fn(),
+        addPlaylist: vi.fn(),
+        updatePlaylistFromRemote: vi.fn(),
+        removePlaylistFromRemote: vi.fn(),
+        getPlaylistDetail: vi.fn(() => mockPlaylist),
+        setLoading: vi.fn(),
+        setError: vi.fn(),
+        subscribe: vi.fn(),
+        unsubscribe: vi.fn(),
+        getListeners: vi.fn(),
+      };
+      return selector(state);
     });
 
     render(
@@ -89,39 +136,65 @@ describe("PlaylistDetailPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /add songs/i }));
 
-    expect(addSongs).toHaveBeenCalledWith([
-      toBrandId<SongId>("song-1"),
-      toBrandId<SongId>("song-2"),
-    ]);
+    expect(addSongsToPlaylist).toHaveBeenCalledWith(
+      toBrandId<PlaylistId>("1"),
+      [
+        toBrandId<SongId>("song-1"),
+        toBrandId<SongId>("song-2"),
+      ],
+    );
   });
 
   it("renders songs and removes them with the current song identifier", async () => {
-    const playlistId = toBrandId<PlaylistId>("11111111-1111-1111-1111-111111111111");
+    const playlistId = toBrandId<PlaylistId>("1");
     const songId = toBrandId<SongId>("22222222-2222-2222-2222-222222222222");
-    const removeSong = vi.fn();
+    const removeSongFromPlaylist = vi.fn();
 
-    mockedUsePlaylistDetail.mockReturnValue({
-      playlist: {
-        id: playlistId,
-        name: "Favorites",
-        createdAt: new Date().toISOString(),
-        songs: [
-          {
-            song: {
-              id: songId,
-              title: "Second Song",
-              playbackEnabled: true,
-            },
+    const mockPlaylist: PlaylistDetail = {
+      id: playlistId,
+      name: "Favorites",
+      createdAt: new Date().toISOString(),
+      songs: [
+        {
+          song: {
+            id: songId,
+            title: "Second Song",
+            playbackEnabled: true,
           },
-        ],
-      },
-      isLoading: false,
-      error: null,
-      updatePlaylist: vi.fn(),
-      deletePlaylist: vi.fn(),
-      addSongs: vi.fn(),
-      addSong: vi.fn(),
-      removeSong,
+        },
+      ],
+    };
+
+    mockedUsePlaylistsStore.mockImplementation((selector) => {
+      const playlistDetailsRecord: Record<string, PlaylistDetail> = {
+        "1": mockPlaylist,
+      };
+
+      const state: PlaylistsState = {
+        playlistDetails: playlistDetailsRecord,
+        playlists: [],
+        playlistDetailsMap: new Map(),
+        songCounts: {},
+        isLoading: false,
+        error: null,
+        fetchPlaylistDetail: vi.fn(),
+        fetchPlaylists: vi.fn(),
+        createPlaylist: vi.fn(),
+        updatePlaylist: vi.fn(),
+        deletePlaylist: vi.fn(),
+        addSongsToPlaylist: vi.fn(),
+        removeSongFromPlaylist,
+        addPlaylist: vi.fn(),
+        updatePlaylistFromRemote: vi.fn(),
+        removePlaylistFromRemote: vi.fn(),
+        getPlaylistDetail: vi.fn(() => mockPlaylist),
+        setLoading: vi.fn(),
+        setError: vi.fn(),
+        subscribe: vi.fn(),
+        unsubscribe: vi.fn(),
+        getListeners: vi.fn(),
+      };
+      return selector(state);
     });
 
     render(
@@ -136,6 +209,9 @@ describe("PlaylistDetailPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /remove/i }));
 
-    expect(removeSong).toHaveBeenCalledWith(songId);
+    expect(removeSongFromPlaylist).toHaveBeenCalledWith(
+      toBrandId<PlaylistId>("1"),
+      songId,
+    );
   });
 });

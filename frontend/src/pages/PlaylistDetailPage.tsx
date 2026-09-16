@@ -1,8 +1,7 @@
-import { useEffect, useState, useCallback, type KeyboardEvent } from "react";
+import { useEffect, useState, useCallback, useRef, type KeyboardEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
-import { usePlaylistDetail } from "../hooks/usePlaylistDetail";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { usePlaylistsStore } from "../stores/usePlaylistsStore";
 import { useSongSelectorModal } from "../components/SongSelector";
@@ -15,10 +14,20 @@ function PlaylistDetailPage() {
   const { id } = useParams<"id">();
   const navigate = useNavigate();
   const playlistId = toBrandId<PlaylistId>(id || "");
-  const { playlist, isLoading, error, updatePlaylist, deletePlaylist, addSongs, removeSong } =
-    usePlaylistDetail(playlistId);
+
+  // Subscribe to playlist data changes
+  const playlist = usePlaylistsStore((state) => state.playlistDetails[playlistId]);
+  const isLoading = usePlaylistsStore((state) => state.isLoading);
+  const error = usePlaylistsStore((state) => state.error);
+  const fetchPlaylistDetail = usePlaylistsStore((state) => state.fetchPlaylistDetail);
+  const getPlaylistDetail = usePlaylistsStore((state) => state.getPlaylistDetail);
+  const updatePlaylist = usePlaylistsStore((state) => state.updatePlaylist);
+  const deletePlaylist = usePlaylistsStore((state) => state.deletePlaylist);
+  const addSongsToPlaylist = usePlaylistsStore((state) => state.addSongsToPlaylist);
+  const removeSongFromPlaylist = usePlaylistsStore((state) => state.removeSongFromPlaylist);
   const subscribe = usePlaylistsStore((state) => state.subscribe);
   const unsubscribe = usePlaylistsStore((state) => state.unsubscribe);
+
   const confirmDialog = useConfirmDialog();
 
   const [draftName, setDraftName] = useState("");
@@ -28,35 +37,51 @@ function PlaylistDetailPage() {
   const [isPlayLoading, setIsPlayLoading] = useState(false);
   const [isFrozen, setIsFrozen] = useState(false);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const { setQueue } = usePlayerStore();
 
   const handleAddSongs = useCallback(
     (songIds: string[]) => {
       void (async () => {
         try {
-          await addSongs(songIds.map((songId) => toBrandId<SongId>(songId)));
+          await addSongsToPlaylist(playlistId, songIds.map((songId) => toBrandId<SongId>(songId)));
         } catch {
           // Error is already in store.
         }
       })();
     },
-    [addSongs],
+    [playlistId, addSongsToPlaylist],
   );
 
   const songSelectorModal = useSongSelectorModal({
     onSongsSelected: handleAddSongs,
   });
 
+  // Fetch playlist if not cached
   useEffect(() => {
+    if (!playlistId) return;
+    const cached = getPlaylistDetail(playlistId);
+    if (!cached) {
+      void fetchPlaylistDetail(playlistId);
+    }
+  }, [playlistId, fetchPlaylistDetail, getPlaylistDetail]);
+
+  useEffect(() => {
+    setIsEditingName(false);
+    setIsSavingName(false);
     if (playlist) {
       setDraftName(playlist.name);
     }
-  }, [playlist]);
+  }, [playlistId, playlist]);
 
-  // Exit rename mode when navigating to a different playlist
+  // Focus input when entering edit mode
   useEffect(() => {
-    setIsEditingName(false);
-  }, [playlistId]);
+    if (isEditingName && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditingName]);
 
   const handleSaveName = async () => {
     if (!playlist) {
@@ -71,8 +96,10 @@ function PlaylistDetailPage() {
 
     setIsSavingName(true);
     try {
-      await updatePlaylist(nextName);
+      await updatePlaylist(playlistId, nextName);
       setIsEditingName(false);
+    } catch {
+      // Error is already in store
     } finally {
       setIsSavingName(false);
     }
@@ -108,7 +135,7 @@ function PlaylistDetailPage() {
     });
 
     try {
-      await deletePlaylist();
+      await deletePlaylist(playlistId);
     } catch {
       setDeleteError("Failed to delete playlist");
       // Unsubscribe on error since we won't navigate away
@@ -122,7 +149,7 @@ function PlaylistDetailPage() {
 
   const handleRemoveSong = async (songId: SongId) => {
     try {
-      await removeSong(songId);
+      await removeSongFromPlaylist(playlistId, songId);
     } catch {
       // Error is already in store
     }
@@ -231,6 +258,7 @@ function PlaylistDetailPage() {
                       Playlist name
                     </label>
                     <input
+                      ref={inputRef}
                       id="playlist-name-edit"
                       value={draftName}
                       onChange={(event) => setDraftName(event.target.value)}
